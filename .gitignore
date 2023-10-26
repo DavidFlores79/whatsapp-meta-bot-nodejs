@@ -4,3 +4,4 @@ uploads/*.jpg
 uploads/*.png
 uploads/*.jpeg
 .env
+logs.txt

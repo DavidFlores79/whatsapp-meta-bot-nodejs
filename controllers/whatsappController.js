@@ -33,10 +33,22 @@ const receivedMessage = (req, res) => {
         const messageObject = getMessageObject(req.body);
         const messageType = messageObject.type;
         
-        console.log({messageObject});
-        
-        
         // if(messageType == 'text') console.log(messageObject.text.body);
+        switch (messageType) {
+            case 'text':
+                console.log(messageObject[0].text.body);
+                break;
+            case 'interactive':
+                console.log('es INTERACTIVE');
+                if(messageObject[0].interactive.type == 'button_reply') {
+                    console.log('button reply!!');
+                    console.log(messageObject[0].interactive.button_reply);
+                }
+                break;
+        
+            default:
+                break;
+        }
         
         myConsole.log(messageObject);
 
@@ -52,11 +64,17 @@ const receivedMessage = (req, res) => {
 
 function getMessageObject(body) {
     const { entry } = body;
+    myConsole.log('********** INICIO body *************');
+    myConsole.log(body);
+    myConsole.log('********** FIN body *************');
     const { changes } = entry[0];
     const { value } = changes[0];
     const { messages, errors, statuses } = value;
     const messageObject = messages;
-    return messageObject[0];
+    console.log('************* Objeto Completo ************* ');
+    console.log(messageObject);
+    console.log('************* FIN Objeto Completo ************* ');
+    return messageObject;
 }
 
 
