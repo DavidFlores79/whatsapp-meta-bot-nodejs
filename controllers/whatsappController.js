@@ -31,6 +31,10 @@ const receivedMessage = (req, res) => {
     try {
 
         const messageObject = getMessageObject(req.body);
+        if(!messageObject) {
+            console.log('********BODY ********', req.body);
+            return res.send('EVENT_RECEIVED');
+        }
         const messageType = messageObject[0].type;
 
         // if(messageType == 'text') console.log(messageObject.text.body);
