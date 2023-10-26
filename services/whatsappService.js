@@ -50,7 +50,7 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
 const getTextData = (textResponse, number, type) => {
 
     // Verificar que el número tenga 11 dígitos
-    if (number.length == 11) {
+    if (number.length == 13) {
         number = formatNumber(number);
     };
 
