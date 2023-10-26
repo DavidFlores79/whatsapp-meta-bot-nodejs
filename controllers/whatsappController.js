@@ -32,22 +32,25 @@ const receivedMessage = (req, res) => {
 
         const messageObject = getMessageObject(req.body);
         if(!messageObject) {
-            console.log('********BODY ********', req.body);
+            console.log('******** BODY ********', req.body);
             return res.send('EVENT_RECEIVED');
         }
         const messageType = messageObject[0].type;
 
-        // if(messageType == 'text') console.log(messageObject.text.body);
         switch (messageType) {
             case 'text':
                 console.log(messageObject[0].text.body);
                 break;
             case 'interactive':
                 console.log('es INTERACTIVE');
-                if (messageObject[0].interactive.type == 'button_reply') {
-                    console.log('button reply!!');
-                    console.log(messageObject[0].interactive.button_reply);
+                const { type: interactiveType } = messageObject[0].interactive;
+
+                if (interactiveType == 'button_reply') {
+                    const { button_reply: buttonReply } = messageObject[0].interactive;
+                    console.log('reply id!!', buttonReply.id);
+                    console.log('reply text!!', buttonReply.title);
                 }
+
                 break;
 
             default:
@@ -69,12 +72,16 @@ const receivedMessage = (req, res) => {
 
 function getMessageObject(body) {
     const { entry } = body;
+
     myConsole.log('********** INICIO body *************');
     myConsole.log(body);
     myConsole.log('********** FIN body *************');
     const { changes } = entry[0];
     const { value } = changes[0];
     const { messages, errors, statuses } = value;
+    myConsole.log('********** INICIO value *************');
+    myConsole.log(value);
+    myConsole.log('********** FIN value *************');
     const messageObject = messages;
     console.log('************* Objeto Completo ************* ');
     console.log(messageObject);
