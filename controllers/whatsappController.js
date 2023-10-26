@@ -34,8 +34,8 @@ const receivedMessage = (req, res) => {
         const { changes } = entry[0];
         const { value } = changes[0];
         const { messages, errors, statuses } = value;
-        const messageType = messageObject[0].type;
         const messageObject = messages;
+        const messageType = messageObject[0].type;
         
         console.log({messages});
         if(messageType == 'text') console.log(messageObject[0].text.body);
