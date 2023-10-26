@@ -30,15 +30,14 @@ const receivedMessage = (req, res) => {
     
     try {
 
-        const { entry } = req.body;
-        const { changes } = entry[0];
-        const { value } = changes[0];
-        const { messages, errors, statuses } = value;
-        const messageObject = messages;
-        const messageType = messageObject[0].type;
+        const messageObject = getMessageObject(req.body);
+        const messageType = messageObject.type;
         
-        console.log({messages});
-        if(messageType == 'text') console.log(messageObject[0].text.body);
+        console.log({messageObject});
+        
+        
+        // if(messageType == 'text') console.log(messageObject.text.body);
+        
         myConsole.log(messageObject);
 
         return res.send('EVENT_RECEIVED');
@@ -49,6 +48,15 @@ const receivedMessage = (req, res) => {
         console.log({error});
         return res.send('EVENT_RECEIVED');
     }
+}
+
+function getMessageObject(body) {
+    const { entry } = body;
+    const { changes } = entry[0];
+    const { value } = changes[0];
+    const { messages, errors, statuses } = value;
+    const messageObject = messages;
+    return messageObject[0];
 }
 
 
