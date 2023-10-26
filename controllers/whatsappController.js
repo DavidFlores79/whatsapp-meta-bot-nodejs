@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
-
+const whatsappService = require('../services/whatsappService');
 
 const verifyToken = (req, res) => {
 
@@ -39,7 +39,7 @@ const receivedMessage = (req, res) => {
             const { messages, errors, statuses, metadata } = value;
 
             if(!messages) {
-                console.log('******** SERVER ********', changes.metadata);
+                console.log('******** SERVER ********', changes[0].metadata);
                 return res.send('EVENT_RECEIVED');
             }
             const messageObject = messages[0];
@@ -47,7 +47,10 @@ const receivedMessage = (req, res) => {
 
         switch (messageType) {
             case 'text':
-                console.log(messageObject.text.body);
+                console.log('es TEXT');
+                const userRequest = messageObject.text.body;
+                console.log({messageObject});
+                whatsappService.sendWhatsappResponse(userRequest, messageObject.from, messageType);
                 break;
             case 'interactive':
                 console.log('es INTERACTIVE');
