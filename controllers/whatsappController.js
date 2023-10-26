@@ -4,8 +4,21 @@ const path = require('path');
 
 
 const verifyToken = (req, res) => {
+
+    try {
+        const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+        const token = req.query['hub.verify_token'];
+        const challenge = req.query['hub.challenge'];
+
+        if(challenge != null && token != null && accessToken == token) {
+            return res.status(200).send(challenge);
+        }
+
+        return res.status(400).send({msg: 'El Token no está presente. Validar.'});
+    } catch (error) {
+        return res.status(400).send();
+    }
     
-    res.status(200).send({data: "Hola verifyToken"});
 }
 
 const receivedMessage = (req, res) => {
