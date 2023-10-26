@@ -14,7 +14,7 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
             let textResponse = userRequest.toLowerCase();
             data = getTextData(textResponse, number, type);
             break;
-    
+
         default:
             break;
     }
@@ -30,7 +30,7 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
         }
     };
 
-    console.log({options});
+    console.log({ options });
 
     const req = https.request(options, res => {
         res.on('data', data => {
@@ -49,9 +49,14 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
 
 const getTextData = (textResponse, number, type) => {
 
+    // Verificar que el número tenga 11 dígitos
+    if (number.length == 11) {
+        number = formatNumber(number);
+    };
+
     let dataObject = {};
 
-    if(textResponse.includes('hola','hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias')) {
+    if (textResponse.includes('hola', 'hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias')) {
         textResponse = 'Bienvenido a Clínica Hoper, en que puedo servirle.'
     }
 
@@ -66,9 +71,22 @@ const getTextData = (textResponse, number, type) => {
         }
     });
 
-    console.log({dataObject});
+    console.log({ dataObject });
 
     return dataObject;
+}
+
+const formatNumber = (numero) => {
+
+    // Verificar que comience con "521"
+    if (!numero.startsWith('521')) {
+        return 'Número de teléfono no válido';
+    }
+
+    // Formatear el número con "52" en lugar de "521"
+    const numeroFormateado = `52${numero.slice(3)}`;
+
+    return numeroFormateado;
 }
 
 module.exports = {
