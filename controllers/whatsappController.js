@@ -91,9 +91,11 @@ function getMessageObject(body) {
     myConsole.log(value);
     myConsole.log('********** FIN value *************');
     const messageObject = messages;
-    console.log('************* Objeto Completo ************* ');
-    console.log(messageObject);
-    console.log('************* FIN Objeto Completo ************* ');
+    if(messageObject) {
+        console.log('************* Objeto Completo ************* ');
+        console.log(messageObject);
+        console.log('************* FIN Objeto Completo ************* ');
+    }
     return messageObject;
 }
 
