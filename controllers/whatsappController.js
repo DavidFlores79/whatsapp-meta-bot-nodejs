@@ -10,6 +10,10 @@ const verifyToken = (req, res) => {
         const token = req.query['hub.verify_token'];
         const challenge = req.query['hub.challenge'];
 
+        console.log({accessToken});
+        console.log({token});
+        console.log({challenge});
+
         if(challenge != null && token != null && accessToken == token) {
             return res.status(200).send(challenge);
         }
