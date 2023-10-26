@@ -32,7 +32,9 @@ const receivedMessage = (req, res) => {
 
         const messageObject = getMessageObject(req.body);
         if(!messageObject) {
-            console.log('******** BODY ********', req.body);
+            const { entry } = req.body;
+            const { changes } = entry[0];
+            console.log('******** CHANGES ********', changes);
             return res.send('EVENT_RECEIVED');
         }
         const messageType = messageObject[0].type;
@@ -47,8 +49,14 @@ const receivedMessage = (req, res) => {
 
                 if (interactiveType == 'button_reply') {
                     const { button_reply: buttonReply } = messageObject[0].interactive;
-                    console.log('reply id!!', buttonReply.id);
-                    console.log('reply text!!', buttonReply.title);
+                    console.log('Button Reply id!!', buttonReply.id);
+                    console.log('Button Reply text!!', buttonReply.title);
+                }
+
+                if (interactiveType == 'liston_reply') {
+                    const { list_reply: listReply } = messageObject[0].interactive;
+                    console.log('List Reply id!!', listReply.id);
+                    console.log('List Reply text!!', listReply.title);
                 }
 
                 break;
