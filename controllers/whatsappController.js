@@ -31,7 +31,7 @@ const receivedMessage = (req, res) => {
     try {
 
         const messageObject = getMessageObject(req.body);
-        const messageType = messageObject.type;
+        const messageType = messageObject[0].type;
 
         // if(messageType == 'text') console.log(messageObject.text.body);
         switch (messageType) {
