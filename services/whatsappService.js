@@ -54,13 +54,23 @@ const getTextData = (textResponse, number, type) => {
         number = formatNumber(number);
     };
 
-    let dataObject = {};
+    const greetings = ['hola', 'hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias'];
+    const farewells = ['adios', 'bye', 'hasta pronto', 'adiós', 'nos vemos'];
+    const thanks = ['gracias', 'thank you', 'thanks'];
 
-    if (textResponse.includes('hola', 'hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias')) {
-        textResponse = 'Bienvenido a Clínica Hoper, en que puedo servirle.'
+    if (includeStrings(textResponse, greetings)) {
+        textResponse = 'Bienvenido a Clínica Hoper, en que puedo servirle.';
     }
 
-    dataObject = JSON.stringify({
+    if (includeStrings(textResponse, farewells)) {
+        textResponse = 'Fue un placer servirle. Hasta pronto 😁';
+    }
+
+    if (includeStrings(textResponse, thanks)) {
+        textResponse = 'De nada 😁';
+    }
+
+    const dataObject = JSON.stringify({
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
         "to": number,
@@ -87,6 +97,11 @@ const formatNumber = (numero) => {
     const numeroFormateado = `52${numero.slice(3)}`;
 
     return numeroFormateado;
+}
+
+const includeStrings = (texto, arrayDeCadenas) => {
+    // Utiliza Array.some() para verificar si alguna cadena del array está incluida en el texto
+    return arrayDeCadenas.some(cadena => texto.includes(cadena));
 }
 
 module.exports = {
