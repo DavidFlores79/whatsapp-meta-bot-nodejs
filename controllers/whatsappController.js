@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const fs = require('fs');
+const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 
 
@@ -27,7 +28,26 @@ const verifyToken = (req, res) => {
 
 const receivedMessage = (req, res) => {
     
-    res.status(200).send({data: "Hola receivedMessage"});
+    try {
+
+        const { entry } = req.body;
+        const { changes } = entry[0];
+        const { value } = changes[0];
+        const { messages, errors, statuses } = value;
+        const messageObject = messages;
+        
+        console.log({messages});
+        console.log(messageObject[0].text.body);
+        myConsole.log(messageObject);
+
+        return res.send('EVENT_RECEIVED');
+
+
+        
+    } catch (error) {
+        console.log({error});
+        return res.send('EVENT_RECEIVED');
+    }
 }
 
 
