@@ -34,10 +34,11 @@ const receivedMessage = (req, res) => {
         const { changes } = entry[0];
         const { value } = changes[0];
         const { messages, errors, statuses } = value;
+        const messageType = messageObject[0].type;
         const messageObject = messages;
         
         console.log({messages});
-        console.log(messageObject[0].text.body);
+        if(messageType == 'text') console.log(messageObject[0].text.body);
         myConsole.log(messageObject);
 
         return res.send('EVENT_RECEIVED');
