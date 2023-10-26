@@ -29,32 +29,38 @@ const verifyToken = (req, res) => {
 const receivedMessage = (req, res) => {
 
     try {
-
-        const messageObject = getMessageObject(req.body);
-        if(!messageObject) {
             const { entry } = req.body;
+            if(!entry) {
+                console.log('******** NO ENTRY ********', req.body);
+                return res.send('EVENT_RECEIVED');
+            }
             const { changes } = entry[0];
-            console.log('******** CHANGES ********', changes);
-            return res.send('EVENT_RECEIVED');
-        }
-        const messageType = messageObject[0].type;
+            const { value } = changes[0];
+            const { messages, errors, statuses, metadata } = value;
+
+            if(!messages) {
+                console.log('******** SERVER ********', changes.metadata);
+                return res.send('EVENT_RECEIVED');
+            }
+            const messageObject = messages[0];
+            const messageType = messageObject.type;
 
         switch (messageType) {
             case 'text':
-                console.log(messageObject[0].text.body);
+                console.log(messageObject.text.body);
                 break;
             case 'interactive':
                 console.log('es INTERACTIVE');
-                const { type: interactiveType } = messageObject[0].interactive;
+                const { type: interactiveType } = messageObject.interactive;
 
                 if (interactiveType == 'button_reply') {
-                    const { button_reply: buttonReply } = messageObject[0].interactive;
+                    const { button_reply: buttonReply } = messageObject.interactive;
                     console.log('Button Reply id!!', buttonReply.id);
                     console.log('Button Reply text!!', buttonReply.title);
                 }
 
-                if (interactiveType == 'liston_reply') {
-                    const { list_reply: listReply } = messageObject[0].interactive;
+                if (interactiveType == 'list_reply') {
+                    const { list_reply: listReply } = messageObject.interactive;
                     console.log('List Reply id!!', listReply.id);
                     console.log('List Reply text!!', listReply.title);
                 }
@@ -62,7 +68,7 @@ const receivedMessage = (req, res) => {
                 break;
 
             default:
-                console.log('Entró al default!!');
+                console.log('Entró al default!! Tipo: ', messageType);
                 break;
         }
 
@@ -77,28 +83,6 @@ const receivedMessage = (req, res) => {
         return res.send('EVENT_RECEIVED');
     }
 }
-
-function getMessageObject(body) {
-    const { entry } = body;
-
-    myConsole.log('********** INICIO body *************');
-    myConsole.log(body);
-    myConsole.log('********** FIN body *************');
-    const { changes } = entry[0];
-    const { value } = changes[0];
-    const { messages, errors, statuses } = value;
-    myConsole.log('********** INICIO value *************');
-    myConsole.log(value);
-    myConsole.log('********** FIN value *************');
-    const messageObject = messages;
-    if(messageObject) {
-        console.log('************* Objeto Completo ************* ');
-        console.log(messageObject);
-        console.log('************* FIN Objeto Completo ************* ');
-    }
-    return messageObject;
-}
-
 
 const uploadFile = async (req, res) => {
 
