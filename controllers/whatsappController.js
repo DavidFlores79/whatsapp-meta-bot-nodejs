@@ -30,10 +30,6 @@ const receivedMessage = (req, res) => {
 
     try {
 
-        console.log('************* INICIO REQUEST ************* ');
-        console.log(req);
-        console.log('************* FIN REQUEST ************* ');
-
         const messageObject = getMessageObject(req.body);
         const messageType = messageObject.type;
 
@@ -51,6 +47,7 @@ const receivedMessage = (req, res) => {
                 break;
 
             default:
+                console.log('Entró al default!!');
                 break;
         }
 
