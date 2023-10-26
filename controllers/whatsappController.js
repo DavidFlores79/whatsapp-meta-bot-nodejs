@@ -1,0 +1,56 @@
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+
+
+const verifyToken = (req, res) => {
+    
+    res.status(200).send({data: "Hola verifyToken"});
+}
+
+const receivedMessage = (req, res) => {
+    
+    res.status(200).send({data: "Hola receivedMessage"});
+}
+
+
+const uploadFile = async (req, res) => {
+
+    const files = req.files;
+    const img_path = files.file.path;
+    // const img_name = img_path.split('/')[1];
+    // const url=`https://whatsapp-api-bot-nodejs-production.up.railway.app/api/v1/get_resource/${img_name}`;
+    const img_name = img_path.split('\\')[1];
+    const url=`http://127.0.0.1:${process.env.PORT ?? 5000}/api/v1/get_resource/${img_name}`;
+
+
+    console.log({files});
+
+    res.status(200).send({data:url});
+}
+
+const getResource = async (req, res) => {
+
+    const name = req.params['name'];
+    // console.log({name});
+    fs.stat(`./uploads/${name}`, (err) => {
+        if(err) {
+            let path_img = './uploads/default.png';
+            return res.status(200).sendFile(path.resolve(path_img));
+        }
+
+        let path_img = `./uploads/${name}`;
+        res.status(200).sendFile(path.resolve(path_img));
+    });
+
+
+}
+
+
+
+module.exports = {
+    verifyToken,
+    receivedMessage,
+    uploadFile,
+    getResource,
+}
