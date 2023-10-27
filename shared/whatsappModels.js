@@ -67,8 +67,43 @@ const buildLocationJSON = ( number ) => {
 
 }
 
+const buildButtonsJSON = (number, { bodyTitle, button1Label, button1Id, button2Label, button2Id }) => {
+
+    return JSON.stringify({
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": number,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {
+                "text": bodyTitle
+            },
+            "action": {
+                "buttons": [
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "001",
+                            "title": "✔️ Si"
+                        }
+                    },
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "002",
+                            "title": "No ❌"
+                        }
+                    }
+                ]
+            }
+        }
+    });
+}
+
 module.exports = {
     buildTextJSON,
     buildListJSON,
     buildLocationJSON,
+    buildButtonsJSON,
 }

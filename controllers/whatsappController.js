@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getLocationData, analizeText } = require('../shared/processMessage');
+const { getLocationData, analizeText, getButtonsData } = require('../shared/processMessage');
 
 const verifyToken = (req, res) => {
 
@@ -76,7 +76,38 @@ const receivedMessage = (req, res) => {
                             data = getLocationData( number );
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                    
+                        case '006':
+                            data = getButtonsData( number, {
+                                bodyTitle : `Su número de Teléfono es: *${number}*?`,
+                                button1Label : "✔️ Si",
+                                button1Id : "010",
+                                button2Label : "No ❌",
+                                button2Id : "011",
+                            });
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '010':
+                            data = getButtonsData( number, {
+                                bodyTitle : `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
+                                button1Label : "✔️ Confirmar",
+                                button1Id : "020",
+                                button2Label : "❌ Cancelar Cita",
+                                button2Id : "021",
+                            });
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '011':
+                            data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '020':
+                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '021':
+                            data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
                         default:
                             break;
                     }
