@@ -64,7 +64,7 @@ const receivedMessage = (req, res) => {
                     if (number.length == 13) {
                         number = formatNumber(number);
                     };
-                    
+
                     console.log('Button Reply id!!', buttonReply.id);
                     console.log('Button Reply text!!', buttonReply.title);
 
@@ -138,6 +138,7 @@ const receivedMessage = (req, res) => {
                 break;
 
             default:
+                console.log({messageObject});
                 console.log('Entró al default!! Tipo: ', messageType);
                 break;
         }
