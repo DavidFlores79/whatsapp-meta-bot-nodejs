@@ -50,8 +50,14 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                const number = messageObject.from;
+                let number = messageObject.from;
+                
                 analizeText(userRequest, number);
+                
+                // Verificar que el número tenga 11 dígitos
+                if (number.length == 13) {
+                    number = formatNumber(number);
+                };
 
                 break;
             case 'interactive':
@@ -62,6 +68,39 @@ const receivedMessage = (req, res) => {
                     const { button_reply: buttonReply } = messageObject.interactive;
                     console.log('Button Reply id!!', buttonReply.id);
                     console.log('Button Reply text!!', buttonReply.title);
+
+                    switch (buttonReply.id) {
+                        case '007':
+                            console.log(`Entró en ${buttonReply.id}`);
+                            data = getButtonsData(number, {
+                                bodyTitle: `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
+                                button1Label: "✔️ Confirmar",
+                                button1Id: '009',
+                                button2Label: "❌ Cancelar Cita",
+                                button2Id: '010',
+                            });
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '008':
+                            console.log(`Entró en ${buttonReply.id}`);
+                            data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '009':
+                            console.log(`Entró en ${buttonReply.id}`);
+                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        case '010':
+                            console.log(`Entró en ${buttonReply.id}`);
+                            data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                        default:
+                            data = getTextData('Opción Desconocida!! ☠', number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                    }
                 }
 
                 if (interactiveType == 'list_reply') {
@@ -90,34 +129,8 @@ const receivedMessage = (req, res) => {
                             });
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                        case '007':
-                            console.log(`Entró en ${listReply.id}`);
-                            data = getButtonsData(number, {
-                                bodyTitle: `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
-                                button1Label: "✔️ Confirmar",
-                                button1Id: '009',
-                                button2Label: "❌ Cancelar Cita",
-                                button2Id: '010',
-                            });
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '008':
-                            console.log(`Entró en ${listReply.id}`);
-                            data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '009':
-                            console.log(`Entró en ${listReply.id}`);
-                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '010':
-                            console.log(`Entró en ${listReply.id}`);
-                            data = getTextData('Deberá escribir al motivo de la cancelación.', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
                         default:
-                            data = getTextData('Opción por Default!!', number);
+                            data = getTextData('Opción Desconocida!! ☠', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                     }
