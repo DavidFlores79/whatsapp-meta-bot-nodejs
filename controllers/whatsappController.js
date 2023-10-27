@@ -136,7 +136,23 @@ const receivedMessage = (req, res) => {
                 }
 
                 break;
-
+            case 'button':
+                console.log('es BUTTON');
+                switch (messageObject.button.payload) {
+                    case 'Confirmar':
+                        console.log(`Eligió Confirmar - Template`);
+                        data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                        whatsappService.sendWhatsappResponse(data);
+                        break;
+                    case 'Cancelar':
+                        console.log(`Eligió Cancelar - Template`);
+                        data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+                        whatsappService.sendWhatsappResponse(data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
             default:
                 console.log({messageObject});
                 console.log('Entró al default!! Tipo: ', messageType);
