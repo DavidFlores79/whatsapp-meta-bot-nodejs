@@ -40,7 +40,12 @@ const receivedMessage = (req, res) => {
         const { messages, errors, statuses, metadata } = value;
 
         if (!messages) {
-            console.log('******** SERVER ********', changes[0]);
+            let objectChanges = changes[0];
+            let objectStatuses = objectChanges.statuses[0];
+            console.log('******** SERVER ********');
+            console.log({objectChanges});
+            console.log({objectStatuses});
+            console.log('******** SERVER ********');
             return res.send('EVENT_RECEIVED');
         }
         const messageObject = messages[0];
@@ -136,6 +141,7 @@ const receivedMessage = (req, res) => {
                 }
 
                 break;
+            //templates
             case 'button':
                 console.log('es BUTTON');
                 switch (messageObject.button.payload) {
