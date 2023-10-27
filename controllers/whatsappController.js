@@ -66,7 +66,7 @@ const receivedMessage = (req, res) => {
 
                 if (interactiveType == 'list_reply') {
                     const { list_reply: listReply } = messageObject.interactive;
-                    const number = messageObject.from;
+                    let number = messageObject.from;
                     // Verificar que el número tenga 11 dígitos
                     if (number.length == 13) {
                         number = formatNumber(number);
