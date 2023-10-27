@@ -50,7 +50,7 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                const number = messageObject.from;                
+                const number = messageObject.from;
                 analizeText(userRequest, number);
 
                 break;
@@ -67,33 +67,37 @@ const receivedMessage = (req, res) => {
                 if (interactiveType == 'list_reply') {
                     const { list_reply: listReply } = messageObject.interactive;
                     const number = messageObject.from;
+                    // Verificar que el número tenga 11 dígitos
+                    if (number.length == 13) {
+                        number = formatNumber(number);
+                    };
 
                     console.log('List Reply id!!', listReply.id);
                     console.log('List Reply text!!', listReply.title);
-                    
+
                     switch (listReply.id) {
                         case '005':
-                            data = getLocationData( number );
+                            data = getLocationData(number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '006':
-                            data = getButtonsData( number, {
-                                bodyTitle : `Su número de Teléfono es: *${number}*?`,
-                                button1Label : "✔️ Si",
-                                button1Id : '007',
-                                button2Label : "No ❌",
-                                button2Id : '008',
+                            data = getButtonsData(number, {
+                                bodyTitle: `Su número de Teléfono es: *${number}*?`,
+                                button1Label: "✔️ Si",
+                                button1Id: '007',
+                                button2Label: "No ❌",
+                                button2Id: '008',
                             });
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '007':
                             console.log(`Entró en ${listReply.id}`);
-                            data = getButtonsData( number, {
-                                bodyTitle : `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
-                                button1Label : "✔️ Confirmar",
-                                button1Id : '009',
-                                button2Label : "❌ Cancelar Cita",
-                                button2Id : '010',
+                            data = getButtonsData(number, {
+                                bodyTitle: `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
+                                button1Label: "✔️ Confirmar",
+                                button1Id: '009',
+                                button2Label: "❌ Cancelar Cita",
+                                button2Id: '010',
                             });
                             whatsappService.sendWhatsappResponse(data);
                             break;
