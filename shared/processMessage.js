@@ -1,4 +1,4 @@
-const { buildTextJSON, buildListJSON } = require("../shared/whatsappModels");
+const { buildTextJSON, buildListJSON, buildLocationJSON } = require("../shared/whatsappModels");
 
 const getTextData = (userRequest, number) => {
 
@@ -24,6 +24,18 @@ const getListData = ( number ) => {
     };
 
     const dataObject = buildListJSON(number);
+
+    return dataObject;
+}
+
+const getLocationData = ( number ) => {
+
+    // Verificar que el número tenga 11 dígitos
+    if (number.length == 13) {
+        number = formatNumber(number);
+    };
+
+    const dataObject = buildLocationJSON(number);
 
     return dataObject;
 }
@@ -67,4 +79,5 @@ const includeStrings = (texto, arrayDeCadenas) => {
 module.exports = {
     getTextData,
     getListData,
+    getLocationData,
 }

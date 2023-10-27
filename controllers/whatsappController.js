@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getTextData, getListData } = require('../shared/processMessage');
+const { getTextData, getListData, getLocationData } = require('../shared/processMessage');
 
 const verifyToken = (req, res) => {
 
@@ -80,7 +80,7 @@ const receivedMessage = (req, res) => {
                     console.log('List Reply text!!', listReply.title);
                     switch (listReply.id) {
                         case '005':
-                            data = getTextData(userRequest, number);
+                            data = getLocationData( number );
                             whatsappService.sendWhatsappResponse(data);
                             break;
                     

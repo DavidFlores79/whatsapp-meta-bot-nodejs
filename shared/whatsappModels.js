@@ -70,4 +70,5 @@ const buildLocationJSON = ( number ) => {
 module.exports = {
     buildTextJSON,
     buildListJSON,
+    buildLocationJSON,
 }
