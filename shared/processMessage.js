@@ -31,15 +31,18 @@ const analizeText = (userRequest) => {
     let textResponse = `No entendí el mensaje: *${userRequest}*`;
 
     if (includeStrings(userRequest, greetings)) {
-        textResponse = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención sólo por mensaje, no llamadas.';
+        console.log('greetings');
+        return 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención sólo por mensaje, no llamadas.';
     }
 
     if (includeStrings(userRequest, farewells)) {
-        textResponse = 'Fue un placer poder servirle. Hasta pronto 😁';
+        console.log('farewells');
+        return 'Fue un placer poder servirle. Hasta pronto 😁';
     }
 
     if (includeStrings(userRequest, thanks)) {
-        textResponse = 'De nada 😁';
+        console.log('thanks');
+        return 'De nada 😁';
     }
 
     return textResponse;
