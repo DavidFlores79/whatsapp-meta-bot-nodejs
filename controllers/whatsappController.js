@@ -41,7 +41,7 @@ const receivedMessage = (req, res) => {
 
         if (!messages) {
             console.log('******** SERVER ********');
-            console.log(`${changes[0]}`);
+            console.log(JSON.stringify(changes[0]));
             return res.send('EVENT_RECEIVED');
         }
         const messageObject = messages[0];
