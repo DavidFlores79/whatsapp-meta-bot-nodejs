@@ -73,13 +73,12 @@ const analizeText = (userRequest, number) => {
 
     if (includeStrings(userRequest.toLowerCase(), greetings)) {
         textResponse = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención es sólo por mensajes, no llamadas.';
-        console.log(textResponse);
         listModel = getListData(number);
         dataModels.push(listModel);
         textModel = getTextData(textResponse, number);
         dataModels.push(textModel);
 
-    }
+    } else
 
     if (includeStrings(userRequest.toLowerCase(), farewells)) {
         // agradece la atencion
