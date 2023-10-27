@@ -87,6 +87,7 @@ const receivedMessage = (req, res) => {
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '010':
+                            console.log(`Entró en ${listReply.id}`);
                             data = getButtonsData( number, {
                                 bodyTitle : `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
                                 button1Label : "✔️ Confirmar",
@@ -97,14 +98,17 @@ const receivedMessage = (req, res) => {
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '011':
+                            console.log(`Entró en ${listReply.id}`);
                             data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '020':
+                            console.log(`Entró en ${listReply.id}`);
                             data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '021':
+                            console.log(`Entró en ${listReply.id}`);
                             data = getTextData('Deberá escribir al motivo de la cancelación.', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
