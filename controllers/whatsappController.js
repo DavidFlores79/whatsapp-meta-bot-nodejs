@@ -40,7 +40,7 @@ const receivedMessage = (req, res) => {
         const { messages, errors, statuses, metadata } = value;
 
         if (!messages) {
-            console.log('******** SERVER ********', changes[0].metadata);
+            console.log('******** SERVER ********', changes[0]);
             return res.send('EVENT_RECEIVED');
         }
         const messageObject = messages[0];
@@ -50,7 +50,7 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                const number = messageObject.from;                
+                let number = messageObject.from;
                 analizeText(userRequest, number);
                 break;
             case 'interactive':
@@ -138,17 +138,17 @@ const receivedMessage = (req, res) => {
                 break;
             case 'button':
                 console.log('es BUTTON');
-                console.log({messageObject});
+                number = messageObject.from;
                 switch (messageObject.button.payload) {
                     case 'Confirmar':
                         console.log(`Eligió Confirmar - Template`);
-                        // data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
-                        // whatsappService.sendWhatsappResponse(data);
+                        data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                        whatsappService.sendWhatsappResponse(data);
                         break;
                     case 'Cancelar':
                         console.log(`Eligió Cancelar - Template`);
-                        // data = getTextData('Deberá escribir al motivo de la cancelación.', number);
-                        // whatsappService.sendWhatsappResponse(data);
+                        data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+                        whatsappService.sendWhatsappResponse(data);
                         break;
                     default:
                         break;
@@ -163,8 +163,6 @@ const receivedMessage = (req, res) => {
         myConsole.log(messageObject);
 
         return res.send('EVENT_RECEIVED');
-
-
 
     } catch (error) {
         console.log({ error });
