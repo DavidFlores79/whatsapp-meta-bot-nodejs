@@ -123,4 +123,5 @@ module.exports = {
     getLocationData,
     analizeText,
     getButtonsData,
+    formatNumber,
 }

@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getLocationData, analizeText, getButtonsData } = require('../shared/processMessage');
+const { getLocationData, analizeText, getButtonsData, formatNumber } = require('../shared/processMessage');
 
 const verifyToken = (req, res) => {
 
