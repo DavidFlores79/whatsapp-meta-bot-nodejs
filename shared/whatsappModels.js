@@ -84,15 +84,15 @@ const buildButtonsJSON = (number, { bodyTitle, button1Label, button1Id, button2L
                     {
                         "type": "reply",
                         "reply": {
-                            "id": "001",
-                            "title": "✔️ Si"
+                            "id": button1Id,
+                            "title": button1Label
                         }
                     },
                     {
                         "type": "reply",
                         "reply": {
-                            "id": "002",
-                            "title": "No ❌"
+                            "id": button2Id,
+                            "title": button2Label
                         }
                     }
                 ]
