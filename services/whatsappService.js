@@ -1,24 +1,12 @@
 const https = require('https');
-const { getTextData } = require('../shared/processMessage');
+const { getTextData, getListData } = require('../shared/processMessage');
 
 const URI = process.env.WHATSAPP_URI;
 const VERSION = process.env.WHATSAPP_VERSION
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const TOKEN = process.env.WHATSAPP_API_TOKEN;
 
-const sendWhatsappResponse = (userRequest = '', number, type) => {
-
-    let data = {};
-
-    switch (type) {
-        case 'text':
-            // let textResponse = userRequest.toLowerCase();
-            data = getTextData(userRequest, number);
-            break;
-
-        default:
-            break;
-    }
+const sendWhatsappResponse = (data) => {
 
     const options = {
         host: `${URI}`,
@@ -45,7 +33,6 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
 
     req.write(data);
     req.end();
-
 }
 
 

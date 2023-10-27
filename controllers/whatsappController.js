@@ -3,6 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
+const { getTextData, getListData } = require('../shared/processMessage');
 
 const verifyToken = (req, res) => {
 
@@ -29,28 +30,39 @@ const verifyToken = (req, res) => {
 const receivedMessage = (req, res) => {
 
     try {
-            const { entry } = req.body;
-            if(!entry) {
-                console.log('******** NO ENTRY ********', req.body);
-                return res.send('EVENT_RECEIVED');
-            }
-            const { changes } = entry[0];
-            const { value } = changes[0];
-            const { messages, errors, statuses, metadata } = value;
+        const { entry } = req.body;
+        if (!entry) {
+            console.log('******** NO ENTRY ********', req.body);
+            return res.send('EVENT_RECEIVED');
+        }
+        const { changes } = entry[0];
+        const { value } = changes[0];
+        const { messages, errors, statuses, metadata } = value;
 
-            if(!messages) {
-                console.log('******** SERVER ********', changes[0].metadata);
-                return res.send('EVENT_RECEIVED');
-            }
-            const messageObject = messages[0];
-            const messageType = messageObject.type;
+        if (!messages) {
+            console.log('******** SERVER ********', changes[0].metadata);
+            return res.send('EVENT_RECEIVED');
+        }
+        const messageObject = messages[0];
+        const messageType = messageObject.type;
 
         switch (messageType) {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                // console.log({messageObject});
-                whatsappService.sendWhatsappResponse(userRequest, messageObject.from, messageType);
+                const number = messageObject.from;
+                let dataModels = [];
+
+                listModel = getListData(number);
+                dataModels.push(listModel);
+                textModel = getTextData(userRequest, number);
+                dataModels.push(textModel);
+                
+
+                dataModels.forEach(data => {
+                    whatsappService.sendWhatsappResponse(data);
+                });
+
                 break;
             case 'interactive':
                 console.log('es INTERACTIVE');
@@ -66,6 +78,15 @@ const receivedMessage = (req, res) => {
                     const { list_reply: listReply } = messageObject.interactive;
                     console.log('List Reply id!!', listReply.id);
                     console.log('List Reply text!!', listReply.title);
+                    switch (listReply.id) {
+                        case '005':
+                            data = getTextData(userRequest, number);
+                            whatsappService.sendWhatsappResponse(data);
+                            break;
+                    
+                        default:
+                            break;
+                    }
                 }
 
                 break;
