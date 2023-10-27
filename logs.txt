@@ -1,0 +1,16 @@
+{
+  from: '529991992696',
+  id: 'wamid.HBgLNTE5NDM2NjI5NjQVAgASGBQzQUNCODUzN0U1QkU5MkZENTFBQwA=',
+  Timestamp: '1660362642',
+  type: 'text',
+  text: { body: 'hola mundo!! prueba' },
+  interactive: null,
+  image: null,
+  audio: null,
+  video: null,
+  document: null,
+  sticker: null,
+  location: null,
+  contacts: null,
+  system: null
+}
