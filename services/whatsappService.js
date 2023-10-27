@@ -1,5 +1,4 @@
 const https = require('https');
-const { getTextData, getListData } = require('../shared/processMessage');
 
 const URI = process.env.WHATSAPP_URI;
 const VERSION = process.env.WHATSAPP_VERSION

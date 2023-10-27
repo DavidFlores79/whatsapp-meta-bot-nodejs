@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getTextData, getListData, getLocationData } = require('../shared/processMessage');
+const { getLocationData, analizeText } = require('../shared/processMessage');
 
 const verifyToken = (req, res) => {
 
@@ -50,18 +50,8 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                const number = messageObject.from;
-                let dataModels = [];
-
-                listModel = getListData(number);
-                dataModels.push(listModel);
-                textModel = getTextData(userRequest, number);
-                dataModels.push(textModel);
-                
-
-                dataModels.forEach(data => {
-                    whatsappService.sendWhatsappResponse(data);
-                });
+                const number = messageObject.from;                
+                analizeText(userRequest, number);
 
                 break;
             case 'interactive':
@@ -77,8 +67,10 @@ const receivedMessage = (req, res) => {
                 if (interactiveType == 'list_reply') {
                     const { list_reply: listReply } = messageObject.interactive;
                     const number = messageObject.from;
+
                     console.log('List Reply id!!', listReply.id);
                     console.log('List Reply text!!', listReply.title);
+                    
                     switch (listReply.id) {
                         case '005':
                             data = getLocationData( number );
