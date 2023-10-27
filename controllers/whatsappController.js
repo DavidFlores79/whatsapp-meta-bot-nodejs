@@ -41,10 +41,14 @@ const receivedMessage = (req, res) => {
 
         if (!messages) {
             let objectChanges = changes[0];
-            let objectStatuses = objectChanges.statuses;
+            let metaData = objectChanges.medatada;
             console.log('******** SERVER ********');
             console.log({objectChanges});
-            console.log({objectStatuses});
+            console.log({metaData});
+
+            objectChanges.statuses.forEach(status => {
+                console.log({status});
+            });
             console.log('******** SERVER ********');
             return res.send('EVENT_RECEIVED');
         }
