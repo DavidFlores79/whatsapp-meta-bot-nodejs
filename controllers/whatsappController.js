@@ -41,7 +41,7 @@ const receivedMessage = (req, res) => {
 
         if (!messages) {
             let objectChanges = changes[0];
-            let objectStatuses = objectChanges.statuses[0];
+            let objectStatuses = objectChanges.statuses;
             console.log('******** SERVER ********');
             console.log({objectChanges});
             console.log({objectStatuses});
