@@ -1,4 +1,5 @@
 const https = require('https');
+const { getTextData } = require('../shared/processMessage');
 
 const URI = process.env.WHATSAPP_URI;
 const VERSION = process.env.WHATSAPP_VERSION
@@ -11,8 +12,8 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
 
     switch (type) {
         case 'text':
-            let textResponse = userRequest.toLowerCase();
-            data = getTextData(textResponse, number, type);
+            // let textResponse = userRequest.toLowerCase();
+            data = getTextData(userRequest, number);
             break;
 
         default:
@@ -47,62 +48,7 @@ const sendWhatsappResponse = (userRequest = '', number, type) => {
 
 }
 
-const getTextData = (textResponse, number, type) => {
 
-    // Verificar que el número tenga 11 dígitos
-    if (number.length == 13) {
-        number = formatNumber(number);
-    };
-
-    const greetings = ['hola', 'hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias'];
-    const farewells = ['adios', 'bye', 'hasta pronto', 'adiós', 'nos vemos'];
-    const thanks = ['gracias', 'thank you', 'thanks'];
-
-    if (includeStrings(textResponse, greetings)) {
-        textResponse = 'Bienvenido a Clínica Hoper, en que puedo servirle.';
-    }
-
-    if (includeStrings(textResponse, farewells)) {
-        textResponse = 'Fue un placer servirle. Hasta pronto 😁';
-    }
-
-    if (includeStrings(textResponse, thanks)) {
-        textResponse = 'De nada 😁';
-    }
-
-    const dataObject = JSON.stringify({
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": number,
-        "type": type,
-        "text": {
-            "preview_url": false,
-            "body": textResponse
-        }
-    });
-
-    console.log({ dataObject });
-
-    return dataObject;
-}
-
-const formatNumber = (numero) => {
-
-    // Verificar que comience con "521"
-    if (!numero.startsWith('521')) {
-        return 'Número de teléfono no válido';
-    }
-
-    // Formatear el número con "52" en lugar de "521"
-    const numeroFormateado = `52${numero.slice(3)}`;
-
-    return numeroFormateado;
-}
-
-const includeStrings = (texto, arrayDeCadenas) => {
-    // Utiliza Array.some() para verificar si alguna cadena del array está incluida en el texto
-    return arrayDeCadenas.some(cadena => texto.includes(cadena));
-}
 
 module.exports = {
     sendWhatsappResponse,
