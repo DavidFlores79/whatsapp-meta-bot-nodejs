@@ -80,39 +80,41 @@ const receivedMessage = (req, res) => {
                             data = getButtonsData( number, {
                                 bodyTitle : `Su número de Teléfono es: *${number}*?`,
                                 button1Label : "✔️ Si",
-                                button1Id : "010",
+                                button1Id : '007',
                                 button2Label : "No ❌",
-                                button2Id : "011",
+                                button2Id : '008',
                             });
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                        case '010':
+                        case '007':
                             console.log(`Entró en ${listReply.id}`);
                             data = getButtonsData( number, {
                                 bodyTitle : `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
                                 button1Label : "✔️ Confirmar",
-                                button1Id : "020",
+                                button1Id : '009',
                                 button2Label : "❌ Cancelar Cita",
-                                button2Id : "021",
+                                button2Id : '010',
                             });
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                        case '011':
+                        case '008':
                             console.log(`Entró en ${listReply.id}`);
                             data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                        case '020':
+                        case '009':
                             console.log(`Entró en ${listReply.id}`);
                             data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
-                        case '021':
+                        case '010':
                             console.log(`Entró en ${listReply.id}`);
                             data = getTextData('Deberá escribir al motivo de la cancelación.', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         default:
+                            data = getTextData('Opción por Default!!', number);
+                            whatsappService.sendWhatsappResponse(data);
                             break;
                     }
                 }
