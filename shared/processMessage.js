@@ -56,7 +56,7 @@ const analizeText = (userRequest) => {
     let textResponse = `No entendí el mensaje: *${userRequest}*`;
 
     if (includeStrings(userRequest.toLowerCase(), greetings)) {
-        textResponse = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención sólo por mensaje, no llamadas.';
+        textResponse = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención es sólo por mensajes, no llamadas.';
     }
 
     if (includeStrings(userRequest.toLowerCase(), farewells)) {

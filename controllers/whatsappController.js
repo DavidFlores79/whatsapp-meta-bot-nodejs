@@ -76,6 +76,7 @@ const receivedMessage = (req, res) => {
 
                 if (interactiveType == 'list_reply') {
                     const { list_reply: listReply } = messageObject.interactive;
+                    const number = messageObject.from;
                     console.log('List Reply id!!', listReply.id);
                     console.log('List Reply text!!', listReply.title);
                     switch (listReply.id) {
