@@ -50,15 +50,8 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                let number = messageObject.from;
-                
+                const number = messageObject.from;                
                 analizeText(userRequest, number);
-                
-                // Verificar que el número tenga 11 dígitos
-                if (number.length == 13) {
-                    number = formatNumber(number);
-                };
-
                 break;
             case 'interactive':
                 console.log('es INTERACTIVE');
@@ -66,6 +59,12 @@ const receivedMessage = (req, res) => {
 
                 if (interactiveType == 'button_reply') {
                     const { button_reply: buttonReply } = messageObject.interactive;
+                    let number = messageObject.from;
+                    // Verificar que el número tenga 11 dígitos
+                    if (number.length == 13) {
+                        number = formatNumber(number);
+                    };
+                    
                     console.log('Button Reply id!!', buttonReply.id);
                     console.log('Button Reply text!!', buttonReply.title);
 
