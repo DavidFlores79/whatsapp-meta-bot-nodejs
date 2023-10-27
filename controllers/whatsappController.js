@@ -4,6 +4,7 @@ const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData } = require('../shared/processMessage');
+const { getAppointmentInfo } = require('../services/appointmentService');
 
 const verifyToken = (req, res) => {
 
@@ -143,8 +144,32 @@ const receivedMessage = (req, res) => {
                 switch (messageObject.button.payload) {
                     case 'Confirmar':
                         console.log(`Eligió Confirmar - Template`);
-                        data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', messageObject.from);
-                        whatsappService.sendWhatsappResponse(data);
+
+                        try {
+                            const apiResponse = getAppointmentInfo({
+                                phone: messageObject.from
+                            });
+
+                            console.log({apiResponse});
+                        
+                            // Do something with the response, for example, send it as the HTTP response
+                            // res.json(apiResponse);
+
+                          } catch (error) {
+                            // Handle the error, for example, send an error message to the client
+                            data = getTextData(`Ocurrió Error: ${error}`, messageObject.from);
+                          }
+
+                        // data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', messageObject.from);
+
+                        // data = getButtonsData(number, {
+                        //     bodyTitle: `¿Desea confirmar su cita?`,
+                        //     button1Label: "✔️ Si",
+                        //     button1Id: '007',
+                        //     button2Label: "No ❌",
+                        //     button2Id: '008',
+                        // });
+                        // whatsappService.sendWhatsappResponse(data);
                         break;
                     case 'Cancelar':
                         console.log(`Eligió Cancelar - Template`);

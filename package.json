@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.0",
     "body-parser": "^1.20.2",
     "connect-multiparty": "^2.2.0",
     "dotenv": "^16.3.1",
