@@ -49,7 +49,7 @@ const receivedMessage = (req, res) => {
             case 'text':
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
-                console.log({messageObject});
+                // console.log({messageObject});
                 whatsappService.sendWhatsappResponse(userRequest, messageObject.from, messageType);
                 break;
             case 'interactive':

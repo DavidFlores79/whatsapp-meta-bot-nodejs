@@ -28,20 +28,21 @@ const analizeText = (userRequest) => {
     const greetings = ['hola', 'hi', 'hello', 'buenas', 'buenas tardes', 'buenas noches', 'buenos días', 'buenos dias'];
     const farewells = ['adios', 'bye', 'hasta pronto', 'adiós', 'nos vemos'];
     const thanks = ['gracias', 'thank you', 'thanks', 'grax'];
+    let textResponse = `No entendí el mensaje: *${userRequest}*`;
 
     if (includeStrings(userRequest, greetings)) {
-        userRequest = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención sólo por mensaje, no llamadas.';
+        textResponse = 'Gracias por comunicarse a *Clínica Hoper* ¿Cómo podemos ayudarle? le recordamos que por este medio la atención sólo por mensaje, no llamadas.';
     }
 
     if (includeStrings(userRequest, farewells)) {
-        userRequest = 'Fue un placer poder servirle. Hasta pronto 😁';
+        textResponse = 'Fue un placer poder servirle. Hasta pronto 😁';
     }
 
     if (includeStrings(userRequest, thanks)) {
-        userRequest = 'De nada 😁';
+        textResponse = 'De nada 😁';
     }
 
-    return userRequest;
+    return textResponse;
 
 }
 
