@@ -13,7 +13,7 @@ async function getAppointmentInfo( data ) {
       };
   
       // Make the POST request to the API with the custom headers
-      const response = await axios.post(URI, data, { headers });
+      const response = await axios.post(`${URI}/appointments/info`, data, { headers });
   
       // Access the response data (response.data) and assign it to a variable
       const apiResponse = response.data;
