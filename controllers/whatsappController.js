@@ -83,8 +83,9 @@ const receivedMessage = (req, res) => {
                     switch (buttonId) {
                         case '007':
                             console.log(`Entró en ${buttonId}`);
-                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
-                            whatsappService.sendWhatsappResponse(data);
+                            appointmentConfirmMessage(number);
+                            // data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                            // whatsappService.sendWhatsappResponse(data);
                             break;
                         case '008':
                             console.log(`Entró en ${buttonId}`);
@@ -208,6 +209,38 @@ const appointmentInfo = async (req, res) => {
             msg: 'Info Funciona!! ***',
             phone: phone,
         })
+
+    } catch (error) {
+        // Handle the error, for example, send an error message to the client
+        // data = getTextData(`Ocurrió Error: ${error}`, phone);
+        console.log({error});
+    }
+}
+
+const appointmentConfirmMessage = async ( phone ) => {
+
+    try {
+        const apiResponse = await getAppointmentInfo(phone);
+
+        console.log( apiResponse );
+
+        if(apiResponse.total != 1) {
+            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Validar.`, phone);
+            whatsappService.sendWhatsappResponse(data);
+        } else {
+            // data = getTextData(`${apiResponse.message}`, phone);
+            const appointment = apiResponse.data[0];
+
+            data = getButtonsData(phone, {
+                // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
+                bodyTitle: `¿Desea confirmar su cita?`,
+                button1Label: "✔️ Si",
+                button1Id: `009-${appointment.id}`,
+                button2Label: "❌ No",
+                button2Id: `010-${appointment.id}`,
+            });
+            whatsappService.sendWhatsappResponse(data);
+        }
 
     } catch (error) {
         // Handle the error, for example, send an error message to the client
