@@ -80,29 +80,29 @@ const analizeText = (userRequest, number) => {
 
     } else
 
-    if (includeStrings(userRequest.toLowerCase(), farewells)) {
-        // agradece la atencion
-        textResponse = 'Fue un placer poder servirle. Hasta pronto 😁';
-        textModel = getTextData(textResponse, number);
-        dataModels.push(textModel);
-    } else 
+        if (includeStrings(userRequest.toLowerCase(), farewells)) {
+            // agradece la atencion
+            textResponse = 'Fue un placer poder servirle. Hasta pronto 😁';
+            textModel = getTextData(textResponse, number);
+            dataModels.push(textModel);
+        } else
 
-    if (includeStrings(userRequest.toLowerCase(), thanks)) {
-        //se despide
-        textResponse = 'De nada 😁';
-        textModel = getTextData(textResponse, number);
-        dataModels.push(textModel);
-    } else 
+            if (includeStrings(userRequest.toLowerCase(), thanks)) {
+                //se despide
+                textResponse = 'De nada 😁';
+                textModel = getTextData(textResponse, number);
+                dataModels.push(textModel);
+            } else
 
-    if (includeStrings(userRequest.toLowerCase(), menuList)) {
-        //quiere el menu
-        listModel = getListData(number);
-        dataModels.push(listModel);
-    } else {
-        //no se entendio el mensaje
-        textModel = getTextData(textResponse, number);
-        dataModels.push(textModel);
-    }
+                if (includeStrings(userRequest.toLowerCase(), menuList)) {
+                    //quiere el menu
+                    listModel = getListData(number);
+                    dataModels.push(listModel);
+                } else {
+                    //no se entendio el mensaje
+                    textModel = getTextData(textResponse, number);
+                    dataModels.push(textModel);
+                }
 
     dataModels.forEach(data => {
         whatsappService.sendWhatsappResponse(data);
@@ -117,6 +117,10 @@ const includeStrings = (texto, arrayDeCadenas) => {
     return arrayDeCadenas.some(cadena => texto.includes(cadena));
 }
 
+const getLast10Digits = (phoneNumber) => {
+    return phoneNumber.slice(-10);
+}
+
 module.exports = {
     getTextData,
     getListData,
@@ -124,4 +128,5 @@ module.exports = {
     analizeText,
     getButtonsData,
     formatNumber,
+    getLast10Digits,
 }

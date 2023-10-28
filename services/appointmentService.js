@@ -1,9 +1,15 @@
 const axios = require('axios');
+const { getLast10Digits } = require('../shared/processMessage');
 
-const URI = process.env.HOPER_API;
-const TOKEN = process.env.HOPER_TOKEN;
+const URI = process.env.HOPER_API_URI;
+const TOKEN = process.env.HOPER_API_TOKEN;
 
-async function getAppointmentInfo( data ) {
+async function getAppointmentInfo( phone ) {
+
+    const data = {
+        phone: getLast10Digits(phone)
+    }
+
     try {
   
       // Define the request headers with the Authorization header
@@ -13,19 +19,13 @@ async function getAppointmentInfo( data ) {
       };
   
       // Make the POST request to the API with the custom headers
-      const response = await axios.post(`${URI}/appointments/info`, data, { headers });
+      const response = await axios.post(`http://${URI}/appointments/info`, data, { headers });
   
-      // Access the response data (response.data) and assign it to a variable
-      const apiResponse = response.data;
-  
-      // Perform any other logic you need with the response
-      // ...
-      return apiResponse; // Return the API response
+      return response.data; // Return the API response
 
     } catch (error) {
-      console.error('Error calling the API:', error);
-      throw error; // You can handle the error as needed
-    }
+        return error.response;
+      }
   }
 
 module.exports = {

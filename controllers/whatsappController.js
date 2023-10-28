@@ -70,30 +70,34 @@ const receivedMessage = (req, res) => {
                     console.log('Button Reply id!!', buttonReply.id);
                     console.log('Button Reply text!!', buttonReply.title);
 
-                    switch (buttonReply.id) {
+                    let buttonId = '000';
+                    let appointmentId = null;
+
+                    if(buttonReply.id.length != 3){
+                        buttonId = inputString.split('-')[0];
+                        appointmentId = inputString.split('-')[1];
+                    } else {
+                        buttonId = buttonReply.id;
+                    }
+
+                    switch (buttonId) {
                         case '007':
-                            console.log(`Entró en ${buttonReply.id}`);
-                            data = getButtonsData(number, {
-                                bodyTitle: `Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?`,
-                                button1Label: "✔️ Confirmar",
-                                button1Id: '009',
-                                button2Label: "❌ Cancelar Cita",
-                                button2Id: '010',
-                            });
+                            console.log(`Entró en ${buttonId}`);
+                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '008':
-                            console.log(`Entró en ${buttonReply.id}`);
+                            console.log(`Entró en ${buttonId}`);
                             data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '009':
-                            console.log(`Entró en ${buttonReply.id}`);
+                            console.log(`Entró en ${buttonId}`);
                             data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '010':
-                            console.log(`Entró en ${buttonReply.id}`);
+                            console.log(`Entró en ${buttonId}`);
                             data = getTextData('Deberá escribir al motivo de la cancelación.', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
@@ -144,32 +148,8 @@ const receivedMessage = (req, res) => {
                 switch (messageObject.button.payload) {
                     case 'Confirmar':
                         console.log(`Eligió Confirmar - Template`);
-
-                        try {
-                            const apiResponse = getAppointmentInfo({
-                                phone: messageObject.from
-                            });
-
-                            console.log({apiResponse});
-                        
-                            // Do something with the response, for example, send it as the HTTP response
-                            // res.json(apiResponse);
-
-                          } catch (error) {
-                            // Handle the error, for example, send an error message to the client
-                            data = getTextData(`Ocurrió Error: ${error}`, messageObject.from);
-                          }
-
-                        // data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', messageObject.from);
-
-                        // data = getButtonsData(number, {
-                        //     bodyTitle: `¿Desea confirmar su cita?`,
-                        //     button1Label: "✔️ Si",
-                        //     button1Id: '007',
-                        //     button2Label: "No ❌",
-                        //     button2Id: '008',
-                        // });
-                        // whatsappService.sendWhatsappResponse(data);
+                        data = getTextData('Gracias por confirmar su cita.', messageObject.from);
+                        whatsappService.sendWhatsappResponse(data);
                         break;
                     case 'Cancelar':
                         console.log(`Eligió Cancelar - Template`);
@@ -181,7 +161,7 @@ const receivedMessage = (req, res) => {
                 }
                 break;
             default:
-                console.log({messageObject});
+                console.log({ messageObject });
                 console.log('Entró al default!! Tipo: ', messageType);
                 break;
         }
@@ -193,6 +173,46 @@ const receivedMessage = (req, res) => {
     } catch (error) {
         console.log({ error });
         return res.send('EVENT_RECEIVED');
+    }
+}
+
+const appointmentInfo = async (req, res) => {
+
+    const { phone } = req.body;
+
+    try {
+        const apiResponse = await getAppointmentInfo(phone);
+
+        console.log( apiResponse );
+
+        if(apiResponse.total != 1) {
+            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Validar.`, phone);
+            whatsappService.sendWhatsappResponse(data);
+        } else {
+            // data = getTextData(`${apiResponse.message}`, phone);
+            const appointment = apiResponse.data[0];
+
+            data = getButtonsData(phone, {
+                // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
+                bodyTitle: `¿Desea confirmar su cita?`,
+                button1Label: "✔️ Si",
+                button1Id: `009-${appointment.id}`,
+                button2Label: "❌ No",
+                button2Id: `010-${appointment.id}`,
+            });
+            whatsappService.sendWhatsappResponse(data);
+        }
+
+
+        return res.send({
+            msg: 'Info Funciona!! ***',
+            phone: phone,
+        })
+
+    } catch (error) {
+        // Handle the error, for example, send an error message to the client
+        // data = getTextData(`Ocurrió Error: ${error}`, phone);
+        console.log({error});
     }
 }
 
@@ -230,9 +250,11 @@ const getResource = async (req, res) => {
 
 
 
+
 module.exports = {
     verifyToken,
     receivedMessage,
     uploadFile,
     getResource,
+    appointmentInfo,
 }

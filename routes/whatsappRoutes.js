@@ -6,7 +6,8 @@ const path = multiparty({uploadDir: './uploads'});
 
 router
 .get('/', whatsappController.verifyToken)
-.post('/', whatsappController.receivedMessage);
+.post('/', whatsappController.receivedMessage)
+.post('/info', whatsappController.appointmentInfo);
 
 module.exports = router;
 
