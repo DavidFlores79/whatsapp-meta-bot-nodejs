@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData } = require('../shared/processMessage');
+const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
 
 const verifyToken = (req, res) => {
@@ -58,119 +58,15 @@ const receivedMessage = async (req, res) => {
             case 'interactive':
                 console.log('es INTERACTIVE');
                 const { type: interactiveType } = messageObject.interactive;
-
-                if (interactiveType == 'button_reply') {
-                    const { button_reply: buttonReply } = messageObject.interactive;
-                    let number = messageObject.from;
-                    // Verificar que el número tenga 11 dígitos
-                    if (number.length == 13) {
-                        number = formatNumber(number);
-                    };
-
-                    console.log('Button Reply id!!', buttonReply.id);
-                    console.log('Button Reply text!!', buttonReply.title);
-
-                    let buttonId = '000';
-                    let appointmentId = null;
-
-                    if(buttonReply.id.length != 3){
-                        buttonId = buttonReply.id.split('-')[0];
-                        appointmentId = buttonReply.id.split('-')[1];
-                    } else {
-                        buttonId = buttonReply.id;
-                    }
-                    console.log('*************** button ID ******************');
-                    console.log({buttonId});
-                    
-                    switch (buttonId) {
-                        case '007':
-                            console.log(`Entró en ${buttonId}`);
-                            appointmentConfirmMessage(number);
-                            // data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
-                            // whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '008':
-                            console.log(`Entró en ${buttonId}`);
-                            data = getTextData('Este número No está registrado en nuestro Sistema 😭 (Pendiente Preguntar número del paciente)', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '009':
-                            //Si entra aqui es porque ya tiene un ID de cita para poder hacer la peticion al Backend
-                            console.log(`Entró en ${buttonId}`);
-
-                            const apiResponse = await confirmAppointment( appointmentId );
-                            if(!apiResponse) {
-                                data = getTextData(`Ocurrió un error al intentar confirmar la cita!!`, number);
-                                whatsappService.sendWhatsappResponse(data);
-                            } else {
-                                data = getTextData(`${apiResponse.data.message}`, number);
-                                whatsappService.sendWhatsappResponse(data);
-                            }
-                            break;
-                        case '010':
-                            //Escogio NO a la pregunta de si desea confirmar la cita y se debera preguntar el MOTIVO DE CANCELACION
-                            console.log(`Entró en ${buttonId}`);
-                            data = getTextData('Deberá escribir al motivo de la cancelación.', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        default:
-                            data = getTextData('Opción Desconocida!! ☠', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                    }
-                }
-
-                if (interactiveType == 'list_reply') {
-                    const { list_reply: listReply } = messageObject.interactive;
-                    let number = messageObject.from;
-                    // Verificar que el número tenga 11 dígitos
-                    if (number.length == 13) {
-                        number = formatNumber(number);
-                    };
-
-                    console.log('List Reply id!!', listReply.id);
-                    console.log('List Reply text!!', listReply.title);
-
-                    switch (listReply.id) {
-                        case '005':
-                            data = getLocationData(number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        case '006':
-                            data = getButtonsData(number, {
-                                bodyTitle: `Su número de Teléfono es: *${number}*?`,
-                                button1Label: "✔️ Si",
-                                button1Id: '007',
-                                button2Label: "No ❌",
-                                button2Id: '008',
-                            });
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                        default:
-                            data = getTextData('Opción Desconocida!! ☠', number);
-                            whatsappService.sendWhatsappResponse(data);
-                            break;
-                    }
-                }
-
+                
+                if (interactiveType == 'button_reply') buttonReplyActions(messageObject);
+                if (interactiveType == 'list_reply') listReplyActions(messageObject);
+                
                 break;
             //templates
             case 'button':
                 console.log('es BUTTON');
-                switch (messageObject.button.payload) {
-                    case 'Confirmar':
-                        console.log(`Eligió Confirmar - Template`);
-                        data = getTextData('Gracias por confirmar su cita.', messageObject.from);
-                        whatsappService.sendWhatsappResponse(data);
-                        break;
-                    case 'Cancelar':
-                        console.log(`Eligió Cancelar - Template`);
-                        data = getTextData('Deberá escribir al motivo de la cancelación.', messageObject.from);
-                        whatsappService.sendWhatsappResponse(data);
-                        break;
-                    default:
-                        break;
-                }
+                buttonActions(messageObject);
                 break;
             default:
                 console.log({ messageObject });
@@ -188,38 +84,31 @@ const receivedMessage = async (req, res) => {
     }
 }
 
-const appointmentInfo = async (req, res) => {
-
-    const { phone } = req.body;
+const appointmentConfirmMessage = async ( phone ) => {
 
     try {
         const apiResponse = await getAppointmentInfo(phone);
 
-        console.log( apiResponse );
-
-        if(apiResponse.total != 1) {
-            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Validar.`, phone);
-            whatsappService.sendWhatsappResponse(data);
-        } else {
-            // data = getTextData(`${apiResponse.message}`, phone);
-            const appointment = apiResponse.data[0];
-
-            data = getButtonsData(phone, {
-                // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
-                bodyTitle: `¿Desea confirmar su cita?`,
-                button1Label: "✔️ Si",
-                button1Id: `009-${appointment.id}`,
-                button2Label: "❌ No",
-                button2Id: `010-${appointment.id}`,
-            });
-            whatsappService.sendWhatsappResponse(data);
+        if(apiResponse) {
+            if(apiResponse.total > 1) {
+                data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
+                whatsappService.sendWhatsappResponse(data);
+            } else {
+                // data = getTextData(`${apiResponse.message}`, phone);
+                const appointment = apiResponse.data[0];
+    
+                data = getButtonsData(phone, {
+                    // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
+                    bodyTitle: `Tiene una cita con *${appointment.doctor.name} ${appointment.doctor.last_name}* el día *${appointment.scheduled_date}* a las *${appointment.scheduled_time}*.\n\n¿Desea confirmar su cita?`,
+                    button1Label: "✔️ Si",
+                    button1Id: `009-${appointment.id}`,
+                    button2Label: "❌ No",
+                    button2Id: `010-${appointment.id}`,
+                });
+                whatsappService.sendWhatsappResponse(data);
+            }
         }
 
-
-        return res.send({
-            msg: 'Info Funciona!! ***',
-            phone: phone,
-        })
 
     } catch (error) {
         // Handle the error, for example, send an error message to the client
@@ -228,38 +117,110 @@ const appointmentInfo = async (req, res) => {
     }
 }
 
-const appointmentConfirmMessage = async ( phone ) => {
+const listReplyActions = async (messageObject) => {
 
-    try {
-        const apiResponse = await getAppointmentInfo(phone);
+    const { list_reply: listReply } = messageObject.interactive;
+        let number = messageObject.from;
+        // Verificar que el número tenga 11 dígitos
+        if (number.length == 13) {
+            number = formatNumber(number);
+        };
 
-        if(!apiResponse) {
-            data = getTextData(`Error al consultar el backend. Validar.`, phone);
-            whatsappService.sendWhatsappResponse(data);
+        console.log('List Reply id!!', listReply.id);
+        console.log('List Reply text!!', listReply.title);
+
+        switch (listReply.id) {
+            case '005':
+                data = getLocationData(number);
+                whatsappService.sendWhatsappResponse(data);
+                break;
+            case '006':
+                data = getButtonsData(number, {
+                    bodyTitle: `Su número de Teléfono es: *${getLast10Digits(number)}*?`,
+                    button1Label: "✔️ Si",
+                    button1Id: '007',
+                    button2Label: "No ❌",
+                    button2Id: '008',
+                });
+                whatsappService.sendWhatsappResponse(data);
+                break;
+            default:
+                data = getTextData('Opción Desconocida!! ☠', number);
+                whatsappService.sendWhatsappResponse(data);
+                break;
         }
 
-        if(apiResponse.total > 1) {
-            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
-            whatsappService.sendWhatsappResponse(data);
+}
+const buttonReplyActions = async (messageObject) => {
+
+    const { button_reply: buttonReply } = messageObject.interactive;
+        let number = messageObject.from;
+        // Verificar que el número tenga 11 dígitos
+        if (number.length == 13) {
+            number = formatNumber(number);
+        };
+
+        console.log('Button Reply id!!', buttonReply.id);
+        console.log('Button Reply text!!', buttonReply.title);
+
+        let buttonId = '000';
+        let appointmentId = null;
+
+        if(buttonReply.id.length != 3){
+            buttonId = buttonReply.id.split('-')[0];
+            appointmentId = buttonReply.id.split('-')[1];
         } else {
-            // data = getTextData(`${apiResponse.message}`, phone);
-            const appointment = apiResponse.data[0];
-
-            data = getButtonsData(phone, {
-                // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
-                bodyTitle: `Tiene una cita con *${appointment.doctor.name} ${appointment.doctor.last_name}* el día *${appointment.scheduled_date}* a las *${appointment.scheduled_time}*.\n\n¿Desea confirmar su cita?`,
-                button1Label: "✔️ Si",
-                button1Id: `009-${appointment.id}`,
-                button2Label: "❌ No",
-                button2Id: `010-${appointment.id}`,
-            });
-            whatsappService.sendWhatsappResponse(data);
+            buttonId = buttonReply.id;
         }
+        console.log('*************** button ID ******************');
+        console.log({buttonId});
+        
+        switch (buttonId) {
+            case '007':
+                console.log(`Entró en ${buttonId}`);
+                appointmentConfirmMessage(number);
+                break;
+            case '008':
+                console.log(`Entró en ${buttonId}`);
+                data = getTextData('Este número No está registrado en nuestro Sistema 😭 (Pendiente Preguntar número del paciente)', number);
+                whatsappService.sendWhatsappResponse(data);
+                break;
+            case '009':
+                //Si entra aqui es porque ya tiene un ID de cita para poder hacer la peticion al Backend
+                console.log(`Entró en ${buttonId}`);
+                const apiResponse = await confirmAppointment( appointmentId );
+                if(apiResponse) {
+                    data = getTextData(`${apiResponse.data.message}`, number);
+                    whatsappService.sendWhatsappResponse(data);
+                }
+                break;
+            case '010':
+                //Escogio NO a la pregunta de si desea confirmar la cita y se debera preguntar el MOTIVO DE CANCELACION
+                console.log(`Entró en ${buttonId}`);
+                data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+                whatsappService.sendWhatsappResponse(data);
+                break;
+            default:
+                data = getTextData('Opción Desconocida!! ☠', number);
+                whatsappService.sendWhatsappResponse(data);
+                break;
+        }
+}
 
-    } catch (error) {
-        // Handle the error, for example, send an error message to the client
-        // data = getTextData(`Ocurrió Error: ${error}`, phone);
-        console.log({error});
+const buttonActions = async (messageObject) =>  {
+    switch (messageObject.button.payload) {
+        case 'Confirmar':
+            console.log(`Eligió Confirmar - Template`);
+            data = getTextData('Gracias por confirmar su cita.', messageObject.from);
+            whatsappService.sendWhatsappResponse(data);
+            break;
+        case 'Cancelar':
+            console.log(`Eligió Cancelar - Template`);
+            data = getTextData('Deberá escribir al motivo de la cancelación.', messageObject.from);
+            whatsappService.sendWhatsappResponse(data);
+            break;
+        default:
+            break;
     }
 }
 

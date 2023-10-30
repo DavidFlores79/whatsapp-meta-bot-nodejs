@@ -25,7 +25,6 @@ async function getAppointmentInfo(phone) {
     if (!response.data) return null;
 
     console.log('********** Response Data ***********', response.data);
-
     return response.data; // Return the API response
 
   } catch (error) {
@@ -63,7 +62,10 @@ async function confirmAppointment( apppointmentId ) {
 
   } catch (error) {
     console.log('************ ERROR ******************');
-    console.log(error);
+    console.log(error.response.data);
+    console.log('************ ERROR ******************');
+    let dataMsg = getTextData(`${error.response.data.message}`, phone);
+    whatsappService.sendWhatsappResponse(dataMsg);
     return null;
   }
 }
