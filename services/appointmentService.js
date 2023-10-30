@@ -51,6 +51,10 @@ async function confirmAppointment( apppointmentId ) {
     // Make the POST request to the API with the custom headers
     const response = await axios.post(`${URI}/confirm-appointment`, data, { headers });
 
+    console.log('**************** RESPONSE ********************');
+    console.log(response);
+    console.log('**************** RESPONSE ********************');
+
     if (!response.appointment) return null;
 
     console.log('********** Response Data ***********', response.data);
@@ -67,5 +71,5 @@ async function confirmAppointment( apppointmentId ) {
 module.exports = {
   getAppointmentInfo,
   confirmAppointment,
-  
+
 }
