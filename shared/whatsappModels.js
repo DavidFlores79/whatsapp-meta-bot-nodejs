@@ -50,6 +50,44 @@ const buildListJSON = ( number ) => {
     })
 }
 
+const buildAppointmentListJSON = ( number ) => {
+    return JSON.stringify({
+        "messaging_product": "whatsapp",
+        "to": number,
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Se encontró más de una cita pendiente de CONFIRMAR en las proximas 24hrs."
+            },
+            "footer" : {
+                "text": "Por favor, seleccione una cita de esta lista:"
+            },
+            "action": {
+                "button": "CITAS",
+                "sections": [
+                    {
+                        "title": "Citas Médicas NO Confirmadas",
+                        "rows": [
+                            {
+                                // `009-${appointment.id}`
+                                "id": "009-314",
+                                "title": "Cita: *Consulta* - DRA. CLAUDIA HOIL PEREZ",
+                                "description": "Fecha: *31-12-2023* a las *04:30 p.m.*",
+                            },
+                            {
+                                "id": "009-324",
+                                "title": "Cita: *Examen* - DRA. CLAUDIA HOIL PEREZ",
+                                "description": "Fecha: *10-11-2023* a las *05:00 p.m.*",
+                            },
+                        ],
+                    },
+                ],
+            }
+        }
+    })
+}
+
 const buildLocationJSON = ( number ) => {
 
     return JSON.stringify({
@@ -106,4 +144,5 @@ module.exports = {
     buildListJSON,
     buildLocationJSON,
     buildButtonsJSON,
+    buildAppointmentListJSON,
 }

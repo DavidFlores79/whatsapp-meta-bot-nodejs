@@ -5,6 +5,7 @@ const path = require('path');
 const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
+const { buildAppointmentListJSON } = require('../shared/whatsappModels');
 
 const verifyToken = (req, res) => {
 
@@ -91,7 +92,9 @@ const appointmentConfirmMessage = async ( phone ) => {
 
         if(apiResponse) {
             if(apiResponse.total > 1) {
-                data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
+                // data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
+                // whatsappService.sendWhatsappResponse(data);
+                data = buildAppointmentListJSON(phone);
                 whatsappService.sendWhatsappResponse(data);
             } else {
                 // data = getTextData(`${apiResponse.message}`, phone);
