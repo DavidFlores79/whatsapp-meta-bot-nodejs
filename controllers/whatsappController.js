@@ -135,14 +135,7 @@ const listReplyActions = async (messageObject) => {
                 whatsappService.sendWhatsappResponse(data);
                 break;
             case '006':
-                data = getButtonsData(number, {
-                    bodyTitle: `Su número de Teléfono es: *${getLast10Digits(number)}*?`,
-                    button1Label: "✔️ Si",
-                    button1Id: '007',
-                    button2Label: "No ❌",
-                    button2Id: '008',
-                });
-                whatsappService.sendWhatsappResponse(data);
+                verifyPhoneNumber(number, ['007', '008']);
                 break;
             default:
                 data = getTextData('Opción Desconocida!! ☠', number);
@@ -182,7 +175,7 @@ const buttonReplyActions = async (messageObject) => {
                 break;
             case '008':
                 console.log(`Entró en ${buttonId}`);
-                data = getTextData('Este número No está registrado en nuestro Sistema 😭 (Pendiente Preguntar número del paciente)', number);
+                data = getTextData('Este número No está registrado en nuestro Sistema 😭 Favor de comunicarse al 9999-444404', number);
                 whatsappService.sendWhatsappResponse(data);
                 break;
             case '009':
@@ -214,7 +207,8 @@ const buttonActions = async (messageObject) =>  {
     switch (buttonPayload) {
         case 'SI':
             console.log(`Eligió ${buttonPayload} - Template`);
-            appointmentConfirmMessage(messageObject.from);
+            // appointmentConfirmMessage(messageObject.from);
+            verifyPhoneNumber(messageObject.from, ['007', '008']);
             break;
         case 'NO':
             console.log(`Eligió ${buttonPayload} - Template`);
@@ -234,6 +228,17 @@ const buttonActions = async (messageObject) =>  {
         default:
             break;
     }
+}
+
+const verifyPhoneNumber = async ( number, buttonIds ) => {
+    data = getButtonsData(number, {
+        bodyTitle: `Su número de Teléfono es: *${getLast10Digits(number)}*?`,
+        button1Label: "✔️ Si",
+        button1Id: buttonIds[0],
+        button2Label: "No ❌",
+        button2Id: buttonIds[1],
+    });
+    whatsappService.sendWhatsappResponse(data);
 }
 
 const uploadFile = async (req, res) => {
