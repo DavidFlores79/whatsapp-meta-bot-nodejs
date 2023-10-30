@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { getLast10Digits } = require('../shared/processMessage');
 
-const URI = process.env.HOPER_API_URI;
+const URI = `http://${process.env.HOPER_API_URI}/appointments/info`;
 const TOKEN = process.env.HOPER_API_TOKEN;
 
 async function getAppointmentInfo( phone ) {
@@ -18,8 +18,10 @@ async function getAppointmentInfo( phone ) {
         'Authorization': `Bearer ${TOKEN}`
       };
   
+      console.log({URI});
       // Make the POST request to the API with the custom headers
-      const response = await axios.post(`http://${URI}/appointments/info`, data, { headers });
+      const response = await axios.post(URI, data, { headers });
+      console.log({response});
   
       return response.data; // Return the API response
 
