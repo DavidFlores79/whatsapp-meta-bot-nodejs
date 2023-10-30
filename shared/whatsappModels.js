@@ -50,7 +50,7 @@ const buildListJSON = ( number ) => {
     })
 }
 
-const buildAppointmentListJSON = ( number ) => {
+const buildAppointmentListJSON = ( number, rows ) => {
     return JSON.stringify({
         "messaging_product": "whatsapp",
         "to": number,
@@ -68,18 +68,7 @@ const buildAppointmentListJSON = ( number ) => {
                 "sections": [
                     {
                         "title": "Citas NO Confirmadas",
-                        "rows": [
-                            {
-                                "id": "009-314",
-                                "title": "Cita: *Consulta*",
-                                "description": "Médico: DRA. CLAUDIA HOIL PEREZ. Fecha: *31-12-2023* a las *04:30 p.m.*",
-                            },
-                            {
-                                "id": "009-324",
-                                "title": "Cita: *Examen*",
-                                "description": "Médico: DRA. CLAUDIA HOIL PEREZ. Fecha: *10-11-2023* a las *05:00 p.m.*",
-                            },
-                        ],
+                        "rows": rows,
                     },
                 ],
             }

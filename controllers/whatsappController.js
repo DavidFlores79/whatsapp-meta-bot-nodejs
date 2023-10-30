@@ -92,9 +92,13 @@ const appointmentConfirmMessage = async (phone) => {
 
         if (apiResponse) {
             if (apiResponse.total > 1) {
-                data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas.`, phone);
-                whatsappService.sendWhatsappResponse(data);
-                data = buildAppointmentListJSON(phone);
+                let rows = [];
+                apiResponse.data.forEach(appointment => {
+                    let row = { id: `009-${appointment.id}`, title: `Cita: ${appointment.type}`, description: `Médico: ${appointment.doctor.name} ${appointment.doctor.last_name}.\nFecha: ${appointment.scheduled_date} a las ${appointment.scheduled_time}`,
+                    }
+                    rows.push(row);
+                });
+                data = buildAppointmentListJSON(phone, rows);
                 whatsappService.sendWhatsappResponse(data);
             } else {
                 // data = getTextData(`${apiResponse.message}`, phone);
