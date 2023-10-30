@@ -32,8 +32,8 @@ async function getAppointmentInfo(phone) {
     console.log('************ ERROR ******************');
     console.log(error.response.data);
     console.log('************ ERROR ******************');
-    data = getTextData(`${error.response.data.message}`, phone);
-    whatsappService.sendWhatsappResponse(data);
+    let dataMsg = getTextData(`${error.response.data.message}`, phone);
+    whatsappService.sendWhatsappResponse(dataMsg);
     return null;
   }
 }
