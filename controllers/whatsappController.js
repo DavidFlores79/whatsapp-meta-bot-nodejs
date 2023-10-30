@@ -190,7 +190,7 @@ const buttonReplyActions = async (messageObject) => {
                 console.log(`Entró en ${buttonId}`);
                 const apiResponse = await confirmAppointment( appointmentId );
                 if(apiResponse) {
-                    data = getTextData(`${apiResponse.data.message}`, number);
+                    data = getTextData(`${apiResponse.message}`, number);
                     whatsappService.sendWhatsappResponse(data);
                 }
                 break;
