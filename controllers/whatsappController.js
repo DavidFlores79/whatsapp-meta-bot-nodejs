@@ -264,5 +264,4 @@ module.exports = {
     receivedMessage,
     uploadFile,
     getResource,
-    appointmentInfo,
 }
