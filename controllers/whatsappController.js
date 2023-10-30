@@ -4,7 +4,7 @@ const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData } = require('../shared/processMessage');
-const { getAppointmentInfo } = require('../services/appointmentService');
+const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
 
 const verifyToken = (req, res) => {
 
@@ -28,7 +28,7 @@ const verifyToken = (req, res) => {
 
 }
 
-const receivedMessage = (req, res) => {
+const receivedMessage = async (req, res) => {
 
     try {
         const { entry } = req.body;
@@ -95,11 +95,20 @@ const receivedMessage = (req, res) => {
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '009':
+                            //Si entra aqui es porque ya tiene un ID de cita para poder hacer la peticion al Backend
                             console.log(`Entró en ${buttonId}`);
-                            data = getTextData(`Se hace la petición API y la Cita número *${appointmentId}* ha sido *CONFIRMADA*!! ✨✨✨🖖`, number);
-                            whatsappService.sendWhatsappResponse(data);
+
+                            const apiResponse = await confirmAppointment( appointmentId );
+                            if(!apiResponse) {
+                                data = getTextData(`Ocurrió un error al intentar confirmar la cita!!`, number);
+                                whatsappService.sendWhatsappResponse(data);
+                            } else {
+                                data = getTextData(`${apiResponse.data.message}`, number);
+                                whatsappService.sendWhatsappResponse(data);
+                            }
                             break;
                         case '010':
+                            //Escogio NO a la pregunta de si desea confirmar la cita y se debera preguntar el MOTIVO DE CANCELACION
                             console.log(`Entró en ${buttonId}`);
                             data = getTextData('Deberá escribir al motivo de la cancelación.', number);
                             whatsappService.sendWhatsappResponse(data);
@@ -224,10 +233,13 @@ const appointmentConfirmMessage = async ( phone ) => {
     try {
         const apiResponse = await getAppointmentInfo(phone);
 
-        console.log( apiResponse );
+        if(!apiResponse) {
+            data = getTextData(`Error al consultar el backend. Validar.`, phone);
+            whatsappService.sendWhatsappResponse(data);
+        }
 
-        if(apiResponse.total != 1) {
-            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Validar.`, phone);
+        if(apiResponse.total > 1) {
+            data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
             whatsappService.sendWhatsappResponse(data);
         } else {
             // data = getTextData(`${apiResponse.message}`, phone);
@@ -235,7 +247,7 @@ const appointmentConfirmMessage = async ( phone ) => {
 
             data = getButtonsData(phone, {
                 // Tiene una cita con *Dra. Nayli Hoil* el día *mañana 27 de Octubre de 2023* a las *5:00 p.m.* Desea confirmarla?
-                bodyTitle: `¿Desea confirmar su cita?`,
+                bodyTitle: `Tiene una cita con *${appointment.doctor.name} ${appointment.doctor.last_name}* el día *${appointment.scheduled_date}* a las *${appointment.scheduled_time}*.\n\n¿Desea confirmar su cita?`,
                 button1Label: "✔️ Si",
                 button1Id: `009-${appointment.id}`,
                 button2Label: "❌ No",
