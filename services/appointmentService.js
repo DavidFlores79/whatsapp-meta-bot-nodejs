@@ -32,8 +32,7 @@ async function getAppointmentInfo(phone) {
     console.log('************ ERROR ******************');
     console.log(error.response.data);
     console.log('************ ERROR ******************');
-    const message = error.response.data.message ?? 'Ocurrió un error 404';
-    data = getTextData(`${message}`, phone);
+    data = getTextData(`${error.response.data.message}`, phone);
     whatsappService.sendWhatsappResponse(data);
     return null;
   }
