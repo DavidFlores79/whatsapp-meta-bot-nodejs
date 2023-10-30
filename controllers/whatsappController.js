@@ -79,7 +79,9 @@ const receivedMessage = (req, res) => {
                     } else {
                         buttonId = buttonReply.id;
                     }
-
+                    console.log('*************** button ID ******************');
+                    console.log({buttonId});
+                    
                     switch (buttonId) {
                         case '007':
                             console.log(`Entró en ${buttonId}`);
