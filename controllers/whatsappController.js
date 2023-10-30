@@ -167,6 +167,7 @@ const buttonReplyActions = async (messageObject) => {
         }
         console.log('*************** button ID ******************');
         console.log({buttonId});
+        console.log({number});
         
         switch (buttonId) {
             case '007':
