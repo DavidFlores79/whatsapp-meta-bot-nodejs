@@ -134,8 +134,9 @@ const listReplyActions = async (messageObject) => {
                 data = getLocationData(number);
                 whatsappService.sendWhatsappResponse(data);
                 break;
-            case '006':
-                verifyPhoneNumber(number, ['007', '008']);
+            case '006': //Menu -> Confirmar Cita
+                // verifyPhoneNumber(number, ['007', '008']);
+                appointmentConfirmMessage(number)
                 break;
             default:
                 data = getTextData('Opción Desconocida!! ☠', number);
@@ -208,8 +209,8 @@ const buttonActions = async (messageObject) =>  {
     switch (buttonPayload) {
         case 'SI':
             console.log(`Eligió ${buttonPayload} - Template`);
-            // appointmentConfirmMessage(messageObject.from);
-            verifyPhoneNumber(messageObject.from, ['007', '008']);
+            // verifyPhoneNumber(messageObject.from, ['007', '008']);
+            appointmentConfirmMessage(messageObject.from);
             break;
         case 'NO':
             console.log(`Eligió ${buttonPayload} - Template`);
