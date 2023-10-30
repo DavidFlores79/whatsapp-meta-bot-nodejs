@@ -74,8 +74,8 @@ const receivedMessage = (req, res) => {
                     let appointmentId = null;
 
                     if(buttonReply.id.length != 3){
-                        buttonId = inputString.split('-')[0];
-                        appointmentId = inputString.split('-')[1];
+                        buttonId = buttonReply.id.split('-')[0];
+                        appointmentId = buttonReply.id.split('-')[1];
                     } else {
                         buttonId = buttonReply.id;
                     }
@@ -91,12 +91,12 @@ const receivedMessage = (req, res) => {
                             break;
                         case '008':
                             console.log(`Entró en ${buttonId}`);
-                            data = getTextData('**** Este número No está registrado en nuestro Sistema 😭', number);
+                            data = getTextData('Este número No está registrado en nuestro Sistema 😭 (Pendiente Preguntar número del paciente)', number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '009':
                             console.log(`Entró en ${buttonId}`);
-                            data = getTextData('Se hace la petición API y la Cita ha sido *CONFIRMADA*!! ✨✨✨🖖', number);
+                            data = getTextData(`Se hace la petición API y la Cita número *${appointmentId}* ha sido *CONFIRMADA*!! ✨✨✨🖖`, number);
                             whatsappService.sendWhatsappResponse(data);
                             break;
                         case '010':
