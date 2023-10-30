@@ -67,7 +67,7 @@ const buildAppointmentListJSON = ( number ) => {
                 "button": "CITAS",
                 "sections": [
                     {
-                        "title": "Citas Médicas NO Confirmadas",
+                        "title": "Citas NO Confirmadas",
                         "rows": [
                             {
                                 "id": "009-314",
