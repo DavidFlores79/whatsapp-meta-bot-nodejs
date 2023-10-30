@@ -208,14 +208,26 @@ const buttonReplyActions = async (messageObject) => {
 }
 
 const buttonActions = async (messageObject) =>  {
-    switch (messageObject.button.payload) {
+    const buttonPayload = messageObject.button.payload;
+    console.log('Button Payload', );
+
+    switch (buttonPayload) {
+        case 'SI':
+            console.log(`Eligió ${buttonPayload} - Template`);
+            appointmentConfirmMessage(messageObject.from);
+            break;
+        case 'NO':
+            console.log(`Eligió ${buttonPayload} - Template`);
+            data = getTextData('Confirmar su cita es muy importante para poder atenderle con rapidez y eficiencia. Si tiene dudas marque al 9999-444404', messageObject.from);
+            whatsappService.sendWhatsappResponse(data);
+            break;
         case 'Confirmar':
-            console.log(`Eligió Confirmar - Template`);
+            console.log(`Eligió ${buttonPayload} - Template`);
             data = getTextData('Gracias por confirmar su cita.', messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;
         case 'Cancelar':
-            console.log(`Eligió Cancelar - Template`);
+            console.log(`Eligió ${buttonPayload} - Template`);
             data = getTextData('Deberá escribir al motivo de la cancelación.', messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;

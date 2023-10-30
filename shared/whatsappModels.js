@@ -6,7 +6,7 @@ const buildTextJSON = (textResponse, number) => {
         "to": number,
         "type": "text",
         "text": {
-            "preview_url": false,
+            "preview_url": true,
             "body": textResponse
         }
     })
