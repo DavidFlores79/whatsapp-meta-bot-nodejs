@@ -70,7 +70,6 @@ const buildAppointmentListJSON = ( number ) => {
                         "title": "Citas Médicas NO Confirmadas",
                         "rows": [
                             {
-                                // `009-${appointment.id}`
                                 "id": "009-314",
                                 "title": "Cita: *Consulta* - DRA. CLAUDIA HOIL PEREZ",
                                 "description": "Fecha: *31-12-2023* a las *04:30 p.m.*",

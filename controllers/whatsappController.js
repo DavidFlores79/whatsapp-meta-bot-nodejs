@@ -92,8 +92,8 @@ const appointmentConfirmMessage = async (phone) => {
 
         if (apiResponse) {
             if (apiResponse.total > 1) {
-                // data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas. Mostrar al cliente para Seleccionar.`, phone);
-                // whatsappService.sendWhatsappResponse(data);
+                data = getTextData(`Se encontraron ${apiResponse.total} citas no Confirmadas.`, phone);
+                whatsappService.sendWhatsappResponse(data);
                 data = buildAppointmentListJSON(phone);
                 whatsappService.sendWhatsappResponse(data);
             } else {
@@ -141,6 +141,7 @@ const listReplyActions = async (messageObject) => {
     } else {
         listId = listReply.id;
     }
+    console.log({listId});
 
     switch (listId) {
         case '005':
@@ -195,15 +196,15 @@ const buttonReplyActions = async (messageObject) => {
     console.log({ number });
 
     switch (buttonId) {
-        case '007':
-            console.log(`Entró en ${buttonId}`);
-            appointmentConfirmMessage(number);
-            break;
-        case '008':
-            console.log(`Entró en ${buttonId}`);
-            data = getTextData('Este número No está registrado en nuestro Sistema 😭 Favor de comunicarse al 9999-444404', number);
-            whatsappService.sendWhatsappResponse(data);
-            break;
+        // case '007':
+        //     console.log(`Entró en ${buttonId}`);
+        //     appointmentConfirmMessage(number);
+        //     break;
+        // case '008':
+        //     console.log(`Entró en ${buttonId}`);
+        //     data = getTextData('Este número No está registrado en nuestro Sistema 😭 Favor de comunicarse al 9999-444404', number);
+        //     whatsappService.sendWhatsappResponse(data);
+        //     break;
         case '009':
             //Si entra aqui es porque ya tiene un ID de cita para poder hacer la peticion al Backend
             console.log(`Entró en ${buttonId}`);
