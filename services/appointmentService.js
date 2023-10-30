@@ -30,6 +30,8 @@ async function getAppointmentInfo(phone) {
   } catch (error) {
     console.log('************ ERROR ******************');
     console.log(error);
+    data = getTextData(`${error.data.message ?? 'Error sin mensaje!!'}`, phone);
+    whatsappService.sendWhatsappResponse(data);
     return null;
   }
 }
@@ -51,15 +53,11 @@ async function confirmAppointment( apppointmentId ) {
     // Make the POST request to the API with the custom headers
     const response = await axios.post(`${URI}/confirm-appointment`, data, { headers });
 
-    console.log('**************** RESPONSE ********************');
-    console.log(response);
-    console.log('**************** RESPONSE ********************');
-
-    if (!response.appointment) return null;
+    if (!response.data) return null;
 
     console.log('********** Response Data ***********', response.data);
-
     return response.data; // Return the API response
+
 
   } catch (error) {
     console.log('************ ERROR ******************');
