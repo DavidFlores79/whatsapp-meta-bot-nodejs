@@ -7,6 +7,7 @@ const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData,
 const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 const Constants = require('../shared/constants');
+const ADMIN = process.env.WHATSAPP_ADMIN;
 
 const verifyToken = (req, res) => {
 
@@ -138,6 +139,8 @@ const appointmentReminder = async (req, res) => {
     try {
         let templateData = buildTemplateJSON(number, template_name, parameters);
         whatsappService.sendWhatsappResponse(templateData);
+        let adminMsg = getTextData(`Se envió un Appointment Reminder al Cel ${number}`, ADMIN);
+        whatsappService.sendWhatsappResponse(adminMsg);
 
         return res.send({ msg: 'Template Enviado correctamente.', data });
     } catch (error) {
