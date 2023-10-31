@@ -21,10 +21,10 @@ const buildListJSON = ( number ) => {
         "interactive": {
             "type": "list",
             "body": {
-                "text": "Estas opciones pueden ayudarte!"
+                "text": "Este es nuestro Menú!"
             },
             "footer" : {
-                "text": "Selecciona una para continuar atendiéndole:"
+                "text": "Por favor selecciona una opción para continuar"
             },
             "action": {
                 "button": "Ver Opciones",
