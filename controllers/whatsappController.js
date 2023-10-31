@@ -94,9 +94,9 @@ const appointmentConfirmMessage = async (phone) => {
             if (apiResponse.total > 1) {
                 let rows = [];
                 apiResponse.data.forEach(appointment => {
-                    let row = { 
-                        id: `009-${appointment.id}`, 
-                        title: `Cita: ${appointment.type}`, 
+                    let row = {
+                        id: `009-${appointment.id}`,
+                        title: `Cita: ${appointment.type}`,
                         description: `Médico: ${appointment.doctor.name} ${appointment.doctor.last_name}.\nFecha: ${appointment.scheduled_date} a las ${appointment.scheduled_time}`,
                     }
                     rows.push(row);
@@ -128,16 +128,16 @@ const appointmentConfirmMessage = async (phone) => {
 }
 
 const appointmentReminder = async (req, res) => {
-    
+
     const { data } = req.body;
     const { number, template_name, parameters } = data;
 
-    console.log({number, template_name, parameters});
+    console.log({ number, template_name, parameters });
 
     try {
         let templateData = buildTemplateJSON(number, template_name, parameters);
         whatsappService.sendWhatsappResponse(templateData);
-    
+
         return res.send({ msg: 'Template Enviado correctamente.', data });
     } catch (error) {
         return res.status(400).send({ msg: error, data });
@@ -167,7 +167,7 @@ const listReplyActions = async (messageObject) => {
     } else {
         listId = listReply.id;
     }
-    console.log({listId});
+    console.log({ listId });
 
     switch (listId) {
         case '005':
@@ -209,6 +209,7 @@ const buttonReplyActions = async (messageObject) => {
 
     let buttonId = '000';
     let appointmentId = null;
+    let data = {};
 
     if (buttonReply.id.length != 3) {
         buttonId = buttonReply.id.split('-')[0];
@@ -290,7 +291,7 @@ const uploadFile = async (req, res) => {
     const files = req.files;
     const img_path = files.file.path;
     const img_name = img_path.split('/')[1];
-    const url=`https://whatsapp-meta-bot-nodejs-production.up.railway.app//api/v1/get_resource/${img_name}`;
+    const url = `https://whatsapp-meta-bot-nodejs-production.up.railway.app//api/v1/get_resource/${img_name}`;
     // const img_name = img_path.split('\\')[1];
     // const url = `http://127.0.0.1:${process.env.PORT ?? 5000}/api/v1/get_resource/${img_name}`;
 
