@@ -6,6 +6,7 @@ const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
+const Constants = require('../shared/constants');
 
 const verifyToken = (req, res) => {
 
