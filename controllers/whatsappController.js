@@ -5,7 +5,7 @@ const path = require('path');
 const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
-const { buildAppointmentListJSON } = require('../shared/whatsappModels');
+const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 
 const verifyToken = (req, res) => {
 
@@ -94,7 +94,10 @@ const appointmentConfirmMessage = async (phone) => {
             if (apiResponse.total > 1) {
                 let rows = [];
                 apiResponse.data.forEach(appointment => {
-                    let row = { id: `009-${appointment.id}`, title: `Cita: ${appointment.type}`, description: `Médico: ${appointment.doctor.name} ${appointment.doctor.last_name}.\nFecha: ${appointment.scheduled_date} a las ${appointment.scheduled_time}`,
+                    let row = { 
+                        id: `009-${appointment.id}`, 
+                        title: `Cita: ${appointment.type}`, 
+                        description: `Médico: ${appointment.doctor.name} ${appointment.doctor.last_name}.\nFecha: ${appointment.scheduled_date} a las ${appointment.scheduled_time}`,
                     }
                     rows.push(row);
                 });
@@ -122,6 +125,25 @@ const appointmentConfirmMessage = async (phone) => {
         // data = getTextData(`Ocurrió Error: ${error}`, phone);
         console.log({ error });
     }
+}
+
+const appointmentReminder = async (req, res) => {
+    
+    const { data } = req.body;
+    const { number, template_name, parameters } = data;
+
+    console.log({number, template_name, parameters});
+
+    try {
+        let templateData = buildTemplateJSON(number, template_name, parameters);
+        whatsappService.sendWhatsappResponse(templateData);
+    
+        return res.send({ msg: 'Template Enviado correctamente.', data });
+    } catch (error) {
+        return res.status(400).send({ msg: error, data });
+    }
+
+
 }
 
 const listReplyActions = async (messageObject) => {
@@ -155,7 +177,6 @@ const listReplyActions = async (messageObject) => {
             break;
         case '006': //Menu -> Confirmar Cita
             console.log(`Entró en ${listId}`);
-            // verifyPhoneNumber(number, ['007', '008']);
             appointmentConfirmMessage(number)
             break;
         case '009':
@@ -168,7 +189,7 @@ const listReplyActions = async (messageObject) => {
             }
             break;
         default:
-            data = getTextData('Opción Desconocida!! ☠', number);
+            data = getTextData(Constants.UnknownOption, number);
             whatsappService.sendWhatsappResponse(data);
             break;
     }
@@ -200,15 +221,6 @@ const buttonReplyActions = async (messageObject) => {
     console.log({ number });
 
     switch (buttonId) {
-        // case '007':
-        //     console.log(`Entró en ${buttonId}`);
-        //     appointmentConfirmMessage(number);
-        //     break;
-        // case '008':
-        //     console.log(`Entró en ${buttonId}`);
-        //     data = getTextData('Este número No está registrado en nuestro Sistema 😭 Favor de comunicarse al 9999-444404', number);
-        //     whatsappService.sendWhatsappResponse(data);
-        //     break;
         case '009':
             //Si entra aqui es porque ya tiene un ID de cita para poder hacer la peticion al Backend
             console.log(`Entró en ${buttonId}`);
@@ -221,11 +233,11 @@ const buttonReplyActions = async (messageObject) => {
         case '010':
             //Escogio NO a la pregunta de si desea confirmar la cita y se debera preguntar el MOTIVO DE CANCELACION
             console.log(`Entró en ${buttonId}`);
-            data = getTextData('Deberá escribir al motivo de la cancelación.', number);
+            data = getTextData(Constants.ConfirmNO, messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;
         default:
-            data = getTextData('Opción Desconocida!! ☠', number);
+            data = getTextData(Constants.UnknownOption, number);
             whatsappService.sendWhatsappResponse(data);
             break;
     }
@@ -238,25 +250,26 @@ const buttonActions = async (messageObject) => {
     switch (buttonPayload) {
         case 'SI':
             console.log(`Eligió ${buttonPayload} - Template`);
-            // verifyPhoneNumber(messageObject.from, ['007', '008']);
             appointmentConfirmMessage(messageObject.from);
             break;
         case 'NO':
             console.log(`Eligió ${buttonPayload} - Template`);
-            data = getTextData('Confirmar su cita es muy importante para poder atenderle con rapidez y eficiencia. Si tiene dudas marque al 9999-444404', messageObject.from);
+            data = getTextData(Constants.ConfirmNO, messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;
         case 'Confirmar':
             console.log(`Eligió ${buttonPayload} - Template`);
-            data = getTextData('Gracias por confirmar su cita.', messageObject.from);
+            appointmentConfirmMessage(messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;
         case 'Cancelar':
             console.log(`Eligió ${buttonPayload} - Template`);
-            data = getTextData('Deberá escribir al motivo de la cancelación.', messageObject.from);
+            data = getTextData(Constants.ConfirmNO, messageObject.from);
             whatsappService.sendWhatsappResponse(data);
             break;
         default:
+            data = getTextData(Constants.UnknownOption, number);
+            whatsappService.sendWhatsappResponse(data);
             break;
     }
 }
@@ -276,10 +289,10 @@ const uploadFile = async (req, res) => {
 
     const files = req.files;
     const img_path = files.file.path;
-    // const img_name = img_path.split('/')[1];
-    // const url=`https://whatsapp-api-bot-nodejs-production.up.railway.app/api/v1/get_resource/${img_name}`;
-    const img_name = img_path.split('\\')[1];
-    const url = `http://127.0.0.1:${process.env.PORT ?? 5000}/api/v1/get_resource/${img_name}`;
+    const img_name = img_path.split('/')[1];
+    const url=`https://whatsapp-meta-bot-nodejs-production.up.railway.app//api/v1/get_resource/${img_name}`;
+    // const img_name = img_path.split('\\')[1];
+    // const url = `http://127.0.0.1:${process.env.PORT ?? 5000}/api/v1/get_resource/${img_name}`;
 
 
     console.log({ files });
@@ -312,4 +325,5 @@ module.exports = {
     receivedMessage,
     uploadFile,
     getResource,
+    appointmentReminder,
 }

@@ -35,7 +35,7 @@ const buildListJSON = ( number ) => {
                             {
                                 "id": "005",
                                 "title": "Ubicación de la Clínica",
-                                "description": "Siga unos sencillos pasos para agendar su cita hoy mismo!",
+                                "description": "Esta es nuestra nueva ubicación. Visítanos para agendar tu cita hoy mismo!",
                             },
                             {
                                 "id": "006",
@@ -61,7 +61,7 @@ const buildAppointmentListJSON = ( number, rows ) => {
                 "text": "Se encontró más de una cita pendiente de CONFIRMAR en las proximas 24hrs."
             },
             "footer" : {
-                "text": "Por favor, seleccione una cita de esta lista:"
+                "text": "Por favor, selecciona una cita de esta lista:"
             },
             "action": {
                 "button": "CITAS",
@@ -86,8 +86,30 @@ const buildLocationJSON = ( number ) => {
         "location": {
             "latitude": "20.988600256807224",
             "longitude" : "-89.60911081895594",
-            "name": "Clinica Hoper",
+            "name": "Clínica Hoper",
             "address": "Calle 44 por 27 y 17, Número 404, 97109 Mérida, Yuc."
+        }
+    });
+
+}
+
+const buildTemplateJSON = ( number, templateName, parameters ) => {
+
+    return JSON.stringify({
+        "messaging_product": "whatsapp",
+        "to": `52${number}`,
+        "type": "template",
+        "template": {
+            "name": templateName,
+            "language": {
+                "code": "es_MX"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": parameters
+                }
+            ]
         }
     });
 
@@ -127,10 +149,13 @@ const buildButtonsJSON = (number, { bodyTitle, button1Label, button1Id, button2L
     });
 }
 
+
+
 module.exports = {
     buildTextJSON,
     buildListJSON,
     buildLocationJSON,
     buildButtonsJSON,
     buildAppointmentListJSON,
+    buildTemplateJSON,
 }
