@@ -35,7 +35,7 @@ const buildListJSON = ( number ) => {
                             {
                                 "id": "005",
                                 "title": "Ubicación de la Clínica",
-                                "description": "Esta es nuestra nueva ubicación. Visítanos para agendar tu cita hoy mismo!",
+                                "description": "Visítanos para agendar tu cita hoy mismo!",
                             },
                             {
                                 "id": "006",
