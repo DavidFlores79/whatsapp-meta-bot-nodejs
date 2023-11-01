@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
+const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits, getAppointmentListData } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment, confirmAppointmentByPhone } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 const Constants = require('../shared/constants');
@@ -269,7 +269,8 @@ const buttonActions = async (messageObject) => {
                         }
                         rows.push(row);
                     });
-                    data = buildAppointmentListJSON(messageObject.from, rows);
+                    console.log({rows});
+                    data = getAppointmentListData(messageObject.from, rows);
                     whatsappService.sendWhatsappResponse(data);
                 } else {
                     // data = getTextData(`${apiResponse.message}`, phone);

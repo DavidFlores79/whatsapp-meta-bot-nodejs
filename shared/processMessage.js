@@ -53,6 +53,18 @@ const getButtonsData = (number, buttonsJSON) => {
     return dataObject;
 }
 
+const getAppointmentListData = (number, rows) => {
+
+    // Verificar que el número tenga 11 dígitos
+    if (number.length == 13) {
+        number = formatNumber(number);
+    };
+
+    const dataObject = buildAppointmentListJSON(number, rows);
+
+    return dataObject;
+}
+
 const formatNumber = (numero) => {
 
     // Formatear el número con "52" en lugar de "521"
@@ -127,6 +139,7 @@ module.exports = {
     getLocationData,
     analizeText,
     getButtonsData,
+    getAppointmentListData,
     formatNumber,
     getLast10Digits,
 }
