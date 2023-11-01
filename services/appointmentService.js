@@ -72,10 +72,7 @@ async function confirmAppointment( apppointmentId ) {
 
 async function confirmAppointmentByPhone( phoneNumber ) {
 
-  const data = {
-    phone: phoneNumber
-  }
-  console.log({data});
+  const data = { phone: getLast10Digits(phoneNumber) };
 
   try {
 
@@ -88,10 +85,6 @@ async function confirmAppointmentByPhone( phoneNumber ) {
     // Make the POST request to the API with the custom headers
     const response = await axios.post(`${URI}/confirm-appointment-phone`, data, { headers });
 
-    console.log('********** API RESPONSE ***********', response.data);
-    console.log({response});
-    console.log('********** API RESPONSE ***********', response.data);
-
     if (!response.data) return null;
 
     console.log('********** Response Data ***********', response.data);
@@ -99,10 +92,11 @@ async function confirmAppointmentByPhone( phoneNumber ) {
 
 
   } catch (error) {
+    const errorMsg = (error.response.data) ? error.response.data : 'Error desconcido.';
     console.log('************ ERROR ******************');
-    console.log(error.response.data);
+    console.log(errorMsg);
     console.log('************ ERROR ******************');
-    let dataMsg = getTextData(`${error.response.data.message}`, phoneNumber);
+    let dataMsg = getTextData(`Error: ${errorMsg}`, phoneNumber);
     whatsappService.sendWhatsappResponse(dataMsg);
     return null;
   }
