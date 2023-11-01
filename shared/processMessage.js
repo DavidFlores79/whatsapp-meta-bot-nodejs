@@ -1,4 +1,4 @@
-const { buildTextJSON, buildListJSON, buildLocationJSON, buildButtonsJSON } = require("../shared/whatsappModels");
+const { buildTextJSON, buildListJSON, buildLocationJSON, buildButtonsJSON, buildAppointmentListJSON } = require("../shared/whatsappModels");
 const whatsappService = require('../services/whatsappService');
 
 const getTextData = (textResponse, number) => {
