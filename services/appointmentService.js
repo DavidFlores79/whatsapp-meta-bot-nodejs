@@ -70,8 +70,42 @@ async function confirmAppointment( apppointmentId ) {
   }
 }
 
+async function confirmAppointmentByPhone( phoneNumber ) {
+
+  const data = {
+    phone: phoneNumber
+  }
+
+  try {
+
+    // Define the request headers with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TOKEN}`
+    };
+
+    // Make the POST request to the API with the custom headers
+    const response = await axios.post(`${URI}/confirm-appointment-phone`, data, { headers });
+
+    if (!response.data) return null;
+
+    console.log('********** Response Data ***********', response.data);
+    return response.data; // Return the API response
+
+
+  } catch (error) {
+    console.log('************ ERROR ******************');
+    console.log(error.response.data);
+    console.log('************ ERROR ******************');
+    let dataMsg = getTextData(`${error.response.data.message}`, phone);
+    whatsappService.sendWhatsappResponse(dataMsg);
+    return null;
+  }
+}
+
 module.exports = {
   getAppointmentInfo,
   confirmAppointment,
+  confirmAppointmentByPhone,
 
 }

@@ -4,7 +4,7 @@ const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
 const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits } = require('../shared/processMessage');
-const { getAppointmentInfo, confirmAppointment } = require('../services/appointmentService');
+const { getAppointmentInfo, confirmAppointment, confirmAppointmentByPhone } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 const Constants = require('../shared/constants');
 const ADMIN = process.env.WHATSAPP_ADMIN;
@@ -255,7 +255,28 @@ const buttonActions = async (messageObject) => {
     switch (buttonPayload) {
         case 'SI':
             console.log(`Eligió ${buttonPayload} - Template`);
-            appointmentConfirmMessage(messageObject.from);
+            // appointmentConfirmMessage(messageObject.from);
+            //Escogió 
+            const apiResponse = await confirmAppointmentByPhone(messageObject.from);
+            if (apiResponse) {
+                if (apiResponse.total > 1) {
+                    let rows = [];
+                    apiResponse.data.forEach(appointment => {
+                        let row = {
+                            id: `009-${appointment.id}`,
+                            title: `Cita: ${appointment.type}`,
+                            description: `Médico: ${appointment.doctor.name} ${appointment.doctor.last_name}.\nFecha: ${appointment.scheduled_date} a las ${appointment.scheduled_time}`,
+                        }
+                        rows.push(row);
+                    });
+                    data = buildAppointmentListJSON(phone, rows);
+                    whatsappService.sendWhatsappResponse(data);
+                } else {
+                    // data = getTextData(`${apiResponse.message}`, phone);
+                    data = getTextData(`${apiResponse.message}`, number);
+                    whatsappService.sendWhatsappResponse(data);
+                }
+            }
             break;
         case 'NO':
             console.log(`Eligió ${buttonPayload} - Template`);
