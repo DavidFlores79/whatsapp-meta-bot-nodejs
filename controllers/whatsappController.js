@@ -269,11 +269,11 @@ const buttonActions = async (messageObject) => {
                         }
                         rows.push(row);
                     });
-                    data = buildAppointmentListJSON(phone, rows);
+                    data = buildAppointmentListJSON(messageObject.from, rows);
                     whatsappService.sendWhatsappResponse(data);
                 } else {
                     // data = getTextData(`${apiResponse.message}`, phone);
-                    data = getTextData(`${apiResponse.message}`, number);
+                    data = getTextData(`${apiResponse.message}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
                 }
             }
