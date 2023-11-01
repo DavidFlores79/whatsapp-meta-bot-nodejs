@@ -58,10 +58,10 @@ const buildAppointmentListJSON = ( number, rows ) => {
         "interactive": {
             "type": "list",
             "body": {
-                "text": "Se encontró más de una cita pendiente de CONFIRMAR en las proximas 24hrs."
+                "text": "Parece que tienes más de una cita para mañana. ¿Cual te gustaría confirmar?"
             },
             "footer" : {
-                "text": "Por favor, selecciona una cita de esta lista:"
+                "text": "Por favor, selecciona una de esta lista:"
             },
             "action": {
                 "button": "CITAS",
