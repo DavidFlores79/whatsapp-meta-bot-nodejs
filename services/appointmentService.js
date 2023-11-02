@@ -92,10 +92,10 @@ async function confirmAppointmentByPhone( phoneNumber ) {
 
 
   } catch (error) {
-    const errorMsg = (error.response.data) ? error.response.data : 'Error desconcido.';
     console.log('************ ERROR ******************');
     console.log(errorMsg);
     console.log('************ ERROR ******************');
+    const errorMsg = (error.response.data) ? error.response.data : 'Error desconcido.';
     let dataMsg = getTextData(`Error: ${errorMsg}`, phoneNumber);
     whatsappService.sendWhatsappResponse(dataMsg);
     return null;

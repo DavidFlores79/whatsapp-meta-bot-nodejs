@@ -278,7 +278,7 @@ const buttonActions = async (messageObject) => {
                     whatsappService.sendWhatsappResponse(data);
 
                     if(!apiResponse.patient_medical_history) {
-                        data = getTextData(`Favor de llenar su historial clínico ${process.env.HOPER_API_URI}/historia-clinica/`, messageObject.from);
+                        data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/`, messageObject.from);
                         whatsappService.sendWhatsappResponse(data);
                     }
                 }
