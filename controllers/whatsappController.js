@@ -231,8 +231,15 @@ const buttonReplyActions = async (messageObject) => {
             console.log(`Entró en ${buttonId}`);
             const apiResponse = await confirmAppointment(appointmentId);
             if (apiResponse) {
+                const appointment = apiResponse.data[0];
                 data = getTextData(`${apiResponse.message}`, number);
                 whatsappService.sendWhatsappResponse(data);
+
+                if(!apiResponse.patient_medical_history) {
+                    const codedvalue = Buffer.from(appointment.patient.id).toString('base64');
+                    data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
+                    whatsappService.sendWhatsappResponse(data);
+                }
             }
             break;
         case '010':
@@ -273,12 +280,14 @@ const buttonActions = async (messageObject) => {
                     data = getAppointmentListData(messageObject.from, rows);
                     whatsappService.sendWhatsappResponse(data);
                 } else {
-                    // data = getTextData(`${apiResponse.message}`, phone);
+                    
+                    const appointment = apiResponse.data[0];
                     data = getTextData(`${apiResponse.message}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
 
                     if(!apiResponse.patient_medical_history) {
-                        data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/`, messageObject.from);
+                        const codedvalue = Buffer.from(appointment.patient.id).toString('base64');
+                        data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
                         whatsappService.sendWhatsappResponse(data);
                     }
                 }
@@ -322,7 +331,7 @@ const uploadFile = async (req, res) => {
     const files = req.files;
     const img_path = files.file.path;
     const img_name = img_path.split('/')[1];
-    const url = `https://whatsapp-meta-bot-nodejs-production.up.railway.app//api/v1/get_resource/${img_name}`;
+    const url = `https://whatsapp-meta-bot-nodejs-production.up.railway.app/api/v2/get_resource/${img_name}`;
     // const img_name = img_path.split('\\')[1];
     // const url = `http://127.0.0.1:${process.env.PORT ?? 5000}/api/v1/get_resource/${img_name}`;
 
