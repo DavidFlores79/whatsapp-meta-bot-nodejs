@@ -2,7 +2,7 @@ const axios = require('axios');
 const { getLast10Digits, getTextData } = require('../shared/processMessage');
 const whatsappService = require('../services/whatsappService');
 
-const URI = `https://${process.env.HOPER_API_URI}/api/v1`;
+const URI = `http://${process.env.HOPER_API_URI}/api/v1`;
 const TOKEN = process.env.HOPER_API_TOKEN;
 
 async function getAppointmentInfo(phone) {
@@ -93,9 +93,9 @@ async function confirmAppointmentByPhone( phoneNumber ) {
 
   } catch (error) {
     console.log('************ ERROR ******************');
-    console.log(error.response);
+    console.log(error);
     console.log('************ ERROR ******************');
-    const errorMsg = (error.response) ? error.response.data : 'Error desconcido.';
+    const errorMsg = (error.response) ? error.response.data : 'Error descon0cido.';
     let dataMsg = getTextData(`Error: ${errorMsg}`, phoneNumber);
     whatsappService.sendWhatsappResponse(dataMsg);
     return null;
