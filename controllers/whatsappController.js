@@ -276,6 +276,11 @@ const buttonActions = async (messageObject) => {
                     // data = getTextData(`${apiResponse.message}`, phone);
                     data = getTextData(`${apiResponse.message}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
+
+                    if(!apiResponse.patient_medical_history) {
+                        data = getTextData(`Favor de llenar su historial clínico ${process.env.HOPER_API_URI}/historia-clinica/`, messageObject.from);
+                        whatsappService.sendWhatsappResponse(data);
+                    }
                 }
             }
             break;

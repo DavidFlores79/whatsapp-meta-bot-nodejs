@@ -2,7 +2,7 @@ const axios = require('axios');
 const { getLast10Digits, getTextData } = require('../shared/processMessage');
 const whatsappService = require('../services/whatsappService');
 
-const URI = `http://${process.env.HOPER_API_URI}`;
+const URI = `https://${process.env.HOPER_API_URI}/api/v1`;
 const TOKEN = process.env.HOPER_API_TOKEN;
 
 async function getAppointmentInfo(phone) {
