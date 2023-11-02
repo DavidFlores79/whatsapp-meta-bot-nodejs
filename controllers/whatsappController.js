@@ -7,6 +7,7 @@ const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData,
 const { getAppointmentInfo, confirmAppointment, confirmAppointmentByPhone } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 const Constants = require('../shared/constants');
+const { encode } = require('../shared/helpers');
 const ADMIN = process.env.WHATSAPP_ADMIN;
 
 const verifyToken = (req, res) => {
@@ -237,7 +238,7 @@ const buttonReplyActions = async (messageObject) => {
 
                 if(!apiResponse.patient_medical_history) {
                     const patientId = appointment.patient.id;
-                    const codedvalue = Buffer.from(patientId.toString()).toString('base64');
+                    const codedvalue = encode(patientId.toString());
                     data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
                 }
@@ -288,7 +289,7 @@ const buttonActions = async (messageObject) => {
 
                     if(!apiResponse.patient_medical_history) {
                         const patientId = appointment.patient.id;
-                        const codedvalue = Buffer.from(patientId.toString()).toString('base64');
+                        const codedvalue = encode(patientId.toString());
                         data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
                         whatsappService.sendWhatsappResponse(data);
                     }
