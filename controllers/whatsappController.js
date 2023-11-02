@@ -236,7 +236,8 @@ const buttonReplyActions = async (messageObject) => {
                 whatsappService.sendWhatsappResponse(data);
 
                 if(!apiResponse.patient_medical_history) {
-                    const codedvalue = Buffer.from(appointment.patient.id).toString('base64');
+                    const patientId = appointment.patient.id;
+                    const codedvalue = Buffer.from(patientId.toString()).toString('base64');
                     data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
                 }
@@ -286,7 +287,8 @@ const buttonActions = async (messageObject) => {
                     whatsappService.sendWhatsappResponse(data);
 
                     if(!apiResponse.patient_medical_history) {
-                        const codedvalue = Buffer.from(appointment.patient.id).toString('base64');
+                        const patientId = appointment.patient.id;
+                        const codedvalue = Buffer.from(patientId.toString()).toString('base64');
                         data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
                         whatsappService.sendWhatsappResponse(data);
                     }
