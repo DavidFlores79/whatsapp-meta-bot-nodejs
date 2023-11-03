@@ -240,7 +240,9 @@ const buttonReplyActions = async (messageObject) => {
                     const patientId = appointment.patient.id;
                     const codedvalue = encode(patientId.toString());
                     data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\n\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en https://${process.env.HOPER_API_URI}/historia-clinica?id=${codedvalue}`, messageObject.from);
-                    whatsappService.sendWhatsappResponse(data);
+                    setTimeout(() => {
+                        whatsappService.sendWhatsappResponse(data);
+                    }, 2000);
                 }
             }
             break;
@@ -291,7 +293,9 @@ const buttonActions = async (messageObject) => {
                         const patientId = appointment.patient.id;
                         const codedvalue = encode(patientId.toString());
                         data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\n\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en https://${process.env.HOPER_API_URI}/historia-clinica?id=${codedvalue}`, messageObject.from);
-                        whatsappService.sendWhatsappResponse(data);
+                        setTimeout(() => {
+                            whatsappService.sendWhatsappResponse(data);
+                        }, 2000);
                     }
                 }
             }
