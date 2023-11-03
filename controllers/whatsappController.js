@@ -246,12 +246,6 @@ const buttonReplyActions = async (messageObject) => {
                 }
             }
             break;
-        case '010':
-            //Escogio NO a la pregunta de si desea confirmar la cita y se debera preguntar el MOTIVO DE CANCELACION
-            console.log(`Entró en ${buttonId}`);
-            data = getTextData(Constants.ConfirmNO, messageObject.from);
-            whatsappService.sendWhatsappResponse(data);
-            break;
         default:
             data = getTextData(Constants.UnknownOption, number);
             whatsappService.sendWhatsappResponse(data);
@@ -266,8 +260,6 @@ const buttonActions = async (messageObject) => {
     switch (buttonPayload) {
         case 'SI':
             console.log(`Eligió ${buttonPayload} - Template`);
-            // appointmentConfirmMessage(messageObject.from);
-            //Escogió 
             const apiResponse = await confirmAppointmentByPhone(messageObject.from);
             if (apiResponse) {
                 if (apiResponse.total > 1) {
@@ -301,16 +293,6 @@ const buttonActions = async (messageObject) => {
             }
             break;
         case 'NO':
-            console.log(`Eligió ${buttonPayload} - Template`);
-            data = getTextData(Constants.ConfirmNO, messageObject.from);
-            whatsappService.sendWhatsappResponse(data);
-            break;
-        case 'Confirmar':
-            console.log(`Eligió ${buttonPayload} - Template`);
-            appointmentConfirmMessage(messageObject.from);
-            whatsappService.sendWhatsappResponse(data);
-            break;
-        case 'Cancelar':
             console.log(`Eligió ${buttonPayload} - Template`);
             data = getTextData(Constants.ConfirmNO, messageObject.from);
             whatsappService.sendWhatsappResponse(data);
