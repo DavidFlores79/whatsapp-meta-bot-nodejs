@@ -240,10 +240,10 @@ const buttonReplyActions = async (messageObject) => {
                     const patientId = appointment.patient.id;
                     const codedvalue = encode(patientId.toString());
 
-                    data = getTemplateData(messageObject.from, 'patient_medical_record', [
+                    data = getTemplateData(getLast10Digits(number), 'patient_medical_record', [
                         {
                             'type': 'text',
-                            'text': `https://${process.env.HOPER_API_URI}`
+                            'text': `${process.env.HOPER_API_URI}`
                         },
                         {
                             'type': 'text',
@@ -294,10 +294,10 @@ const buttonActions = async (messageObject) => {
                     if (!apiResponse.patient_medical_history) {
                         const patientId = appointment.patient.id;
                         const codedvalue = encode(patientId.toString());
-                        data = getTemplateData(messageObject.from, 'patient_medical_record', [
+                        data = getTemplateData(getLast10Digits(messageObject.from), 'patient_medical_record', [
                             {
                                 'type': 'text',
-                                'text': `https://${process.env.HOPER_API_URI}`
+                                'text': `${process.env.HOPER_API_URI}`
                             },
                             {
                                 'type': 'text',
