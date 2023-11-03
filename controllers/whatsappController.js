@@ -239,8 +239,9 @@ const buttonReplyActions = async (messageObject) => {
                 if (!apiResponse.patient_medical_history) {
                     const patientId = appointment.patient.id;
                     const codedvalue = encode(patientId.toString());
-
-                    data = getTemplateData(getLast10Digits(number), 'patient_medical_record', [
+                    const template_name = 'patient_medical_record';
+                    
+                    data = getTemplateData(getLast10Digits(number), template_name, [
                         {
                             'type': 'text',
                             'text': `${process.env.HOPER_API_URI}`
@@ -252,6 +253,8 @@ const buttonReplyActions = async (messageObject) => {
                     ]);
                     setTimeout(() => {
                         whatsappService.sendWhatsappResponse(data);
+                        let adminMsg = getTextData(`Se envió el Template ${template_name} al Cel ${number}`, ADMIN);
+                        whatsappService.sendWhatsappResponse(adminMsg);
                     }, 2000);
                 }
             }
@@ -294,7 +297,9 @@ const buttonActions = async (messageObject) => {
                     if (!apiResponse.patient_medical_history) {
                         const patientId = appointment.patient.id;
                         const codedvalue = encode(patientId.toString());
-                        data = getTemplateData(getLast10Digits(messageObject.from), 'patient_medical_record', [
+                        const template_name = 'patient_medical_record';
+
+                        data = getTemplateData(getLast10Digits(messageObject.from), template_name, [
                             {
                                 'type': 'text',
                                 'text': `${process.env.HOPER_API_URI}`
@@ -306,6 +311,8 @@ const buttonActions = async (messageObject) => {
                         ]);
                         setTimeout(() => {
                             whatsappService.sendWhatsappResponse(data);
+                            let adminMsg = getTextData(`Se envió el Template ${template_name} al Cel ${messageObject.from}`, ADMIN);
+                            whatsappService.sendWhatsappResponse(adminMsg);
                         }, 2000);
                     }
                 }
