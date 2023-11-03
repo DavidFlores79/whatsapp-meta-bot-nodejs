@@ -3,7 +3,7 @@ const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const path = require('path');
 const whatsappService = require('../services/whatsappService');
-const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits, getAppointmentListData } = require('../shared/processMessage');
+const { getLocationData, analizeText, getButtonsData, formatNumber, getTextData, getLast10Digits, getAppointmentListData, getTemplateData } = require('../shared/processMessage');
 const { getAppointmentInfo, confirmAppointment, confirmAppointmentByPhone } = require('../services/appointmentService');
 const { buildAppointmentListJSON, buildTemplateJSON } = require('../shared/whatsappModels');
 const Constants = require('../shared/constants');
@@ -138,9 +138,9 @@ const appointmentReminder = async (req, res) => {
     console.log({ number, template_name, parameters });
 
     try {
-        let templateData = buildTemplateJSON(number, template_name, parameters);
+        let templateData = getTemplateData(number, template_name, parameters);
         whatsappService.sendWhatsappResponse(templateData);
-        let adminMsg = getTextData(`Se envió un Appointment Reminder al Cel ${number}`, ADMIN);
+        let adminMsg = getTextData(`Se envió el Template ${template_name} al Cel ${number}`, ADMIN);
         whatsappService.sendWhatsappResponse(adminMsg);
 
         return res.send({ msg: 'Template Enviado correctamente.', data });

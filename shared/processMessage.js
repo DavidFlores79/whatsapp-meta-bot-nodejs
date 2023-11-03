@@ -1,4 +1,4 @@
-const { buildTextJSON, buildListJSON, buildLocationJSON, buildButtonsJSON, buildAppointmentListJSON } = require("../shared/whatsappModels");
+const { buildTextJSON, buildListJSON, buildLocationJSON, buildButtonsJSON, buildAppointmentListJSON, buildTemplateJSON } = require("../shared/whatsappModels");
 const whatsappService = require('../services/whatsappService');
 
 const getTextData = (textResponse, number) => {
@@ -61,6 +61,18 @@ const getAppointmentListData = (number, rows) => {
     };
 
     const dataObject = buildAppointmentListJSON(number, rows);
+
+    return dataObject;
+}
+
+const getTemplateData = (number, templateName, parameters) => {
+
+    // Verificar que el número tenga 11 dígitos
+    if (number.length == 13) {
+        number = formatNumber(number);
+    };
+
+    const dataObject = buildTemplateJSON(number, templateName, parameters);
 
     return dataObject;
 }
@@ -140,6 +152,7 @@ module.exports = {
     analizeText,
     getButtonsData,
     getAppointmentListData,
+    getTemplateData,
     formatNumber,
     getLast10Digits,
 }
