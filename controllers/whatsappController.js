@@ -239,7 +239,7 @@ const buttonReplyActions = async (messageObject) => {
                 if(!apiResponse.patient_medical_history) {
                     const patientId = appointment.patient.id;
                     const codedvalue = encode(patientId.toString());
-                    data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica/${codedvalue}`, messageObject.from);
+                    data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en ${process.env.HOPER_API_URI}/historia-clinica?id=${codedvalue}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
                 }
             }
