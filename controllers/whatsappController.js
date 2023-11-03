@@ -236,10 +236,20 @@ const buttonReplyActions = async (messageObject) => {
                 data = getTextData(`${apiResponse.message}`, number);
                 whatsappService.sendWhatsappResponse(data);
 
-                if(!apiResponse.patient_medical_history) {
+                if (!apiResponse.patient_medical_history) {
                     const patientId = appointment.patient.id;
                     const codedvalue = encode(patientId.toString());
-                    data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\n\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en https://${process.env.HOPER_API_URI}/historia-clinica?id=${codedvalue}`, messageObject.from);
+
+                    data = getTemplateData(messageObject.from, 'patient_medical_record', [
+                        {
+                            'type': 'text',
+                            'text': `https://${process.env.HOPER_API_URI}`
+                        },
+                        {
+                            'type': 'text',
+                            'text': codedvalue
+                        }
+                    ]);
                     setTimeout(() => {
                         whatsappService.sendWhatsappResponse(data);
                     }, 2000);
@@ -272,19 +282,28 @@ const buttonActions = async (messageObject) => {
                         }
                         rows.push(row);
                     });
-                    console.log({rows});
+                    console.log({ rows });
                     data = getAppointmentListData(messageObject.from, rows);
                     whatsappService.sendWhatsappResponse(data);
                 } else {
-                    
+
                     const appointment = apiResponse.data[0];
                     data = getTextData(`${apiResponse.message}`, messageObject.from);
                     whatsappService.sendWhatsappResponse(data);
 
-                    if(!apiResponse.patient_medical_history) {
+                    if (!apiResponse.patient_medical_history) {
                         const patientId = appointment.patient.id;
                         const codedvalue = encode(patientId.toString());
-                        data = getTextData(`Es un gusto saber que pronto estará en consulta con nosotros.\n\nAntes de acudir al consultorio porfavor ayúdenos llenando su historial clínico, esto para brindarle una mejor atención a su llegada en https://${process.env.HOPER_API_URI}/historia-clinica?id=${codedvalue}`, messageObject.from);
+                        data = getTemplateData(messageObject.from, 'patient_medical_record', [
+                            {
+                                'type': 'text',
+                                'text': `https://${process.env.HOPER_API_URI}`
+                            },
+                            {
+                                'type': 'text',
+                                'text': codedvalue
+                            }
+                        ]);
                         setTimeout(() => {
                             whatsappService.sendWhatsappResponse(data);
                         }, 2000);
