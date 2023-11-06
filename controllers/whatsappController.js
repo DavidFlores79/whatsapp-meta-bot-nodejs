@@ -232,7 +232,7 @@ const buttonReplyActions = async (messageObject) => {
             console.log(`Entró en ${buttonId}`);
             const apiResponse = await confirmAppointment(appointmentId);
             if (apiResponse) {
-                const appointment = apiResponse.data[0];
+                const appointment = apiResponse.appointment;
                 data = getTextData(`${apiResponse.message}`, number);
                 whatsappService.sendWhatsappResponse(data);
 
