@@ -36,6 +36,8 @@ const receivedMessage = async (req, res) => {
 
     try {
         const { entry } = req.body;
+        req.io.emit('incoming_messages', req.body);
+        
         if (!entry) {
             console.log('******** NO ENTRY ********', req.body);
             return res.send('EVENT_RECEIVED');

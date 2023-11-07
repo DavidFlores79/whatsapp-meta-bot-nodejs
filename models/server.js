@@ -32,7 +32,7 @@ class Server {
     this.conectarDB();
 
     //middlewares
-    this.middlewares();
+    this.middlewares(io);
 
     this.app.post('/api/v1/incoming_messages', async function (req, res) {
       // console.log('Webhook', req.body);
@@ -43,7 +43,7 @@ class Server {
     this.routes();
   }
 
-  middlewares() {
+  middlewares(io) {
     //directorio public
     this.app.use(express.static("public"));
     this.app.use(express.json());
@@ -62,12 +62,19 @@ class Server {
         limit: "20mb",
       })
     );
+    
     this.app.use(
       bodyParser.urlencoded({
         limit: "20mb",
         extended: true,
       })
     );
+
+    //pasar io para emit desde controller
+    this.app.use(function(req, res, next) {
+      req.io = io;
+      next();
+    });
   }
 
   async conectarDB() {
