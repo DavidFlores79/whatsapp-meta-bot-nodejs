@@ -13,15 +13,8 @@ class Server {
 
     const http = require('http').createServer(this.app);
     const io = require('socket.io')(http);
-
-    //sockets
-    io.on('connection', (socket) => {
-      console.log('Socket connected!');
-
-      socket.on('disconnected', () => {
-        console.log('Socket disconnected!');
-      });
-    });
+    module.exports.io = io;
+    require('../services/socket');
 
     http.listen(this.port, () => {
       console.log(`Listen on port ${this.port}`);
@@ -33,11 +26,6 @@ class Server {
 
     //middlewares
     this.middlewares(io);
-
-    this.app.post('/api/v1/incoming_messages', async function (req, res) {
-      // console.log('Webhook', req.body);
-      io.emit('incoming_messages', req.body);
-    });
 
     //rutas de mi aplicacion
     this.routes();
@@ -86,11 +74,7 @@ class Server {
     this.app.use("/api/v2", whatsappRoutes);
   }
 
-  listen() {
-    // this.app.listen(this.port, () => {
-    //   console.log(`API lista en el puerto ${this.port}`);
-    // });
-  }
+  listen() {}
 }
 
 module.exports = Server;
