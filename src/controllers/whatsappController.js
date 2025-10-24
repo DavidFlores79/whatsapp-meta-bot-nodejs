@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const openaiService = require('../services/openaiService');
 const fs = require('fs');
 const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const whatsappService = require('../services/whatsappService');
@@ -49,25 +50,40 @@ const receivedMessage = async (req, res) => {
         const messageObject = messages[0];
         const messageType = messageObject.type;
 
+
         switch (messageType) {
-            case 'text':
+            case 'text': {
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
                 let number = messageObject.from;
-                analizeText(userRequest, number);
+                // Call OpenAI Assistant for AI response
+                try {
+                    const aiReply = await openaiService.getAIResponse(userRequest, number);
+                    // Send AI reply back to user
+                    const replyPayload = require('../shared/whatsappModels').buildTextJSON(number, aiReply);
+                    whatsappService.sendWhatsappResponse(replyPayload);
+                } catch (err) {
+                    console.error('AI response error:', err);
+                }
+                // Optionally still run analizeText if needed for business logic
+                // analizeText(userRequest, number);
                 break;
-            case 'interactive':
+            }
+            case 'interactive': {
                 console.log('es INTERACTIVE');
                 const { type: interactiveType } = messageObject.interactive;
                 break;
+            }
             //templates
-            case 'button':
+            case 'button': {
                 console.log('es BUTTON');
                 break;
-            default:
+            }
+            default: {
                 console.log({ messageObject });
                 console.log('Entró al default!! Tipo: ', messageType);
                 break;
+            }
         }
 
         myConsole.log(messageObject);
