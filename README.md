@@ -17,6 +17,7 @@ npm install
 
 ### Environment Setup
 
+
 Create a `.env` file with the following variables:
 
 ```env
@@ -28,6 +29,8 @@ WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 WHATSAPP_API_TOKEN=your_api_token
 WHATSAPP_ACCESS_TOKEN=your_access_token
 WHATSAPP_ADMIN=admin_phone_number
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_ASSISTANT_ID=your_openai_assistant_id
 ```
 
 ### Running the Application
@@ -74,11 +77,19 @@ src/
 ## Features
 
 - WhatsApp webhook verification and message processing
+- AI-powered responses using OpenAI Assistant (text messages)
 - Interactive message support (buttons, lists)
 - Template message sending
 - File upload handling
 - Socket.io integration for real-time updates
 - Custom logging system
+
+## OpenAI Assistant Integration
+
+Text messages sent to the bot are processed by OpenAI Assistant for AI-powered responses. Configure your OpenAI API key and Assistant ID in the environment variables:
+
+- `OPENAI_API_KEY`: Your OpenAI API key
+- `OPENAI_ASSISTANT_ID`: The Assistant ID to use for responses
 
 ## License
 
