@@ -86,10 +86,34 @@ src/
 
 ## OpenAI Assistant Integration
 
-Text messages sent to the bot are processed by OpenAI Assistant for AI-powered responses. Configure your OpenAI API key and Assistant ID in the environment variables:
+Text messages sent to the bot are processed by OpenAI Assistant for AI-powered responses. **Context is preserved per user** - each user has their own conversation thread that persists across messages and server restarts.
+
+Configure your OpenAI API key and Assistant ID in the environment variables:
 
 - `OPENAI_API_KEY`: Your OpenAI API key
 - `OPENAI_ASSISTANT_ID`: The Assistant ID to use for responses
+
+### Context Management
+
+- **Per-User Threads**: Each user gets a dedicated OpenAI thread that maintains conversation history
+- **Dual Storage**: Threads are cached in memory for performance and persisted in MongoDB for reliability
+- **Automatic Recovery**: If the server restarts, user contexts are automatically restored from the database
+- **Message Count Tracking**: Each user's interaction count is tracked in the database
+
+You can manage contexts programmatically:
+```javascript
+const openaiService = require('./src/services/openaiService');
+
+// Clear a specific user's context
+await openaiService.clearUserContext('529991234567');
+
+// Clear all user contexts
+await openaiService.clearAllContexts();
+
+// Get active users count
+const counts = await openaiService.getActiveUsersCount();
+console.log(`In-memory: ${counts.inMemory}, Database: ${counts.database}`);
+```
 
 ## License
 

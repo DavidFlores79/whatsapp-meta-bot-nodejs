@@ -33,10 +33,16 @@ const getTemplateData = (number, templateName, parameters, language) => {
 };
 
 const formatNumber = (numero) => {
-  // Formatear el número con "52" en lugar de "521"
-  const numeroFormateado = `52${numero.slice(3)}`;
-
-  return numeroFormateado;
+  // Remove the "1" after the country code for 13-digit numbers
+  // Example: 5219991992696 -> 529991992696
+  // This handles Mexico and other countries with similar format
+  if (numero.length === 13) {
+    // Keep first 2 digits (country code) + last 10 digits (phone number)
+    return `${numero.slice(0, 2)}${numero.slice(3)}`;
+  }
+  
+  // Return as-is if not 13 digits
+  return numero;
 };
 
 const analizeText = (userRequest, number) => {

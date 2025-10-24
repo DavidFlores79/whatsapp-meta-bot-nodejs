@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const openaiService = require('../services/openaiService');
 const fs = require('fs');
 const whatsappService = require('../services/whatsappService');
-const { analizeText, getTemplateData } = require('../shared/processMessage');
+const { analizeText, getTemplateData, formatNumber } = require('../shared/processMessage');
 const ADMIN = process.env.WHATSAPP_ADMIN;
 
 const verifyToken = (req, res) => {
@@ -55,6 +55,12 @@ const receivedMessage = async (req, res) => {
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
                 let number = messageObject.from;
+                
+                // Format number if it has 13 digits (5219991992696 -> 529991992696)
+                if (number.length === 13) {
+                    number = formatNumber(number);
+                }
+                
                 // Call OpenAI Assistant for AI response
                 try {
                     const aiReply = await openaiService.getAIResponse(userRequest, number);

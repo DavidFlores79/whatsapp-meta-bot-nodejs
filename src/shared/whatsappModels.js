@@ -1,4 +1,15 @@
 
+const buildTextJSON = (number, text) => {
+    return JSON.stringify({
+        "messaging_product": "whatsapp",
+        "to": number,
+        "type": "text",
+        "text": {
+            "body": text
+        }
+    });
+}
+
 const buildTemplateJSON = ( number, templateName, parameters, language ) => {
 
     let components = [];
@@ -28,5 +39,6 @@ const buildTemplateJSON = ( number, templateName, parameters, language ) => {
 
 
 module.exports = {
+    buildTextJSON,
     buildTemplateJSON,
 }
