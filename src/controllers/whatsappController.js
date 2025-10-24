@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 const openaiService = require('../services/openaiService');
 const fs = require('fs');
-const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 const whatsappService = require('../services/whatsappService');
 const { analizeText, getTemplateData } = require('../shared/processMessage');
 const ADMIN = process.env.WHATSAPP_ADMIN;
@@ -85,9 +84,6 @@ const receivedMessage = async (req, res) => {
                 break;
             }
         }
-
-        myConsole.log(messageObject);
-
         return res.send('EVENT_RECEIVED');
 
     } catch (error) {
