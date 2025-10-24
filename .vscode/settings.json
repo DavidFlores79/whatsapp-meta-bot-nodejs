@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/7954b510-f16c-4a3f-80ab-9c414c2c112f/resourceGroups/api_rg/providers/Microsoft.Web/sites/luxfreewhatsappapi",
+    "appService.deploySubpath": "."
+}

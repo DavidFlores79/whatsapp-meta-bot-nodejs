@@ -3,7 +3,6 @@ const { dbConnection } = require("../database/config");
 const bodyParser = require("body-parser");
 require('dotenv').config()
 
-const wttpRoutes = require("../routes/wttpRoutes");
 const whatsappRoutes = require("../routes/whatsappRoutes");
 
 class Server {
@@ -70,7 +69,6 @@ class Server {
   }
 
   routes() {
-    this.app.use("/api/v1", wttpRoutes);
     this.app.use("/api/v2", whatsappRoutes);
   }
 
