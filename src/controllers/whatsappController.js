@@ -63,7 +63,12 @@ const receivedMessage = async (req, res) => {
                 
                 // Call OpenAI Assistant for AI response
                 try {
+                    // Show typing indicator while processing
+                    whatsappService.sendTypingIndicator(number, 'typing');
+                    
+                    // Get AI response (this may take several seconds)
                     const aiReply = await openaiService.getAIResponse(userRequest, number);
+                    
                     // Send AI reply back to user
                     const replyPayload = require('../shared/whatsappModels').buildTextJSON(number, aiReply);
                     whatsappService.sendWhatsappResponse(replyPayload);
