@@ -178,6 +178,42 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
 
         output = JSON.stringify(ticketResult);
         console.log("Ticket creado:", ticketResult);
+      } else if (functionName === "get_ticket_information") {
+        // Retrieve ticket information by ticket_id or phone_number
+        console.log("Obteniendo información del ticket con args:", functionArgs);
+        const { ticket_id, phone_number } = functionArgs;
+        
+        // Simula llamada a API interna - fake data for now
+        const ticketInfo = {
+          success: true,
+          ticket_id: ticket_id || "TICKET12345",
+          phone_number: phone_number || userId,
+          status: "open",
+          priority: "high",
+          subject: "Problema con conexión a internet",
+          description: "El cliente reporta intermitencias en el servicio de internet desde hace 2 días",
+          created_at: "2025-10-25T10:30:00Z",
+          last_updated: "2025-10-27T14:20:00Z",
+          assigned_to: "Soporte Técnico - Nivel 2",
+          estimated_resolution: "2025-10-28T18:00:00Z",
+          customer_name: "Juan Pérez",
+          customer_email: "juan.perez@example.com",
+          notes: [
+            {
+              date: "2025-10-25T10:30:00Z",
+              author: "Sistema",
+              note: "Ticket creado automáticamente"
+            },
+            {
+              date: "2025-10-26T09:15:00Z",
+              author: "Técnico Carlos",
+              note: "Se realizó diagnóstico remoto. Se detectó problema en router"
+            }
+          ]
+        };
+
+        output = JSON.stringify(ticketInfo);
+        console.log("Información del ticket obtenida:", ticketInfo);
       } else if (functionName === "otra_function") {
         // lógica distinta
         output = JSON.stringify({ success: true });
@@ -272,7 +308,7 @@ async function getAIResponse(message, userId) {
       `${BASE_URL}/threads/${threadId}/runs`,
       {
         assistant_id: OPENAI_ASSISTANT_ID,
-        additional_instructions: `The user's WhatsApp phone number is: ${userId}. You can reference this phone number if needed for appointments, tickets, or identification without asking the user.`
+        additional_instructions: `The user's WhatsApp phone number is: ${userId}. You can reference this phone number if needed for appointments, tickets, or identification but you have to confirm by asking the user.`
       },
       { headers }
     );
