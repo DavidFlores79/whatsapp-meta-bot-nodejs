@@ -38,16 +38,19 @@ const buildTemplateJSON = ( number, templateName, parameters, language ) => {
 }
 
 /**
- * Build JSON for sending typing indicator (or marking as read)
- * @param {string} number - WhatsApp phone number
- * @param {string} action - 'typing' or 'mark_as_read'
+ * Build JSON for marking message as read with typing indicator
+ * @param {string} messageId - The message ID to mark as read
+ * @param {string} typingType - The typing indicator type (default: 'text')
  * @returns {string} JSON string for WhatsApp API
  */
-const buildStatusJSON = (number, action = 'typing') => {
+const buildReadWithTypingJSON = (messageId, typingType = 'text') => {
     return JSON.stringify({
         "messaging_product": "whatsapp",
-        "to": number,
-        "type": action
+        "status": "read",
+        "message_id": messageId,
+        "typing_indicator": {
+            "type": typingType
+        }
     });
 }
 
@@ -55,5 +58,5 @@ const buildStatusJSON = (number, action = 'typing') => {
 module.exports = {
     buildTextJSON,
     buildTemplateJSON,
-    buildStatusJSON,
+    buildReadWithTypingJSON,
 }

@@ -54,6 +54,7 @@ const receivedMessage = async (req, res) => {
             case 'text': {
                 console.log('es TEXT');
                 const userRequest = messageObject.text.body;
+                const messageId = messageObject.id; // WhatsApp message ID from webhook
                 let number = messageObject.from;
                 
                 // Format number if it has 13 digits (5219991992696 -> 529991992696)
@@ -63,8 +64,8 @@ const receivedMessage = async (req, res) => {
                 
                 // Call OpenAI Assistant for AI response
                 try {
-                    // Show typing indicator while processing
-                    whatsappService.sendTypingIndicator(number, 'typing');
+                    // Show typing indicator while processing (mark message as read + show typing)
+                    whatsappService.sendTypingIndicator(messageId, 'text');
                     
                     // Get AI response (this may take several seconds)
                     const aiReply = await openaiService.getAIResponse(userRequest, number);

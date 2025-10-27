@@ -39,16 +39,15 @@ const sendWhatsappResponse = (data) => {
 }
 
 /**
- * Send typing indicator or read status to user
- * Convenience wrapper around sendWhatsappResponse for status actions
- * @param {string} number - WhatsApp phone number
- * @param {string} action - 'typing' to show typing indicator, 'mark_as_read' to mark message as read
+ * Mark message as read and show typing indicator
+ * @param {string} messageId - The message ID to mark as read
+ * @param {string} typingType - The typing indicator type (default: 'text')
  */
-const sendTypingIndicator = (number, action = 'typing') => {
-    const { buildStatusJSON } = require('../shared/whatsappModels');
-    const data = buildStatusJSON(number, action);
+const sendTypingIndicator = (messageId, typingType = 'text') => {
+    const { buildReadWithTypingJSON } = require('../shared/whatsappModels');
+    const data = buildReadWithTypingJSON(messageId, typingType);
     
-    console.log(`Sending ${action} indicator to ${number}`);
+    console.log(`Marking message ${messageId} as read and showing typing indicator`);
     
     // Reuse the main send method
     sendWhatsappResponse(data);
