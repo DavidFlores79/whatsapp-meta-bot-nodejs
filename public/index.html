@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:;">
     <title>ITSoft.mx</title>
     <link href="./media/favicon.png" rel="icon" type="image/png">
     <style>
@@ -38,13 +39,11 @@
         .flex-item {
 
             height: 190px;
-            background: url('./media/itsoft-logo.png') no-repeat;
+            background: url('./media/meta-whatsapp-bot.png') no-repeat;
             background-position: center;
             background-size: contain;
-            box-shadow: -7px 7px 5px #ccc;
-            -moz-box-shadow: -7px 7px 5px #ccc;
-            -webkit-box-shadow: -7px 7px 5px #ccc;
-            -khtml-box-shadow: -7px 7px 5px #ccc;
+            filter: drop-shadow(-7px 7px 5px #ccc);
+            -webkit-filter: drop-shadow(-7px 7px 5px #ccc);
 
         }
     </style>
@@ -55,7 +54,7 @@
     <div class="flex-center flex-container">
         <div class="row">
             <div class="flex-item"></div>
-            <h3>Itsoft Services de México, S.A. de C.V.</h3>
+            <h3 class="flex-center">Meta Whatsapp Bot</h3>
             <h3 class="flex-center">WHATSAPP-BOT-API</h3>
         </div>
     </div>
