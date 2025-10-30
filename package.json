@@ -5,7 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app",
-    "dev": "nodemon src/app"
+    "dev": "nodemon src/app",
+    "test:threads": "node test-thread-optimization.js"
   },
   "keywords": [],
   "author": "",

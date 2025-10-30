@@ -97,6 +97,45 @@ const receivedMessage = async (req, res) => {
       case "image": {
         const imageUrl = messageObject.image.url;
         console.log("es IMAGE con URL:", imageUrl);
+        
+        // TODO: Implement image upload to Cloudinary and add URL to ticket
+        // - Download image from WhatsApp URL
+        // - Upload to Cloudinary using their API
+        // - Store Cloudinary URL in ticket data
+        // - Pass image URL to OpenAI assistant for ticket creation
+        // - Consider image analysis for automatic ticket categorization
+        
+        let number = messageObject.from;
+        if (number.length === 13) {
+          number = formatNumber(number);
+        }
+
+        // For now, just acknowledge the image was received
+        const imageReply = "Imagen recibida. Próximamente podremos procesarla automáticamente para incluirla en tu ticket.";
+        const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, imageReply);
+        whatsappService.sendWhatsappResponse(replyPayload);
+        
+        break;
+      }
+      case "location": {
+        // TODO: Implement location processing and add to ticket address
+        // - Extract latitude and longitude from messageObject.location
+        // - Use reverse geocoding API (Google Maps, OpenStreetMap) to get address
+        // - Format address for ticket creation
+        // - Pass location data to OpenAI assistant
+        // - Store both coordinates and formatted address in ticket
+        
+        console.log("es LOCATION:", messageObject.location);
+        let number = messageObject.from;
+        if (number.length === 13) {
+          number = formatNumber(number);
+        }
+
+        // For now, just acknowledge the location was received
+        const locationReply = "Ubicación recibida. Próximamente podremos procesarla automáticamente para incluirla en la dirección de tu ticket.";
+        const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, locationReply);
+        whatsappService.sendWhatsappResponse(replyPayload);
+        
         break;
       }
       default: {
@@ -135,8 +174,43 @@ const sendTemplateData = async (req, res) => {
   }
 };
 
+const cleanupUserThread = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).send({ 
+        msg: "userId is required", 
+        success: false 
+      });
+    }
+
+    const result = await openaiService.cleanupUserThread(userId);
+    
+    if (result) {
+      return res.send({ 
+        msg: `Thread cleanup completed for user ${userId}`, 
+        success: true 
+      });
+    } else {
+      return res.status(404).send({ 
+        msg: `No thread found for user ${userId}`, 
+        success: false 
+      });
+    }
+  } catch (error) {
+    console.error("Error in cleanupUserThread:", error);
+    return res.status(500).send({ 
+      msg: "Error cleaning up thread", 
+      error: error.message,
+      success: false 
+    });
+  }
+};
+
 module.exports = {
   verifyToken,
   receivedMessage,
   sendTemplateData,
+  cleanupUserThread,
 };

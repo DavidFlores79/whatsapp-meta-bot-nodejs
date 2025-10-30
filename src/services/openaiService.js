@@ -9,62 +9,140 @@ const BASE_URL = "https://api.openai.com/v1";
 // Database persistence for reliability across restarts
 const userThreads = new Map();
 
+// Configuration for message management
+const MAX_MESSAGES_PER_THREAD = 10;
+const CLEANUP_THRESHOLD = 15; // When to trigger cleanup
+
+// Clean up old messages in thread to keep only the last N messages
+async function cleanupThreadMessages(threadId, headers, maxMessages = MAX_MESSAGES_PER_THREAD) {
+  try {
+    console.log(`🧹 Cleaning up thread ${threadId} to keep last ${maxMessages} messages`);
+    
+    // Get all messages in the thread
+    const messagesResponse = await axios.get(
+      `${BASE_URL}/threads/${threadId}/messages?order=desc&limit=100`,
+      { headers }
+    );
+    
+    const messages = messagesResponse.data.data;
+    console.log(`Found ${messages.length} messages in thread`);
+    
+    if (messages.length <= maxMessages) {
+      console.log(`Thread has ${messages.length} messages, no cleanup needed`);
+      return;
+    }
+    
+    // Keep the most recent maxMessages, delete the rest
+    const messagesToDelete = messages.slice(maxMessages);
+    console.log(`Deleting ${messagesToDelete.length} old messages`);
+    
+    for (const message of messagesToDelete) {
+      try {
+        await axios.delete(
+          `${BASE_URL}/threads/${threadId}/messages/${message.id}`,
+          { headers }
+        );
+      } catch (deleteError) {
+        console.error(`Error deleting message ${message.id}:`, deleteError.response?.data || deleteError.message);
+      }
+    }
+    
+    console.log(`✅ Thread cleanup completed. Kept ${maxMessages} recent messages`);
+  } catch (error) {
+    console.error("Error during thread cleanup:", error.response?.data || error.message);
+    // Don't throw - cleanup is optional
+  }
+}
+
 // Load thread from cache or database
 async function getOrCreateThread(userId, phoneNumber, headers) {
   // Check in-memory cache first
   let threadId = userThreads.get(userId);
+  let shouldCleanup = false;
 
   if (threadId) {
     console.log(`Using cached thread ${threadId} for user ${userId}`);
-    return threadId;
-  }
+  } else {
+    // Check database
+    try {
+      let userThread = await UserThread.findOne({ userId });
 
-  // Check database
-  try {
-    let userThread = await UserThread.findOne({ userId });
+      if (userThread) {
+        threadId = userThread.threadId;
+        userThreads.set(userId, threadId);
+        console.log(`Loaded thread ${threadId} from DB for user ${userId}`);
 
-    if (userThread) {
-      threadId = userThread.threadId;
-      userThreads.set(userId, threadId);
-
-      // Update interaction stats
-      userThread.messageCount += 1;
-      userThread.lastInteraction = Date.now();
-      await userThread.save();
-
-      console.log(`Loaded thread ${threadId} from DB for user ${userId}`);
-      return threadId;
-    }
-  } catch (dbError) {
-    console.error("Database error loading thread:", dbError.message);
-    // Continue to create new thread if DB fails
-  }
-
-  // Create new thread with metadata including phone number
-  const threadResponse = await axios.post(
-    `${BASE_URL}/threads`,
-    {
-      metadata: {
-        user_id: userId,
-        phone_number: phoneNumber,
+        // Check if cleanup is needed based on message count
+        if (userThread.messageCount >= CLEANUP_THRESHOLD) {
+          shouldCleanup = true;
+        }
       }
-    },
-    { headers }
-  );
-  threadId = threadResponse.data.id;
-  userThreads.set(userId, threadId);
+    } catch (dbError) {
+      console.error("Database error loading thread:", dbError.message);
+      // Continue to create new thread if DB fails
+    }
+  }
 
-  // Save to database
-  try {
-    await UserThread.create({
-      userId,
-      threadId,
-      messageCount: 1,
-    });
-    console.log(`Created and saved new thread ${threadId} for user ${userId}`);
-  } catch (dbError) {
-    console.error("Database error saving thread:", dbError.message);
-    // Continue even if DB save fails - thread is still in memory
+  // Create new thread if none exists
+  if (!threadId) {
+    const threadResponse = await axios.post(
+      `${BASE_URL}/threads`,
+      {
+        metadata: {
+          user_id: userId,
+          phone_number: phoneNumber,
+        }
+      },
+      { headers }
+    );
+    threadId = threadResponse.data.id;
+    userThreads.set(userId, threadId);
+
+    // Save to database
+    try {
+      await UserThread.create({
+        userId,
+        threadId,
+        messageCount: 1,
+      });
+      console.log(`Created and saved new thread ${threadId} for user ${userId}`);
+    } catch (dbError) {
+      console.error("Database error saving thread:", dbError.message);
+      // Continue even if DB save fails - thread is still in memory
+    }
+  } else {
+    // Update existing thread stats
+    try {
+      await UserThread.updateOne(
+        { userId },
+        { 
+          $inc: { messageCount: 1 },
+          $set: { lastInteraction: Date.now() }
+        }
+      );
+    } catch (dbError) {
+      console.error("Database error updating thread:", dbError.message);
+    }
+
+    // Perform cleanup if needed
+    if (shouldCleanup) {
+      await cleanupThreadMessages(threadId, headers);
+      
+      // Reset message count after cleanup
+      try {
+        await UserThread.updateOne(
+          { userId },
+          { 
+            $set: { 
+              messageCount: MAX_MESSAGES_PER_THREAD,
+              lastCleanup: Date.now()
+            } 
+          }
+        );
+      } catch (dbError) {
+        console.error("Database error resetting message count:", dbError.message);
+      }
+    }
   }
 
   return threadId;
@@ -163,10 +241,26 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
       if (functionName === "create_ticket_report") {
         // aquí haces tu lógica de crear ticket con tu API interna
         console.log("Creando ticket con args:", functionArgs);
+        
+        // TODO: Enhance ticket creation with multimedia support
+        // - Add image_urls array field for Cloudinary URLs
+        // - Add location object with coordinates and formatted address
+        // - Implement image analysis for automatic categorization
+        // - Add attachment handling for multiple images per ticket
+        
         // Add phone number to the ticket data
         const ticketData = {
           ...functionArgs,
           phone_number: userId,
+          // TODO: Add these fields when implementing multimedia support:
+          // image_urls: [], // Array of Cloudinary URLs from image messages
+          // location: {     // Location data from location messages
+          //   latitude: null,
+          //   longitude: null,
+          //   formatted_address: null,
+          //   coordinates_string: null
+          // },
+          // attachments_count: 0, // Track number of multimedia attachments
         };
         
         // Simula llamada a API interna y obtén resultado
@@ -174,6 +268,9 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
           ticketId: "TICKET12345",
           status: "created",
           phone: userId,
+          // TODO: Include multimedia data in response:
+          // image_urls: ticketData.image_urls,
+          // location: ticketData.location,
         };
 
         output = JSON.stringify(ticketResult);
@@ -383,6 +480,36 @@ async function clearUserContext(userId) {
   }
 }
 
+// Clean up messages for a specific user's thread
+async function cleanupUserThread(userId) {
+  const headers = {
+    Authorization: `Bearer ${OPENAI_API_KEY}`,
+    "Content-Type": "application/json",
+    "OpenAI-Beta": "assistants=v2",
+  };
+
+  try {
+    const userThread = await UserThread.findOne({ userId });
+    if (!userThread) {
+      console.log(`No thread found for user ${userId}`);
+      return false;
+    }
+
+    await cleanupThreadMessages(userThread.threadId, headers);
+    
+    // Reset message count and update cleanup timestamp
+    userThread.messageCount = MAX_MESSAGES_PER_THREAD;
+    userThread.lastCleanup = Date.now();
+    await userThread.save();
+    
+    console.log(`✅ Cleaned up thread for user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error cleaning up thread for user ${userId}:`, error.message);
+    return false;
+  }
+}
+
 // Clear all user contexts (useful for maintenance/restart)
 async function clearAllContexts() {
   const count = userThreads.size;
@@ -422,4 +549,5 @@ module.exports = {
   clearUserContext,
   clearAllContexts,
   getActiveUsersCount,
+  cleanupUserThread,
 };

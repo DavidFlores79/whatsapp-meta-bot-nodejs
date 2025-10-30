@@ -18,6 +18,10 @@ const userThreadSchema = new mongoose.Schema({
   messageCount: {
     type: Number,
     default: 1
+  },
+  lastCleanup: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
