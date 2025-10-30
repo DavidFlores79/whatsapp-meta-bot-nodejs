@@ -53,9 +53,59 @@ const sendTypingIndicator = (messageId, typingType = 'text') => {
     sendWhatsappResponse(data);
 }
 
+/**
+ * Get media URL from WhatsApp using media ID
+ * @param {string} mediaId - The media ID from WhatsApp webhook
+ * @returns {Promise<string>} - The media URL (expires in a few minutes)
+ */
+const getMediaUrl = async (mediaId) => {
+    return new Promise((resolve, reject) => {
+        const options = {
+            host: URI,
+            path: `/${VERSION}/${mediaId}`,
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+            }
+        };
 
+        console.log(`Getting media URL for ID: ${mediaId}`);
+
+        const req = https.request(options, res => {
+            let data = '';
+            
+            res.on('data', chunk => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+                    if (response.url) {
+                        console.log(`Media URL retrieved: ${response.url}`);
+                        resolve(response.url);
+                    } else {
+                        console.error('No URL in media response:', response);
+                        reject(new Error('No URL in media response'));
+                    }
+                } catch (error) {
+                    console.error('Error parsing media response:', error);
+                    reject(error);
+                }
+            });
+        });
+
+        req.on('error', error => {
+            console.error('Error getting media URL:', error);
+            reject(error);
+        });
+
+        req.end();
+    });
+}
 
 module.exports = {
     sendWhatsappResponse,
     sendTypingIndicator,
+    getMediaUrl,
 }

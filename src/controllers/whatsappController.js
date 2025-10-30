@@ -95,25 +95,50 @@ const receivedMessage = async (req, res) => {
         break;
       }
       case "image": {
-        const imageUrl = messageObject.image.url;
-        console.log("es IMAGE con URL:", imageUrl);
+        // WhatsApp sends image.id, not image.url directly
+        const imageId = messageObject.image.id;
+        const imageCaption = messageObject.image.caption || "";
+        const imageMimeType = messageObject.image.mime_type || "";
+        const imageSha256 = messageObject.image.sha256 || "";
         
-        // TODO: Implement image upload to Cloudinary and add URL to ticket
-        // - Download image from WhatsApp URL
-        // - Upload to Cloudinary using their API
-        // - Store Cloudinary URL in ticket data
-        // - Pass image URL to OpenAI assistant for ticket creation
-        // - Consider image analysis for automatic ticket categorization
+        console.log("es IMAGE con ID:", imageId);
+        console.log("Caption:", imageCaption);
+        console.log("MIME Type:", imageMimeType);
         
         let number = messageObject.from;
         if (number.length === 13) {
           number = formatNumber(number);
         }
 
-        // For now, just acknowledge the image was received
-        const imageReply = "Imagen recibida. Próximamente podremos procesarla automáticamente para incluirla en tu ticket.";
-        const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, imageReply);
-        whatsappService.sendWhatsappResponse(replyPayload);
+        try {
+          // Get the actual media URL from WhatsApp
+          const imageUrl = await whatsappService.getMediaUrl(imageId);
+          console.log("Retrieved image URL:", imageUrl);
+          
+          // TODO: Now you can download and upload to Cloudinary
+          // 1. Download image from imageUrl (expires in a few minutes)
+          // 2. Upload to Cloudinary using their API
+          // 3. Store Cloudinary URL in ticket data
+          // 4. Pass image URL to OpenAI assistant for ticket creation
+          // 5. Consider image analysis for automatic ticket categorization
+          
+          // For now, acknowledge the image was received with its metadata
+          let imageReply = "Imagen recibida y URL obtenida exitosamente. Próximamente podremos procesarla automáticamente para incluirla en tu ticket.";
+          if (imageCaption) {
+            imageReply += `\n\nDescripción de la imagen: "${imageCaption}"`;
+          }
+          
+          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, imageReply);
+          whatsappService.sendWhatsappResponse(replyPayload);
+          
+        } catch (error) {
+          console.error("Error getting image URL:", error);
+          
+          // Send error message to user
+          const errorReply = "Hubo un problema al procesar la imagen recibida. Por favor, intenta enviarla nuevamente.";
+          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, errorReply);
+          whatsappService.sendWhatsappResponse(replyPayload);
+        }
         
         break;
       }
