@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 require('dotenv').config()
 
 const whatsappRoutes = require("../routes/whatsappRoutes");
+const healthRoutes = require("../routes/healthRoutes");
+const infoRoutes = require("../routes/infoRoutes");
 
 class Server {
   constructor() {
@@ -77,6 +79,8 @@ class Server {
 
   routes() {
     this.app.use("/api/v2", whatsappRoutes);
+    this.app.use("/health", healthRoutes);
+    this.app.use("/info", infoRoutes);
   }
 
   listen() {}
