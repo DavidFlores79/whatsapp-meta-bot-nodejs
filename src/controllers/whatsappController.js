@@ -95,15 +95,14 @@ const receivedMessage = async (req, res) => {
         break;
       }
       case "image": {
-        // WhatsApp sends image.id, not image.url directly
         const imageId = messageObject.image.id;
         const imageCaption = messageObject.image.caption || "";
         const imageMimeType = messageObject.image.mime_type || "";
-        const imageSha256 = messageObject.image.sha256 || "";
+        const messageId = messageObject.id;
         
-        console.log("es IMAGE con ID:", imageId);
-        console.log("Caption:", imageCaption);
-        console.log("MIME Type:", imageMimeType);
+        console.log("📸 IMAGE received - ID:", imageId);
+        console.log("   Caption:", imageCaption);
+        console.log("   MIME Type:", imageMimeType);
         
         let number = messageObject.from;
         if (number.length === 13) {
@@ -111,31 +110,47 @@ const receivedMessage = async (req, res) => {
         }
 
         try {
+          // Show typing indicator
+          whatsappService.sendTypingIndicator(messageId, "text");
+
           // Get the actual media URL from WhatsApp
           const imageUrl = await whatsappService.getMediaUrl(imageId);
-          console.log("Retrieved image URL:", imageUrl);
+          console.log("✅ Retrieved image URL from WhatsApp");
           
-          // TODO: Now you can download and upload to Cloudinary
-          // 1. Download image from imageUrl (expires in a few minutes)
-          // 2. Upload to Cloudinary using their API
-          // 3. Store Cloudinary URL in ticket data
-          // 4. Pass image URL to OpenAI assistant for ticket creation
-          // 5. Consider image analysis for automatic ticket categorization
+          // Upload to Cloudinary for permanent storage
+          const cloudinaryService = require("../services/cloudinaryService");
+          const uploadResult = await cloudinaryService.uploadTicketImage(
+            imageUrl,
+            number,
+            process.env.WHATSAPP_API_TOKEN
+          );
           
-          // For now, acknowledge the image was received with its metadata
-          let imageReply = "Imagen recibida y URL obtenida exitosamente. Próximamente podremos procesarla automáticamente para incluirla en tu ticket.";
+          console.log(`✅ Image uploaded to Cloudinary: ${uploadResult.url}`);
+          
+          // Build message for AI assistant including image context
+          let messageForAI = "El usuario ha enviado una imagen.";
           if (imageCaption) {
-            imageReply += `\n\nDescripción de la imagen: "${imageCaption}"`;
+            messageForAI += ` Descripción de la imagen: "${imageCaption}"`;
           }
+          messageForAI += `\n\nURL de la imagen: ${uploadResult.url}`;
+          messageForAI += `\n\nSi el usuario está reportando un problema, puedes usar esta imagen como evidencia en el ticket.`;
           
-          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, imageReply);
+          // Send to AI assistant with image context
+          const aiReply = await openaiService.getAIResponse(
+            messageForAI,
+            number,
+            { imageUrl: uploadResult.url, imageCaption }
+          );
+          
+          // Send AI reply back to user
+          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, aiReply);
           whatsappService.sendWhatsappResponse(replyPayload);
           
         } catch (error) {
-          console.error("Error getting image URL:", error);
+          console.error("❌ Error processing image:", error);
           
           // Send error message to user
-          const errorReply = "Hubo un problema al procesar la imagen recibida. Por favor, intenta enviarla nuevamente.";
+          const errorReply = "Recibí tu imagen pero hubo un problema al procesarla. Por favor, intenta enviarla nuevamente o descríbeme el problema.";
           const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, errorReply);
           whatsappService.sendWhatsappResponse(replyPayload);
         }
@@ -143,23 +158,68 @@ const receivedMessage = async (req, res) => {
         break;
       }
       case "location": {
-        // TODO: Implement location processing and add to ticket address
-        // - Extract latitude and longitude from messageObject.location
-        // - Use reverse geocoding API (Google Maps, OpenStreetMap) to get address
-        // - Format address for ticket creation
-        // - Pass location data to OpenAI assistant
-        // - Store both coordinates and formatted address in ticket
+        const location = messageObject.location;
+        const latitude = location.latitude;
+        const longitude = location.longitude;
+        const locationName = location.name || "";
+        const locationAddress = location.address || "";
+        const messageId = messageObject.id;
         
-        console.log("es LOCATION:", messageObject.location);
+        console.log("📍 LOCATION received:", { latitude, longitude, locationName, locationAddress });
+        
         let number = messageObject.from;
         if (number.length === 13) {
           number = formatNumber(number);
         }
 
-        // For now, just acknowledge the location was received
-        const locationReply = "Ubicación recibida. Próximamente podremos procesarla automáticamente para incluirla en la dirección de tu ticket.";
-        const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, locationReply);
-        whatsappService.sendWhatsappResponse(replyPayload);
+        try {
+          // Show typing indicator
+          whatsappService.sendTypingIndicator(messageId, "text");
+
+          // Reverse geocode to get formatted address
+          const geocodingService = require("../services/geocodingService");
+          const addressData = await geocodingService.reverseGeocode(latitude, longitude);
+          
+          console.log(`✅ Location geocoded: ${addressData.formatted_address}`);
+          
+          // Build message for AI assistant including location context
+          let messageForAI = "El usuario ha enviado su ubicación.\n\n";
+          messageForAI += `📍 Dirección: ${addressData.formatted_address}\n`;
+          messageForAI += `Coordenadas: ${addressData.coordinates_string}\n`;
+          
+          if (locationName) {
+            messageForAI += `Nombre del lugar: ${locationName}\n`;
+          }
+          
+          if (addressData.city) {
+            messageForAI += `Ciudad: ${addressData.city}\n`;
+          }
+          
+          if (addressData.state) {
+            messageForAI += `Estado: ${addressData.state}\n`;
+          }
+          
+          messageForAI += `\nSi el usuario está reportando un problema, puedes usar esta ubicación como la dirección del servicio en el ticket.`;
+          
+          // Send to AI assistant with location context
+          const aiReply = await openaiService.getAIResponse(
+            messageForAI,
+            number,
+            { location: addressData }
+          );
+          
+          // Send AI reply back to user
+          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, aiReply);
+          whatsappService.sendWhatsappResponse(replyPayload);
+          
+        } catch (error) {
+          console.error("❌ Error processing location:", error);
+          
+          // Fallback: send basic acknowledgment
+          const fallbackReply = `Recibí tu ubicación (${latitude}, ${longitude}). Si estás reportando un problema, por favor confírmame la dirección donde necesitas el servicio.`;
+          const replyPayload = require("../shared/whatsappModels").buildTextJSON(number, fallbackReply);
+          whatsappService.sendWhatsappResponse(replyPayload);
+        }
         
         break;
       }

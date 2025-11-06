@@ -157,17 +157,24 @@ async function ensureNoActiveRun(threadId, headers) {
       { headers }
     );
 
-    const activeRuns = runsResponse.data.data.filter(
-      (run) => run.status === "queued" || run.status === "in_progress"
+    // Check for runs that are active OR cancelling
+    const problematicRuns = runsResponse.data.data.filter(
+      (run) => run.status === "queued" || 
+               run.status === "in_progress" || 
+               run.status === "cancelling"
     );
 
-    if (activeRuns.length > 0) {
+    if (problematicRuns.length > 0) {
       console.log(
-        `Found ${activeRuns.length} active run(s) for thread ${threadId}, cancelling them...`
+        `Found ${problematicRuns.length} active/cancelling run(s) for thread ${threadId}`
       );
 
-      // Cancel all active runs
-      for (const run of activeRuns) {
+      // Cancel all active runs (skip already cancelling ones)
+      const runsToCancel = problematicRuns.filter(
+        (run) => run.status !== "cancelling"
+      );
+
+      for (const run of runsToCancel) {
         try {
           await axios.post(
             `${BASE_URL}/threads/${threadId}/runs/${run.id}/cancel`,
@@ -183,12 +190,12 @@ async function ensureNoActiveRun(threadId, headers) {
         }
       }
 
-      // Wait for cancellations to complete (poll until no active runs)
+      // Wait for ALL runs (including cancelling ones) to reach a terminal state
       let attempts = 0;
-      const maxAttempts = 10; // 10 seconds max
-      let stillActive = true;
+      const maxAttempts = 15; // 15 seconds max (increased from 10)
+      let stillProblematic = true;
 
-      while (stillActive && attempts < maxAttempts) {
+      while (stillProblematic && attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         
         const checkResponse = await axios.get(
@@ -196,24 +203,28 @@ async function ensureNoActiveRun(threadId, headers) {
           { headers }
         );
 
+        // Check for ANY non-terminal state
         const activeRunsCheck = checkResponse.data.data.filter(
-          (run) => run.status === "queued" || run.status === "in_progress"
+          (run) => run.status === "queued" || 
+                   run.status === "in_progress" || 
+                   run.status === "cancelling"
         );
 
-        stillActive = activeRunsCheck.length > 0;
+        stillProblematic = activeRunsCheck.length > 0;
         attempts++;
 
-        if (stillActive) {
-          console.log(`Still waiting for runs to cancel (${attempts}/${maxAttempts})...`);
+        if (stillProblematic) {
+          const states = activeRunsCheck.map(r => `${r.id.slice(-8)}:${r.status}`).join(', ');
+          console.log(`Waiting for runs to complete: ${states} (${attempts}/${maxAttempts})`);
         }
       }
 
-      if (stillActive) {
-        console.warn("Some runs are still active after cancellation attempts");
+      if (stillProblematic) {
+        console.warn("⚠️ Some runs still not in terminal state after waiting");
         // Wait a bit longer as a fallback
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } else {
-        console.log("All runs successfully cancelled");
+        console.log("✅ All runs reached terminal state");
       }
     }
   } catch (error) {
@@ -239,42 +250,52 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
 
     try {
       if (functionName === "create_ticket_report") {
-        // aquí haces tu lógica de crear ticket con tu API interna
-        console.log("Creando ticket con args:", functionArgs);
+        console.log("🎫 Creating ticket with args:", functionArgs);
         
-        // TODO: Enhance ticket creation with multimedia support
-        // - Add image_urls array field for Cloudinary URLs
-        // - Add location object with coordinates and formatted address
-        // - Implement image analysis for automatic categorization
-        // - Add attachment handling for multiple images per ticket
-        
-        // Add phone number to the ticket data
+        // Build comprehensive ticket data with multimedia support
         const ticketData = {
           ...functionArgs,
           phone_number: userId,
-          // TODO: Add these fields when implementing multimedia support:
-          // image_urls: [], // Array of Cloudinary URLs from image messages
-          // location: {     // Location data from location messages
-          //   latitude: null,
-          //   longitude: null,
-          //   formatted_address: null,
-          //   coordinates_string: null
-          // },
-          // attachments_count: 0, // Track number of multimedia attachments
+          image_urls: functionArgs.image_urls || [],
+          location: functionArgs.location || null,
+          attachments_count: (functionArgs.image_urls || []).length,
+          created_at: new Date().toISOString(),
         };
         
-        // Simula llamada a API interna y obtén resultado
+        // Log multimedia attachments
+        if (ticketData.image_urls.length > 0) {
+          console.log(`   📸 Ticket includes ${ticketData.image_urls.length} image(s)`);
+          ticketData.image_urls.forEach((url, idx) => {
+            console.log(`      Image ${idx + 1}: ${url}`);
+          });
+        }
+        
+        if (ticketData.location) {
+          console.log(`   📍 Ticket includes location: ${ticketData.location.formatted_address}`);
+        }
+        
+        // TODO: Replace with actual API call to your ticket system
+        // Example: const apiResponse = await axios.post('YOUR_TICKET_API_URL', ticketData);
+        
+        // Simulated ticket creation result
         const ticketResult = {
-          ticketId: "TICKET12345",
+          success: true,
+          ticketId: `TICKET-${Date.now()}`,
           status: "created",
           phone: userId,
-          // TODO: Include multimedia data in response:
-          // image_urls: ticketData.image_urls,
-          // location: ticketData.location,
+          priority: ticketData.priority || "medium",
+          subject: ticketData.subject || "Nuevo ticket",
+          description: ticketData.description || "",
+          image_urls: ticketData.image_urls,
+          location: ticketData.location,
+          attachments_count: ticketData.attachments_count,
+          created_at: ticketData.created_at,
+          estimated_response_time: "24 horas",
+          message: "Ticket creado exitosamente con todos los detalles multimedia"
         };
 
         output = JSON.stringify(ticketResult);
-        console.log("Ticket creado:", ticketResult);
+        console.log("✅ Ticket created successfully:", ticketResult.ticketId);
       } else if (functionName === "get_ticket_information") {
         // Retrieve ticket information by ticket_id or phone_number
         console.log("Obteniendo información del ticket con args:", functionArgs);
@@ -369,7 +390,7 @@ async function pollRunCompletion(threadId, runId, headers) {
   return run;
 }
 
-async function getAIResponse(message, userId) {
+async function getAIResponse(message, userId, context = {}) {
   if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) {
     throw new Error("OpenAI API key or Assistant ID not set");
   }
@@ -387,18 +408,67 @@ async function getAIResponse(message, userId) {
     // Step 2: Check for active runs and cancel them
     await ensureNoActiveRun(threadId, headers);
 
-    // Step 3: Add message to thread with phone number in metadata
-    await axios.post(
-      `${BASE_URL}/threads/${threadId}/messages`,
-      {
-        role: "user",
-        content: message,
-        metadata: {
-          phone_number: userId,
+    // Step 3: Build metadata with multimedia context
+    const metadata = {
+      phone_number: userId,
+    };
+
+    // Add image context if present
+    if (context.imageUrl) {
+      metadata.has_image = "true";
+      metadata.image_url = context.imageUrl;
+      if (context.imageCaption) {
+        metadata.image_caption = context.imageCaption;
+      }
+    }
+
+    // Add location context if present
+    if (context.location) {
+      metadata.has_location = "true";
+      metadata.location_address = context.location.formatted_address || "";
+      metadata.location_coords = context.location.coordinates_string || "";
+      if (context.location.city) {
+        metadata.location_city = context.location.city;
+      }
+      if (context.location.state) {
+        metadata.location_state = context.location.state;
+      }
+    }
+
+    // Add message to thread with enriched metadata - with retry logic
+    let messageAdded = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (!messageAdded && retryCount < maxRetries) {
+      try {
+        await axios.post(
+          `${BASE_URL}/threads/${threadId}/messages`,
+          {
+            role: "user",
+            content: message,
+            metadata: metadata
+          },
+          { headers }
+        );
+        messageAdded = true;
+        console.log("✅ Message added to thread successfully");
+      } catch (msgError) {
+        if (msgError.response?.data?.error?.message?.includes("while a run") && retryCount < maxRetries - 1) {
+          retryCount++;
+          console.log(`⚠️ Run still active, retry ${retryCount}/${maxRetries} in 2s...`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Re-check for active runs
+          await ensureNoActiveRun(threadId, headers);
+        } else {
+          throw msgError; // Re-throw if not a run conflict or out of retries
         }
-      },
-      { headers }
-    );
+      }
+    }
+
+    if (!messageAdded) {
+      throw new Error("Failed to add message after maximum retries");
+    }
 
     // Step 4: Run the assistant
     const runResponse = await axios.post(
