@@ -13,6 +13,52 @@ const userThreads = new Map();
 const MAX_MESSAGES_PER_THREAD = 10;
 const CLEANUP_THRESHOLD = 15; // When to trigger cleanup
 
+// ============================================
+// CONCURRENT REQUEST PROTECTION
+// ============================================
+// Prevents multiple simultaneous AI requests for the same user
+// This protects against race conditions and duplicate processing
+const processingUsers = new Map(); // userId -> Promise
+const PROCESSING_TIMEOUT = 120000; // 120 seconds max wait
+
+async function waitForUserProcessing(userId) {
+  const startTime = Date.now();
+  
+  // If user is being processed, wait for it to complete
+  while (processingUsers.has(userId)) {
+    // Check for timeout to prevent infinite waiting
+    if (Date.now() - startTime > PROCESSING_TIMEOUT) {
+      console.warn(`⚠️ Timeout waiting for user ${userId} processing - forcing through`);
+      endUserProcessing(userId); // Force cleanup
+      break;
+    }
+    
+    console.log(`⏳ User ${userId} is being processed, waiting...`);
+    await processingUsers.get(userId).catch(() => {}); // Catch if promise was rejected
+    
+    // Small delay to prevent tight loop
+    if (processingUsers.has(userId)) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+}
+
+function startUserProcessing(userId) {
+  let resolver;
+  const promise = new Promise((resolve) => {
+    resolver = resolve;
+  });
+  processingUsers.set(userId, promise);
+  return resolver;
+}
+
+function endUserProcessing(userId) {
+  const entry = processingUsers.get(userId);
+  processingUsers.delete(userId);
+  return entry;
+}
+// ============================================
+
 // Clean up old messages in thread to keep only the last N messages
 async function cleanupThreadMessages(threadId, headers, maxMessages = MAX_MESSAGES_PER_THREAD) {
   try {
@@ -401,7 +447,18 @@ async function getAIResponse(message, userId, context = {}) {
     "OpenAI-Beta": "assistants=v2",
   };
 
+  // ============================================
+  // CONCURRENT REQUEST PROTECTION
+  // ============================================
+  // Wait if this user is already being processed
+  await waitForUserProcessing(userId);
+  
+  // Mark this user as being processed
+  const processingResolver = startUserProcessing(userId);
+  
   try {
+    console.log(`🚀 Starting AI processing for user ${userId}`);
+    
     // Step 1: Get or create a thread for this user (userId is the phone number)
     const threadId = await getOrCreateThread(userId, userId, headers);
 
@@ -531,6 +588,14 @@ async function getAIResponse(message, userId, context = {}) {
   } catch (error) {
     console.error("OpenAI error:", error.response?.data || error.message);
     return "Lo siento, hubo un error con el asistente IA.";
+  } finally {
+    // ============================================
+    // RELEASE PROCESSING LOCK
+    // ============================================
+    // Always release the processing lock, even if error occurred
+    endUserProcessing(userId);
+    if (processingResolver) processingResolver();
+    console.log(`✅ Finished AI processing for user ${userId}`);
   }
 }
 
