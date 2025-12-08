@@ -5,6 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app",
+    "build": "npm install && cd frontend && npm install && npm run build",
     "dev": "nodemon src/app",
     "test:threads": "node test-thread-optimization.js"
   },

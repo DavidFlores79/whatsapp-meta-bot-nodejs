@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const { dbConnection } = require("../database/config");
 const bodyParser = require("body-parser");
 require('dotenv').config()
@@ -36,8 +37,10 @@ class Server {
   }
 
   middlewares(io) {
-    //directorio public
-    this.app.use(express.static("public"));
+    // Serve static files from Angular build
+    const frontendPath = path.join(__dirname, '../../frontend/dist/frontend/browser');
+    this.app.use(express.static(frontendPath));
+    this.app.use(express.static("public")); // Keep public for other assets if any
     this.app.use(express.json());
 
 
@@ -84,6 +87,11 @@ class Server {
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));
+
+    // Handle Angular routing - return index.html for all other routes
+    this.app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../../frontend/dist/frontend/browser/index.html'));
+    });
   }
 
   listen() { }
