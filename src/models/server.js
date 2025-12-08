@@ -3,17 +3,20 @@ const { dbConnection } = require("../database/config");
 const bodyParser = require("body-parser");
 require('dotenv').config()
 
-const whatsappRoutes = require("../routes/whatsappRoutes");
-const healthRoutes = require("../routes/healthRoutes");
-const infoRoutes = require("../routes/infoRoutes");
+
 
 class Server {
   constructor() {
     this.app = express();
-    this.port = process.env.PORT || 5000;
+    this.port = process.env.PORT || 5001;
 
     const http = require('http').createServer(this.app);
-    const io = require('socket.io')(http);
+    const io = require('socket.io')(http, {
+      cors: {
+        origin: "*", // Allow all origins for development
+        methods: ["GET", "POST"]
+      }
+    });
     module.exports.io = io;
     require('../services/socket');
 
@@ -43,13 +46,13 @@ class Server {
       res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Access-Control-Allow-Request-Method');
       res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
       res.header('Allow', 'GET, PUT, POST, DELETE, OPTIONS');
-      
+
       // Security headers
       res.header('X-Content-Type-Options', 'nosniff');
       res.header('X-Frame-Options', 'DENY');
       res.header('X-XSS-Protection', '1; mode=block');
       res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-      
+
       next();
     });
 
@@ -58,7 +61,7 @@ class Server {
         limit: "20mb",
       })
     );
-    
+
     this.app.use(
       bodyParser.urlencoded({
         limit: "20mb",
@@ -67,7 +70,7 @@ class Server {
     );
 
     //pasar io para emit desde controller
-    this.app.use(function(req, res, next) {
+    this.app.use(function (req, res, next) {
       req.io = io;
       next();
     });
@@ -78,12 +81,12 @@ class Server {
   }
 
   routes() {
-    this.app.use("/api/v2", whatsappRoutes);
-    this.app.use("/health", healthRoutes);
-    this.app.use("/info", infoRoutes);
+    this.app.use("/api/v2", require("../routes/whatsappRoutes"));
+    this.app.use("/health", require("../routes/healthRoutes"));
+    this.app.use("/info", require("../routes/infoRoutes"));
   }
 
-  listen() {}
+  listen() { }
 }
 
 module.exports = Server;

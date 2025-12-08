@@ -11,25 +11,39 @@ const geocodingService = require("../services/geocodingService");
 const queueService = require("../services/queueService");
 const { buildTextJSON } = require("../shared/whatsappModels");
 
+// Set to store processed message IDs to prevent duplicates
+const processedMessages = new Set();
+
 /**
  * Handle text messages
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
  */
-async function handleTextMessage(messageObject, phoneNumber) {
+async function handleTextMessage(messageObject, phoneNumber, conversationId) {
   console.log("📝 TEXT message received");
-  const userRequest = messageObject.text.body;
   const messageId = messageObject.id;
+  const messageBody = messageObject.text.body;
+
+  // Check for duplicate messages
+  if (processedMessages.has(messageId)) {
+    console.log(`Message ${messageId} already processed, skipping.`);
+    return;
+  }
+  processedMessages.add(messageId);
+  setTimeout(() => processedMessages.delete(messageId), 60000); // Clear after 1 minute
+
+  const userRequest = messageBody.toLowerCase();
 
   console.log(`User ${phoneNumber}: "${userRequest}"`);
 
   // Add to queue (will auto-process after QUEUE_WAIT_TIME)
   queueService.queueUserMessage(
-    phoneNumber, 
-    userRequest, 
-    messageId, 
-    "text", 
-    messageObject
+    phoneNumber,
+    userRequest,
+    messageId,
+    "text",
+    messageObject,
+    conversationId
   );
 }
 
@@ -38,14 +52,14 @@ async function handleTextMessage(messageObject, phoneNumber) {
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
  */
-async function handleImageMessage(messageObject, phoneNumber) {
+async function handleImageMessage(messageObject, phoneNumber, conversationId) {
   const imageId = messageObject.image.id;
-  const imageCaption = messageObject.image.caption || "";
+  const caption = messageObject.image.caption || "Analyze this image";
   const imageMimeType = messageObject.image.mime_type || "";
   const messageId = messageObject.id;
-  
+
   console.log("📸 IMAGE received - ID:", imageId);
-  console.log("   Caption:", imageCaption);
+  console.log("   Caption:", caption);
   console.log("   MIME Type:", imageMimeType);
 
   try {
@@ -55,16 +69,16 @@ async function handleImageMessage(messageObject, phoneNumber) {
     // Get the actual media URL from WhatsApp
     const imageUrl = await whatsappService.getMediaUrl(imageId);
     console.log("✅ Retrieved image URL from WhatsApp");
-    
+
     // Upload to Cloudinary for permanent storage
     const uploadResult = await cloudinaryService.uploadTicketImage(
       imageUrl,
       phoneNumber,
       process.env.WHATSAPP_API_TOKEN
     );
-    
+
     console.log(`✅ Image uploaded to Cloudinary: ${uploadResult.url}`);
-    
+
     // Build message for AI assistant including image context
     let messageForAI = "El usuario ha enviado una imagen.";
     if (imageCaption) {
@@ -72,23 +86,23 @@ async function handleImageMessage(messageObject, phoneNumber) {
     }
     messageForAI += `\n\nURL de la imagen: ${uploadResult.url}`;
     messageForAI += `\n\nSi el usuario está reportando un problema, puedes usar esta imagen como evidencia en el ticket.`;
-    
+
     // Send to AI assistant with image context
     const aiReply = await openaiService.getAIResponse(
       messageForAI,
       phoneNumber,
       { imageUrl: uploadResult.url, imageCaption }
     );
-    
+
     // Send AI reply back to user
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
     whatsappService.sendWhatsappResponse(replyPayload);
-    
+
     console.log(`✅ AI response sent to ${phoneNumber} (with image context)\n`);
-    
+
   } catch (error) {
     console.error("❌ Error processing image:", error);
-    
+
     // Send error message to user
     const errorReply = "Recibí tu imagen pero hubo un problema al procesarla. Por favor, intenta enviarla nuevamente o descríbeme el problema.";
     const replyPayload = buildTextJSON(phoneNumber, errorReply);
@@ -108,7 +122,7 @@ async function handleLocationMessage(messageObject, phoneNumber) {
   const locationName = location.name || "";
   const locationAddress = location.address || "";
   const messageId = messageObject.id;
-  
+
   console.log("📍 LOCATION received:", { latitude, longitude, locationName, locationAddress });
 
   try {
@@ -117,44 +131,44 @@ async function handleLocationMessage(messageObject, phoneNumber) {
 
     // Reverse geocode to get formatted address
     const addressData = await geocodingService.reverseGeocode(latitude, longitude);
-    
+
     console.log(`✅ Location geocoded: ${addressData.formatted_address}`);
-    
+
     // Build message for AI assistant including location context
     let messageForAI = "El usuario ha enviado su ubicación.\n\n";
     messageForAI += `📍 Dirección: ${addressData.formatted_address}\n`;
     messageForAI += `Coordenadas: ${addressData.coordinates_string}\n`;
-    
+
     if (locationName) {
       messageForAI += `Nombre del lugar: ${locationName}\n`;
     }
-    
+
     if (addressData.city) {
       messageForAI += `Ciudad: ${addressData.city}\n`;
     }
-    
+
     if (addressData.state) {
       messageForAI += `Estado: ${addressData.state}\n`;
     }
-    
+
     messageForAI += `\nSi el usuario está reportando un problema, puedes usar esta ubicación como la dirección del servicio en el ticket.`;
-    
+
     // Send to AI assistant with location context
     const aiReply = await openaiService.getAIResponse(
       messageForAI,
       phoneNumber,
       { location: addressData }
     );
-    
+
     // Send AI reply back to user
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
     whatsappService.sendWhatsappResponse(replyPayload);
-    
+
     console.log(`✅ AI response sent to ${phoneNumber} (with location context)\n`);
-    
+
   } catch (error) {
     console.error("❌ Error processing location:", error);
-    
+
     // Fallback: send basic acknowledgment
     const fallbackReply = `Recibí tu ubicación (${latitude}, ${longitude}). Si estás reportando un problema, por favor confírmame la dirección donde necesitas el servicio.`;
     const replyPayload = buildTextJSON(phoneNumber, fallbackReply);
@@ -170,7 +184,7 @@ async function handleLocationMessage(messageObject, phoneNumber) {
 async function handleInteractiveMessage(messageObject, phoneNumber) {
   console.log("🔘 INTERACTIVE message received");
   const { type: interactiveType } = messageObject.interactive;
-  
+
   // TODO: Implement interactive message handling
   console.log("   Type:", interactiveType);
   console.log("   (Not yet implemented)");
@@ -183,7 +197,7 @@ async function handleInteractiveMessage(messageObject, phoneNumber) {
  */
 async function handleButtonMessage(messageObject, phoneNumber) {
   console.log("🔘 BUTTON message received");
-  
+
   // TODO: Implement button handling
   console.log("   (Not yet implemented)");
 }

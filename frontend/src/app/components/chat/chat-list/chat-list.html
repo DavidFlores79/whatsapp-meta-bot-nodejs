@@ -1,0 +1,50 @@
+<div class="flex flex-col h-full bg-whatsapp-dark border-r border-gray-700">
+    <!-- Header -->
+    <div class="h-16 bg-whatsapp-gray flex items-center justify-between px-4 border-b border-gray-700 shrink-0">
+        <div class="w-10 h-10 rounded-full bg-gray-500 overflow-hidden">
+            <img src="https://i.pravatar.cc/150?u=me" alt="My Profile" class="w-full h-full object-cover">
+        </div>
+        <div class="flex gap-4 text-gray-400">
+            <button class="hover:text-gray-200"><i class="fas fa-circle-notch"></i></button>
+            <button class="hover:text-gray-200"><i class="fas fa-comment-alt"></i></button>
+            <button class="hover:text-gray-200"><i class="fas fa-ellipsis-v"></i></button>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="p-2 bg-whatsapp-dark border-b border-gray-700 shrink-0">
+        <div class="bg-whatsapp-gray rounded-lg flex items-center px-4 py-1.5">
+            <i class="fas fa-search text-gray-400 text-sm"></i>
+            <input type="text" placeholder="Search or start new chat"
+                class="bg-transparent border-none text-gray-200 text-sm ml-4 w-full focus:outline-none placeholder-gray-400">
+        </div>
+    </div>
+
+    <!-- Chat List -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <div *ngFor="let chat of chats$ | async" (click)="selectChat(chat.id)"
+            [class.bg-whatsapp-gray]="(selectedChatId$ | async) === chat.id"
+            class="flex items-center p-3 cursor-pointer hover:bg-whatsapp-gray transition-colors border-b border-gray-800">
+
+            <!-- Avatar -->
+            <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 mr-3">
+                <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-baseline mb-1">
+                    <h3 class="text-gray-100 font-medium truncate">{{ chat.name }}</h3>
+                    <span class="text-xs text-gray-400 shrink-0">{{ chat.lastMessageTime | date:'shortTime' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-400 truncate pr-2">{{ chat.lastMessage }}</p>
+                    <div *ngIf="chat.unreadCount > 0"
+                        class="bg-whatsapp-green text-whatsapp-dark text-xs font-bold rounded-full h-5 min-w-[1.25rem] flex items-center justify-center px-1">
+                        {{ chat.unreadCount }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

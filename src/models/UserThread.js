@@ -22,13 +22,32 @@ const userThreadSchema = new mongoose.Schema({
   lastCleanup: {
     type: Date,
     default: null
-  }
+  },
+  history: [{
+    role: {
+      type: String,
+      enum: ['user', 'assistant', 'system'],
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    metadata: {
+      type: Map,
+      of: String
+    }
+  }]
 }, {
   timestamps: true
 });
 
 // Update last interaction on save
-userThreadSchema.pre('save', function(next) {
+userThreadSchema.pre('save', function (next) {
   this.lastInteraction = Date.now();
   next();
 });

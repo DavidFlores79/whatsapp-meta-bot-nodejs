@@ -1,0 +1,39 @@
+<div class="flex flex-col h-full bg-whatsapp-image bg-repeat" *ngIf="selectedChat$ | async as chat; else noChat">
+    <!-- Header -->
+    <div class="h-16 bg-whatsapp-gray flex items-center justify-between px-4 border-b border-gray-700 shrink-0 z-10">
+        <div class="flex items-center cursor-pointer">
+            <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
+                <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+            </div>
+            <div>
+                <h3 class="text-gray-100 font-medium">{{ chat.name }}</h3>
+                <p class="text-xs text-gray-400">click here for contact info</p>
+            </div>
+        </div>
+        <div class="flex gap-4 text-gray-400">
+            <button class="hover:text-gray-200"><i class="fas fa-search"></i></button>
+            <button class="hover:text-gray-200"><i class="fas fa-ellipsis-v"></i></button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col gap-1" #scrollContainer>
+        <app-message-bubble *ngFor="let message of chat.messages" [message]="message"></app-message-bubble>
+    </div>
+
+    <!-- Input -->
+    <div class="bg-whatsapp-gray p-2 shrink-0 z-10">
+        <app-message-input></app-message-input>
+    </div>
+</div>
+
+<ng-template #noChat>
+    <div
+        class="flex flex-col items-center justify-center h-full text-gray-400 bg-whatsapp-dark border-b-[6px] border-whatsapp-green">
+        <div class="text-center">
+            <h2 class="text-3xl font-light text-gray-200 mb-4">WhatsApp Web</h2>
+            <p class="text-sm">Send and receive messages without keeping your phone online.<br>
+                Use WhatsApp on up to 4 linked devices and 1 phone.</p>
+        </div>
+    </div>
+</ng-template>
