@@ -242,7 +242,22 @@ async function handleRunStatus(threadId, runId, headers, userId) {
     run = await pollRunCompletion(threadId, runId, headers);
     toolAttempts++;
   }
-  if (run.status !== "completed") throw new Error(`Run failed: ${run.status}`);
+  if (run.status !== "completed") {
+    // Log detailed error information
+    const errorDetails = {
+      status: run.status,
+      lastError: run.last_error,
+      failedAt: run.failed_at,
+      incompleteDetails: run.incomplete_details
+    };
+    console.error("🚨 OpenAI Run Failed - Detailed Error:", JSON.stringify(errorDetails, null, 2));
+    
+    // Throw with more context
+    const errorMessage = run.last_error 
+      ? `${run.last_error.code}: ${run.last_error.message}` 
+      : run.status;
+    throw new Error(`Run failed: ${errorMessage}`);
+  }
   return run;
 }
 
@@ -310,7 +325,23 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
     await handleRunStatus(threadId, runId, headers, userId);
     return await getAssistantResponse(threadId, runId, userId, conversationId);
   } catch (error) {
-    console.error("OpenAI Error:", error.message);
+    // Enhanced error logging
+    console.error("🚨 OpenAI Service Error:", {
+      message: error.message,
+      userId,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    
+    // Return user-friendly error message
+    if (error.message.includes("rate_limit_exceeded")) {
+      return "Lo siento, el servicio está temporalmente ocupado. Por favor intenta de nuevo en un momento.";
+    } else if (error.message.includes("invalid_api_key")) {
+      return "Error de configuración del asistente. Por favor contacta al administrador.";
+    } else if (error.message.includes("timeout")) {
+      return "La respuesta está tomando demasiado tiempo. Por favor intenta de nuevo.";
+    }
+    
     return "Lo siento, hubo un error con el asistente IA.";
   } finally {
     endUserProcessing(userId);
