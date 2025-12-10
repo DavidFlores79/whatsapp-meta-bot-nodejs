@@ -168,7 +168,7 @@ const receivedMessage = async (req, res) => {
     // Route to message handlers (pass conversation context)
     switch (messageType) {
       case "text":
-        await messageHandlers.handleTextMessage(messageObject, userPhoneNumber, conversation._id);
+        await messageHandlers.handleTextMessage(messageObject, userPhoneNumber, conversation._id, customer._id);
         break;
 
       case "interactive":

@@ -28,7 +28,7 @@ const queueTimers = new Map(); // userId -> timer id
  * @param {object} messageObject - Full message object from WhatsApp
  * @returns {boolean} - True if queued, false if user is already being processed
  */
-function queueUserMessage(userId, messageText, messageId, messageType, messageObject, conversationId) {
+function queueUserMessage(userId, messageText, messageId, messageType, messageObject, conversationId, customerId) {
   // Get or create queue for this user
   if (!userQueues.has(userId)) {
     userQueues.set(userId, []);
@@ -41,7 +41,8 @@ function queueUserMessage(userId, messageText, messageId, messageType, messageOb
     type: messageType,
     object: messageObject,
     timestamp: new Date(),
-    conversationId: conversationId
+    conversationId: conversationId,
+    customerId: customerId
   });
 
   console.log(`📥 Message queued for ${userId}. Queue size: ${userQueues.get(userId).length}`);
@@ -128,10 +129,13 @@ async function processUserQueue(userId) {
       try {
         const newMessage = new Message({
           conversationId: msg.conversationId,
-          sender: 'user',
+          customerId: msg.customerId,
           content: msg.text,
-          timestamp: msg.timestamp,
-          metadata: { whatsappMessageId: msg.id, type: msg.type }
+          type: msg.type || 'text',
+          direction: 'inbound',
+          sender: 'customer',
+          whatsappMessageId: msg.id,
+          status: 'delivered'
         });
         await newMessage.save();
 
@@ -151,12 +155,15 @@ async function processUserQueue(userId) {
 
     // Save AI response to history
     try {
+      const customerId = messagesToProcess[0].customerId;
       const aiMessage = new Message({
         conversationId: conversationId,
-        sender: 'agent',
+        customerId: customerId,
         content: aiReply,
-        timestamp: new Date(),
-        metadata: { type: 'text' }
+        type: 'text',
+        direction: 'outbound',
+        sender: 'ai',
+        status: 'sent'
       });
       await aiMessage.save();
 

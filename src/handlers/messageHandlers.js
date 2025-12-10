@@ -19,7 +19,7 @@ const processedMessages = new Set();
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
  */
-async function handleTextMessage(messageObject, phoneNumber, conversationId) {
+async function handleTextMessage(messageObject, phoneNumber, conversationId, customerId) {
   console.log("📝 TEXT message received");
   const messageId = messageObject.id;
   const messageBody = messageObject.text.body;
@@ -43,7 +43,8 @@ async function handleTextMessage(messageObject, phoneNumber, conversationId) {
     messageId,
     "text",
     messageObject,
-    conversationId
+    conversationId,
+    customerId
   );
 }
 
