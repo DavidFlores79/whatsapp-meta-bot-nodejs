@@ -99,7 +99,8 @@ async function processUserQueue(userId) {
     console.log(`🤖 OpenAI response received in ${duration}s (length: ${aiReply.length} chars)`);
 
     // Send response to WhatsApp
-    await whatsappService.sendMessage(userId, aiReply);
+    const replyPayload = buildTextJSON(userId, aiReply);
+    whatsappService.sendWhatsappResponse(replyPayload);
 
     console.log(`✅ Single AI response sent to ${userId} for ${messagesToProcess.length} message(s)`);
     console.log(`🔓 Queue processing finished for ${userId}\n`);
@@ -176,7 +177,8 @@ async function processUserQueue(userId) {
     console.error(`❌ Error processing queue for ${userId}:`, err);
 
     // Send error message to user
-    await whatsappService.sendMessage(userId, "Lo siento, tuve un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?");
+    const errorPayload = buildTextJSON(userId, "Lo siento, tuve un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?");
+    whatsappService.sendWhatsappResponse(errorPayload);
   } finally {
     // Clean up
     userQueues.delete(userId);
