@@ -139,7 +139,7 @@ const receivedMessage = async (req, res) => {
       sender: 'customer',
       whatsappMessageId: messageId,
       whatsappTimestamp: new Date(parseInt(req.body.entry[0].changes[0].value.messages[0].timestamp) * 1000),
-      status: 'received'
+      status: 'delivered'
     });
 
     // Update conversation stats
