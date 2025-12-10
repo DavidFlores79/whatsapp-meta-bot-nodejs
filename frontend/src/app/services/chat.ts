@@ -26,7 +26,7 @@ export interface Chat {
 })
 export class ChatService {
   private socket: any;
-  private apiUrl = 'http://localhost:3010/api/v2';
+  private apiUrl = 'http://localhost:5001/api/v2';
   private mockChats: Chat[] = [];
 
   private chatsSubject = new BehaviorSubject<Chat[]>(this.mockChats);
@@ -65,7 +65,7 @@ export class ChatService {
   }
 
   private initSocket() {
-    this.socket = io('http://localhost:3010'); // Adjust URL as needed
+    this.socket = io('http://localhost:5001'); // Adjust URL as needed
 
     this.socket.on('connect', () => {
       console.log('Connected to socket server');
