@@ -39,14 +39,14 @@ In development, you typically run the backend and frontend separately to get hot
     ```bash
     npm run dev
     ```
-    Runs on port `5001`.
+    Runs on port `3010`.
 
 2.  **Frontend:**
     ```bash
     cd frontend
     npm start
     ```
-    Runs on port `4200` (proxies API calls to `5001`).
+    Runs on port `4200` (proxies API calls to `3010`).
 
 ### Production
 In production, the backend serves the built frontend files.
@@ -56,15 +56,15 @@ In production, the backend serves the built frontend files.
     ```bash
     npm start
     ```
-    The application will be available on port `5001` (or `PORT` env var).
-    Accessing `http://localhost:5001` will load the Angular app.
+    The application will be available on port `3010` (or `PORT` env var).
+    Accessing `http://localhost:3010` will load the Angular app.
 
 ## Environment Variables
 
 Ensure your `.env` file or environment variables are set:
 
 ```env
-PORT=5001
+PORT=3010
 MONGODB_URI=mongodb://localhost:27017/whatsapp_bot
 OPENAI_API_KEY=sk-...
 OPENAI_ASSISTANT_ID=asst_...
@@ -80,7 +80,7 @@ OPENAI_ASSISTANT_ID=asst_...
     ```bash
     pm2 start src/app.js --name "whatsapp-crm"
     ```
-4.  Set up Nginx as a reverse proxy to port `5001`.
+4.  Set up Nginx as a reverse proxy to port `3010`.
 
 ### Option 2: PaaS (Heroku, Railway, Render)
 1.  Add a `build` script to the root `package.json` to build the frontend during deployment:

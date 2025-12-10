@@ -9,7 +9,7 @@ require('dotenv').config()
 class Server {
   constructor() {
     this.app = express();
-    this.port = process.env.PORT || 5001;
+    this.port = process.env.PORT || 3010;
 
     const http = require('http').createServer(this.app);
     const io = require('socket.io')(http, {
