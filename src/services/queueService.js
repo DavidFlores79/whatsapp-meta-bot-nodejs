@@ -16,7 +16,8 @@ const { io } = require("../models/server");
 
 // Message queue configuration
 const QUEUE_WAIT_TIME = 2000; // 2 seconds - wait for burst to complete
-const userMessageQueues = new Map(); // userId -> { messages: [], timer: timeoutId, processing: false }
+const userQueues = new Map(); // userId -> array of messages
+const queueTimers = new Map(); // userId -> timer id
 
 /**
  * Add message to user's queue (with burst detection)
@@ -189,12 +190,10 @@ async function processUserQueue(userId) {
  */
 function getQueueStats() {
   return {
-    activeQueues: userMessageQueues.size,
-    queues: Array.from(userMessageQueues.entries()).map(([userId, queue]) => ({
+    activeQueues: userQueues.size,
+    queues: Array.from(userQueues.entries()).map(([userId, messages]) => ({
       userId,
-      messageCount: queue.messages.length,
-      processing: queue.processing,
-      hasTimer: queue.timer !== null
+      messageCount: messages.length
     }))
   };
 }
@@ -203,12 +202,11 @@ function getQueueStats() {
  * Clear all queues (useful for testing/cleanup)
  */
 function clearAllQueues() {
-  for (const [userId, queue] of userMessageQueues.entries()) {
-    if (queue.timer) {
-      clearTimeout(queue.timer);
-    }
+  for (const timer of queueTimers.values()) {
+    clearTimeout(timer);
   }
-  userMessageQueues.clear();
+  userQueues.clear();
+  queueTimers.clear();
   console.log('🧹 Cleared all message queues');
 }
 
