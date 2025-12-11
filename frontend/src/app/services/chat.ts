@@ -165,6 +165,12 @@ export class ChatService {
       this.handleAIResumed(data.conversationId);
     });
 
+    this.socket.on('conversation_released', (data: any) => {
+      console.log('Conversation released:', data);
+      // Update conversation in UI (same as AI resumed)
+      this.handleAIResumed(data.conversationId);
+    });
+
     this.socket.on('customer_message', (data: any) => {
       console.log('Customer message (assigned to me):', data);
       this.handleNewMessage(data.conversationId, {
