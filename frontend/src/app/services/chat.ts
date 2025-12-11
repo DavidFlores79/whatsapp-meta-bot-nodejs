@@ -62,11 +62,20 @@ export class ChatService {
 
   constructor(private http: HttpClient, private authService: AuthService) {
     this.initSocket();
-    this.loadConversations();
+    
+    // Load conversations based on agent authentication status
+    this.authService.currentAgent$.subscribe((agent: Agent | null) => {
+      this.loadConversations(agent);
+    });
   }
 
-  private loadConversations() {
-    this.http.get<any>(`${this.apiUrl}/conversations`).subscribe(
+  private loadConversations(agent?: Agent | null) {
+    // If agent is logged in, load only their assigned conversations
+    const endpoint = agent 
+      ? `${this.apiUrl}/conversations/assigned`
+      : `${this.apiUrl}/conversations`;
+
+    this.http.get<any>(endpoint).subscribe(
       (response) => {
         // Map backend conversation format to frontend Chat format
         const conversations = response.conversations || [];
@@ -83,6 +92,8 @@ export class ChatService {
           status: conv.status
         }));
         this.chatsSubject.next(this.mockChats);
+        
+        console.log(`Loaded ${this.mockChats.length} conversation(s)${agent ? ' assigned to agent' : ''}`);
       },
       (error) => console.error('Error loading conversations:', error)
     );
@@ -155,7 +166,10 @@ export class ChatService {
 
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
-      this.loadConversations(); // Reload conversations
+      // Reload conversations with agent context
+      this.authService.currentAgent$.subscribe((agent: Agent | null) => {
+        this.loadConversations(agent);
+      }).unsubscribe();
     });
 
     this.socket.on('agent_typing', (data: any) => {
