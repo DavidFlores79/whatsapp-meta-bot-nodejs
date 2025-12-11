@@ -6,7 +6,8 @@ const authLimiter = rateLimit({
     max: 5, // 5 requests per window
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 // Rate limiter for API endpoints
@@ -15,7 +16,8 @@ const apiLimiter = rateLimit({
     max: 60, // 60 requests per minute
     message: 'Too many requests, please try again later',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 module.exports = {
