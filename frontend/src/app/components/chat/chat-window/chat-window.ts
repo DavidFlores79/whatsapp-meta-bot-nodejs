@@ -58,11 +58,23 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   isAssignedToMe(chat: Chat): boolean {
     const currentAgent = this.authService.getCurrentAgent();
+
+    // Debug logging
+    console.log('=== isAssignedToMe Debug ===');
+    console.log('Current Agent:', currentAgent);
+    console.log('Chat Assigned Agent:', chat.assignedAgent);
+    console.log('Chat Assigned Agent type:', typeof chat.assignedAgent);
+
     if (!currentAgent || !currentAgent._id || !chat.assignedAgent || !chat.assignedAgent._id) {
+      console.log('Check failed - missing data');
       return false;
     }
+
     // Compare as strings to ensure match
-    return chat.assignedAgent._id.toString() === currentAgent._id.toString();
+    const match = chat.assignedAgent._id.toString() === currentAgent._id.toString();
+    console.log('Agent IDs match:', match);
+    console.log('===========================');
+    return match;
   }
 
   /**
