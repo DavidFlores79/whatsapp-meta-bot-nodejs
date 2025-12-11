@@ -23,7 +23,7 @@
                          [alt]="'Map of ' + (message.location.address || 'location')"
                          class="w-full h-full object-cover">
                     <!-- Fallback if no map image -->
-                    <div *ngIf="!message.location.mapImageUrl" 
+                    <div *ngIf="!message.location.mapImageUrl"
                          class="w-full h-full flex items-center justify-center text-gray-400">
                         <i class="fas fa-map-marker-alt text-4xl"></i>
                     </div>
