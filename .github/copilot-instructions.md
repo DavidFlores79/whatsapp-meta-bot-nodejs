@@ -146,6 +146,12 @@ const stats = await openaiService.getActiveUsersCount();
 4. **Maintain phone number formatting** - Mexico-specific logic is embedded
 5. **Respect thread cleanup logic** - Don't disable automatic cleanup
 6. **Test with actual WhatsApp webhooks** - Payload structure is specific
+7. **CRITICAL: NO AI ATTRIBUTION IN COMMITS** - Never include any AI-related attribution, signatures, or references in commit messages. This includes but is not limited to:
+   - "Generated with Claude Code" or similar tools
+   - "Co-Authored-By: Claude" or any AI assistant
+   - Any emojis or markers indicating AI assistance (🤖, etc.)
+   - Any references to AI tools, LLMs, or automated assistance
+   - All commits must appear as human-authored without any AI acknowledgment
 
 ## Testing & Debugging
 
