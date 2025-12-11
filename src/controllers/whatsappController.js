@@ -168,7 +168,7 @@ const receivedMessage = async (req, res) => {
 
     // Emit socket event
     req.io.emit('new_message', {
-      chatId: userPhoneNumber,
+      chatId: conversation._id.toString(),
       message: {
         id: newMessage._id.toString(),
         text: newMessage.content,

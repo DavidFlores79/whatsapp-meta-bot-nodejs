@@ -126,7 +126,7 @@ async function sendAgentMessageToCustomer(conversationId, customerId, agentId, c
 
     // Emit socket event
     io.emit('new_message', {
-        chatId: customerPhone,
+        chatId: conversationId.toString(),
         message: {
             id: newMessage._id.toString(),
             text: newMessage.content,

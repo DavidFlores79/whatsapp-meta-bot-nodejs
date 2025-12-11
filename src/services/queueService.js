@@ -120,7 +120,7 @@ async function processUserQueue(userId) {
         await newMessage.save();
 
         io.emit('new_message', {
-          chatId: userId,
+          chatId: conversationId,
           message: {
             id: newMessage._id.toString(),
             text: newMessage.content,
@@ -204,7 +204,7 @@ async function processUserQueue(userId) {
         await newMessage.save();
 
         io.emit('new_message', {
-          chatId: userId,
+          chatId: conversationId,
           message: {
             id: newMessage._id.toString(),
             text: newMessage.content,
@@ -232,7 +232,7 @@ async function processUserQueue(userId) {
       await aiMessage.save();
 
       io.emit('new_message', {
-        chatId: userId,
+        chatId: conversationId,
         message: {
           id: aiMessage._id.toString(),
           text: aiMessage.content,

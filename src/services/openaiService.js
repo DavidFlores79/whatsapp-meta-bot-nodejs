@@ -287,7 +287,7 @@ async function getAssistantResponse(threadId, runId, userId, conversationId) {
 
     try {
       io.emit('new_message', {
-        chatId: userId,
+        chatId: conversationId || userId,
         message: {
           id: Date.now().toString(),
           text: aiResponseText,
