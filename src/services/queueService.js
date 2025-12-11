@@ -123,8 +123,22 @@ async function processUserQueue(userId) {
         // No need to emit new_message here
       }
 
+      // Update conversation stats
+      await Conversation.findByIdAndUpdate(conversationId, {
+        $inc: { messageCount: messagesToProcess.length, unreadCount: messagesToProcess.length },
+        lastCustomerMessage: new Date(),
+        lastMessage: {
+          content: combinedText,
+          timestamp: new Date(),
+          from: 'customer',
+          type: 'text'
+        }
+      });
+
+      console.log(`✅ Messages routed to agent ${conversation.assignedAgent.email}`);
+
       // Clear queue
-      this.messageQueues.delete(userId);
+      userQueues.delete(userId);
       return; // Exit early - message routed to agent
     }
 
@@ -152,30 +166,26 @@ async function processUserQueue(userId) {
         chatId: conversationId,
         message: {
           id: newMessage._id.toString(),
-            text: newMessage.content,
-            sender: 'other',
-            timestamp: newMessage.timestamp
-          }
-        });
-      }
-
-      // Update conversation
-      await Conversation.findByIdAndUpdate(conversationId, {
-        $inc: { messageCount: messagesToProcess.length, unreadCount: messagesToProcess.length },
-        lastCustomerMessage: new Date(),
-        lastMessage: {
-          content: combinedText,
-          timestamp: new Date(),
-          from: 'customer',
-          type: 'text'
+          text: newMessage.content,
+          sender: 'other',
+          timestamp: newMessage.timestamp
         }
       });
-
-      console.log(`✅ Messages routed to agent ${conversation.assignedAgent.email}`);
-      return;
     }
 
-    // CONTINUE WITH AI PROCESSING (original code)
+    // Update conversation
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $inc: { messageCount: messagesToProcess.length, unreadCount: messagesToProcess.length },
+      lastCustomerMessage: new Date(),
+      lastMessage: {
+        content: combinedText,
+        timestamp: new Date(),
+        from: 'customer',
+        type: 'text'
+      }
+    });
+
+    // CONTINUE WITH AI PROCESSING
     // Show typing indicator
     const lastMessageId = messagesToProcess[messagesToProcess.length - 1].id;
     whatsappService.sendTypingIndicator(lastMessageId, "text");
