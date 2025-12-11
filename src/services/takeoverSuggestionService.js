@@ -54,14 +54,35 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
 
         // AUTO-ASSIGN: Customer explicitly requested human help
         console.log(`🚨 Customer requested human help - Auto-assigning conversation ${conversationId}`);
+
+        // Send friendly AI response before assigning
+        const whatsappService = require('./whatsappService');
+        const { buildTextJSON } = require('../shared/processMessage');
+        const phoneNumber = conversation.customerId.phoneNumber;
+
+        const assignmentMessage = buildTextJSON(
+            phoneNumber,
+            '¡Por supuesto! En unos momentos un agente de nuestro equipo será asignado a esta conversación para ayudarte. Gracias por tu paciencia. 😊'
+        );
+
+        await whatsappService.sendWhatsappResponse(assignmentMessage);
+        console.log(`📤 Sent assignment notification to customer`);
+
         const agentAssignmentService = require('./agentAssignmentService');
         const assignment = await agentAssignmentService.autoAssignConversation(conversationId);
-        
+
         if (assignment) {
             console.log(`✅ Conversation ${conversationId} auto-assigned to agent ${assignment.agent.email}`);
             return { ...assignment, autoAssigned: true, trigger: 'customer_request' };
         } else {
             console.log(`⚠️ No available agents for auto-assignment - creating suggestion`);
+
+            // Send fallback message if no agents available
+            const fallbackMessage = buildTextJSON(
+                phoneNumber,
+                'Lamento informarte que no hay agentes disponibles en este momento. Por favor, inténtalo más tarde o deja tu mensaje y te responderemos lo antes posible.'
+            );
+            await whatsappService.sendWhatsappResponse(fallbackMessage);
         }
     }
 

@@ -83,7 +83,7 @@ export class ChatService {
       (response) => {
         // Map backend conversation format to frontend Chat format
         const conversations = response.conversations || [];
-        this.mockChats = conversations.map((conv: any) => ({
+        const newChats = conversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
           name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
           avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
@@ -95,9 +95,17 @@ export class ChatService {
           isAIEnabled: conv.isAIEnabled !== false, // Default to true if not specified
           status: conv.status
         }));
+
+        // Deduplicate: Remove any existing conversations with same IDs
+        const existingIds = new Set(newChats.map((c: Chat) => c.id));
+        this.mockChats = this.mockChats.filter((c: Chat) => !existingIds.has(c.id));
+
+        // Add new conversations
+        this.mockChats = [...newChats, ...this.mockChats];
+
         this.chatsSubject.next(this.mockChats);
 
-        console.log(`Loaded ${this.mockChats.length} conversation(s)${agent ? ' assigned to agent' : ''}`);
+        console.log(`Loaded ${newChats.length} conversation(s)${agent ? ' assigned to agent' : ''}`);
       },
       (error) => console.error('Error loading conversations:', error)
     );
@@ -188,9 +196,7 @@ export class ChatService {
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
       // Reload conversations with agent context
-      this.authService.currentAgent$.subscribe((agent: Agent | null) => {
-        this.loadConversations(agent);
-      }).unsubscribe();
+      this.loadConversations(this.currentAgent);
     });
 
     this.socket.on('agent_typing', (data: any) => {
