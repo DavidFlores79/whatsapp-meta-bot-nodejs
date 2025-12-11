@@ -52,9 +52,22 @@ export class ChatService {
   }
 
   private loadConversations() {
-    this.http.get<Chat[]>(`${this.apiUrl}/conversations`).subscribe(
-      (chats) => {
-        this.mockChats = chats;
+    this.http.get<any>(`${this.apiUrl}/conversations`).subscribe(
+      (response) => {
+        // Map backend conversation format to frontend Chat format
+        const conversations = response.conversations || [];
+        this.mockChats = conversations.map((conv: any) => ({
+          id: conv._id, // MongoDB _id field
+          name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
+          avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+          lastMessage: conv.lastMessage || '',
+          lastMessageTime: new Date(conv.lastCustomerMessage || conv.updatedAt),
+          unreadCount: 0,
+          messages: [],
+          assignedAgent: conv.assignedAgent,
+          isAIEnabled: conv.isAIEnabled !== false, // Default to true if not specified
+          status: conv.status
+        }));
         this.chatsSubject.next(this.mockChats);
       },
       (error) => console.error('Error loading conversations:', error)
