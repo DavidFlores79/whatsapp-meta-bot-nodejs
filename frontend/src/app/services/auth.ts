@@ -116,4 +116,8 @@ export class AuthService {
   getCurrentAgent(): Agent | null {
     return this.currentAgentSubject.value;
   }
+
+  isAuthenticated(): boolean {
+    return this.isAuthenticatedSubject.value;
+  }
 }
