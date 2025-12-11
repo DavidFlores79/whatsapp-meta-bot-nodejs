@@ -50,6 +50,7 @@ export class ChatService {
   private socket: any;
   private apiUrl = '/api/v2'; // Relative URL for same-port deployment
   private mockChats: Chat[] = [];
+  private currentAgent: Agent | null = null; // Store current agent for filtering
 
   private chatsSubject = new BehaviorSubject<Chat[]>(this.mockChats);
   private selectedChatIdSubject = new BehaviorSubject<string | null>(null);
@@ -65,6 +66,7 @@ export class ChatService {
     
     // Load conversations based on agent authentication status
     this.authService.currentAgent$.subscribe((agent: Agent | null) => {
+      this.currentAgent = agent; // Store current agent
       this.loadConversations(agent);
     });
   }
@@ -142,6 +144,12 @@ export class ChatService {
       this.handleNewMessage(data.chatId, data.message);
     });
 
+    // Listen for new conversations
+    this.socket.on('new_conversation', (data: any) => {
+      console.log('New conversation created:', data);
+      this.handleNewConversation(data);
+    });
+
     // Listen for agent-specific events
     this.socket.on('takeover_suggested', (data: any) => {
       console.log('Takeover suggested:', data);
@@ -194,6 +202,39 @@ export class ChatService {
     }
   }
 
+  private handleNewConversation(data: any) {
+    // Check if conversation already exists
+    if (this.mockChats.find(c => c.id === data.conversationId)) {
+      console.log(`Conversation ${data.conversationId} already exists, ignoring`);
+      return;
+    }
+
+    // For agents, only add unassigned conversations (they can claim them)
+    // Assigned conversations will come through conversation_assigned event
+    if (this.currentAgent && data.assignedAgent) {
+      console.log('Conversation already assigned, ignoring (will come through assignment event)');
+      return;
+    }
+
+    // Create new chat entry
+    const newChat: Chat = {
+      id: data.conversationId,
+      name: data.customer?.name || data.customer?.phoneNumber || 'Unknown',
+      avatar: data.customer?.avatar || `https://i.pravatar.cc/150?u=${data.customer?.phoneNumber}`,
+      lastMessage: 'New conversation',
+      lastMessageTime: new Date(data.timestamp),
+      unreadCount: 0,
+      messages: [],
+      assignedAgent: data.assignedAgent,
+      isAIEnabled: true,
+      status: data.status
+    };
+
+    this.mockChats.unshift(newChat);
+    this.chatsSubject.next([...this.mockChats]);
+    console.log(`Added new conversation ${data.conversationId} to chat list`);
+  }
+
   private handleNewMessage(chatId: string, message: Message) {
     let chatIndex = this.mockChats.findIndex(c => c.id === chatId);
 
@@ -223,27 +264,35 @@ export class ChatService {
         next: (response) => {
           const conv = response.conversation;
           if (conv) {
-            // Create new chat entry with proper data
-            const newChat: Chat = {
-              id: conv._id,
-              name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
-              avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
-              lastMessage: message.text,
-              lastMessageTime: new Date(message.timestamp),
-              unreadCount: 1,
-              messages: [message],
-              assignedAgent: conv.assignedAgent,
-              isAIEnabled: conv.isAIEnabled !== false,
-              status: conv.status
-            };
-            this.mockChats.unshift(newChat);
-            this.chatsSubject.next([...this.mockChats]);
+            // If agent is logged in, only show conversations assigned to them
+            const isAssignedToAgent = !this.currentAgent || 
+              (conv.assignedAgent && conv.assignedAgent._id === this.currentAgent._id);
+            
+            if (isAssignedToAgent) {
+              // Create new chat entry with proper data
+              const newChat: Chat = {
+                id: conv._id,
+                name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
+                avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+                lastMessage: message.text,
+                lastMessageTime: new Date(message.timestamp),
+                unreadCount: 1,
+                messages: [message],
+                assignedAgent: conv.assignedAgent,
+                isAIEnabled: conv.isAIEnabled !== false,
+                status: conv.status
+              };
+              this.mockChats.unshift(newChat);
+              this.chatsSubject.next([...this.mockChats]);
+            } else {
+              console.log(`Conversation ${chatId} is not assigned to current agent, ignoring`);
+            }
           }
         },
         error: (err) => {
           console.error('Error fetching conversation:', err);
-          // Fallback: reload all conversations
-          this.loadConversations();
+          // Fallback: reload conversations with agent context
+          this.loadConversations(this.currentAgent);
         }
       });
     }

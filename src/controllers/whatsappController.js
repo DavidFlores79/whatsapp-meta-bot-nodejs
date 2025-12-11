@@ -139,6 +139,20 @@ const receivedMessage = async (req, res) => {
       // Update customer stats
       customer.statistics.totalConversations = (customer.statistics.totalConversations || 0) + 1;
       await customer.save();
+
+      // Emit new conversation event to all agents
+      req.io.emit('new_conversation', {
+        conversationId: conversation._id.toString(),
+        customer: {
+          id: customer._id.toString(),
+          name: customer.firstName || customer.phoneNumber,
+          phoneNumber: customer.phoneNumber,
+          avatar: customer.avatar
+        },
+        status: conversation.status,
+        timestamp: new Date()
+      });
+      console.log(`📢 New conversation created: ${conversation._id}`);
     }
 
     // Create message record
