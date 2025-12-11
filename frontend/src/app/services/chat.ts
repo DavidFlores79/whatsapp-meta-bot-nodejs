@@ -63,7 +63,7 @@ export class ChatService {
 
   constructor(private http: HttpClient, private authService: AuthService) {
     this.initSocket();
-    
+
     // Load conversations based on agent authentication status
     this.authService.currentAgent$.subscribe((agent: Agent | null) => {
       this.currentAgent = agent; // Store current agent
@@ -73,7 +73,7 @@ export class ChatService {
 
   private loadConversations(agent?: Agent | null) {
     // If agent is logged in, load only their assigned conversations
-    const endpoint = agent 
+    const endpoint = agent
       ? `${this.apiUrl}/conversations/assigned`
       : `${this.apiUrl}/conversations`;
 
@@ -94,7 +94,7 @@ export class ChatService {
           status: conv.status
         }));
         this.chatsSubject.next(this.mockChats);
-        
+
         console.log(`Loaded ${this.mockChats.length} conversation(s)${agent ? ' assigned to agent' : ''}`);
       },
       (error) => console.error('Error loading conversations:', error)
@@ -265,9 +265,9 @@ export class ChatService {
           const conv = response.conversation;
           if (conv) {
             // If agent is logged in, only show conversations assigned to them
-            const isAssignedToAgent = !this.currentAgent || 
+            const isAssignedToAgent = !this.currentAgent ||
               (conv.assignedAgent && conv.assignedAgent._id === this.currentAgent._id);
-            
+
             if (isAssignedToAgent) {
               // Create new chat entry with proper data
               const newChat: Chat = {

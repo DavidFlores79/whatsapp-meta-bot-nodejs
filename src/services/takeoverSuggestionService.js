@@ -10,7 +10,10 @@ const SUGGESTION_THRESHOLDS = {
     ESCALATION_KEYWORDS: [
         'hablar con persona',
         'hablar con humano',
+        'hablar con alguien',
         'agente real',
+        'agente humano',
+        'persona real',
         'gerente',
         'supervisor',
         'mal servicio',
@@ -18,7 +21,11 @@ const SUGGESTION_THRESHOLDS = {
         'denunciar',
         'queja',
         'no funciona',
-        'no sirve'
+        'no sirve',
+        'ayuda humana',
+        'quiero hablar',
+        'necesito hablar',
+        'comunicar con'
     ]
 };
 
@@ -44,6 +51,18 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
     if (hasEscalationKeyword) {
         triggers.push('escalation_keyword');
         suggestionScore += 50;
+
+        // AUTO-ASSIGN: Customer explicitly requested human help
+        console.log(`🚨 Customer requested human help - Auto-assigning conversation ${conversationId}`);
+        const agentAssignmentService = require('./agentAssignmentService');
+        const assignment = await agentAssignmentService.autoAssignConversation(conversationId);
+        
+        if (assignment) {
+            console.log(`✅ Conversation ${conversationId} auto-assigned to agent ${assignment.agent.email}`);
+            return { ...assignment, autoAssigned: true, trigger: 'customer_request' };
+        } else {
+            console.log(`⚠️ No available agents for auto-assignment - creating suggestion`);
+        }
     }
 
     // 2. Check AI confidence (if provided in aiResponse metadata)

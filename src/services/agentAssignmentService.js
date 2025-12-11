@@ -11,9 +11,15 @@ async function getAvailableAgents(filters = {}) {
         ...filters
     };
 
+    console.log(`🔍 Searching for available agents with filters:`, query);
+
     const agents = await Agent.find(query)
         .where('statistics.activeAssignments')
         .lt(20); // Max 20 concurrent chats (using the max value from schema)
+
+    console.log(`📊 Found ${agents.length} available agent(s):`, 
+        agents.map(a => `${a.email} (${a.status}, ${a.statistics.activeAssignments} chats)`).join(', ') || 'none'
+    );
 
     return agents.sort((a, b) =>
         a.statistics.activeAssignments - b.statistics.activeAssignments
@@ -30,14 +36,22 @@ async function autoAssignConversation(conversationId) {
     }
 
     // Get available agents with auto-assign enabled
-    const availableAgents = await getAvailableAgents({ autoAssign: true });
+    let availableAgents = await getAvailableAgents({ autoAssign: true });
+
+    // Fallback: if no auto-assign agents, get ANY available agent
+    if (availableAgents.length === 0) {
+        console.log('⚠️ No auto-assign agents available, trying any available agent');
+        availableAgents = await getAvailableAgents();
+    }
 
     if (availableAgents.length === 0) {
+        console.log('❌ No available agents for assignment');
         return null;
     }
 
     // Simple load balancing: assign to agent with fewest active chats
     const selectedAgent = availableAgents[0];
+    console.log(`✅ Selected agent ${selectedAgent.email} for auto-assignment (${selectedAgent.statistics.activeAssignments} active chats)`);
 
     return await assignConversationToAgent(conversationId, selectedAgent._id);
 }
