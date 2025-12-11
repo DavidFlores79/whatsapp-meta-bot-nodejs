@@ -169,7 +169,10 @@ export class ChatService {
         id: Date.now().toString(),
         text: data.message,
         sender: 'other',
-        timestamp: new Date(data.timestamp)
+        timestamp: new Date(data.timestamp),
+        type: data.type || 'text',
+        attachments: data.attachments,
+        location: data.location
       });
     });
 
