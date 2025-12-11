@@ -82,8 +82,8 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
 
     // Build message for AI assistant including image context
     let messageForAI = "El usuario ha enviado una imagen.";
-    if (imageCaption) {
-      messageForAI += ` Descripción de la imagen: "${imageCaption}"`;
+    if (caption) {
+      messageForAI += ` Descripción de la imagen: "${caption}"`;
     }
     messageForAI += `\n\nURL de la imagen: ${uploadResult.url}`;
     messageForAI += `\n\nSi el usuario está reportando un problema, puedes usar esta imagen como evidencia en el ticket.`;
@@ -92,7 +92,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
     const aiReply = await openaiService.getAIResponse(
       messageForAI,
       phoneNumber,
-      { imageUrl: uploadResult.url, imageCaption }
+      { imageUrl: uploadResult.url, imageCaption: caption }
     );
 
     // Send AI reply back to user

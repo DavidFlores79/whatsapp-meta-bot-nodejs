@@ -188,34 +188,8 @@ async function processUserQueue(userId) {
       }
     }
 
-    // Save user messages to history and emit socket events
-    for (const msg of messagesToProcess) {
-      try {
-        const newMessage = new Message({
-          conversationId: msg.conversationId,
-          customerId: msg.customerId,
-          content: msg.text,
-          type: msg.type || 'text',
-          direction: 'inbound',
-          sender: 'customer',
-          whatsappMessageId: msg.id,
-          status: 'delivered'
-        });
-        await newMessage.save();
-
-        io.emit('new_message', {
-          chatId: conversationId,
-          message: {
-            id: newMessage._id.toString(),
-            text: newMessage.content,
-            sender: 'other',
-            timestamp: newMessage.timestamp
-          }
-        });
-      } catch (dbError) {
-        console.error("Error saving user message to DB:", dbError);
-      }
-    }
+    // NOTE: User messages are already saved in whatsappController.js before calling handlers
+    // No need to save them again here - this was causing duplicate messages
 
     // Save AI response to history
     try {

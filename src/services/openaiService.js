@@ -278,24 +278,8 @@ async function getAssistantResponse(threadId, runId, userId, conversationId) {
     const textContent = assistantMessages[0].content.find(c => c.type === "text");
     const aiResponseText = textContent?.text?.value || "No response";
 
-    if (conversationId) {
-      try {
-        // In a real scenario, we'd fetch customerId properly or pass it. 
-        // For now, we emit socket event which is the priority.
-      } catch (e) { console.error("DB Error:", e); }
-    }
-
-    try {
-      io.emit('new_message', {
-        chatId: conversationId || userId,
-        message: {
-          id: Date.now().toString(),
-          text: aiResponseText,
-          sender: 'me',
-          timestamp: new Date()
-        }
-      });
-    } catch (e) { console.error("Socket Error:", e); }
+    // NOTE: Socket emission is handled in queueService.js after saving to DB
+    // Removed duplicate io.emit here to prevent duplicate messages in frontend
 
     return aiResponseText;
   }
