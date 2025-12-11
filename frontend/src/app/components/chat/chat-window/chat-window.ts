@@ -58,7 +58,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   isAssignedToMe(chat: Chat): boolean {
     const currentAgent = this.authService.getCurrentAgent();
-    if (!currentAgent || !chat.assignedAgent) {
+    if (!currentAgent || !currentAgent._id || !chat.assignedAgent || !chat.assignedAgent._id) {
       return false;
     }
     // Compare as strings to ensure match
