@@ -81,7 +81,8 @@ const messageSchema = new mongoose.Schema({
         latitude: Number,
         longitude: Number,
         address: String,
-        name: String
+        name: String,
+        mapImageUrl: String
     },
 
     // Template Message Data

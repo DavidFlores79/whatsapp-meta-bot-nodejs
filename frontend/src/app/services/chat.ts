@@ -11,6 +11,7 @@ export interface Message {
   sender: 'me' | 'other';
   timestamp: Date;
   type?: string;
+  status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
   attachments?: Array<{
     type: string;
     url: string;
@@ -86,8 +87,8 @@ export class ChatService {
           id: conv._id, // MongoDB _id field
           name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
           avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
-          lastMessage: conv.lastMessage || '',
-          lastMessageTime: new Date(conv.lastCustomerMessage || conv.updatedAt),
+          lastMessage: conv.lastMessage?.content || '',
+          lastMessageTime: new Date(conv.lastMessage?.timestamp || conv.lastCustomerMessage || conv.updatedAt),
           unreadCount: 0,
           messages: [],
           assignedAgent: conv.assignedAgent,
@@ -117,6 +118,7 @@ export class ChatService {
             sender: (msg.sender === 'ai' || msg.sender === 'agent') ? 'me' : 'other',
             timestamp: new Date(msg.timestamp),
             type: msg.type,
+            status: msg.status,
             attachments: msg.attachments,
             location: msg.location
           }));
@@ -171,6 +173,7 @@ export class ChatService {
         sender: 'other',
         timestamp: new Date(data.timestamp),
         type: data.type || 'text',
+        status: data.status,
         attachments: data.attachments,
         location: data.location
       });
@@ -333,7 +336,8 @@ export class ChatService {
           id: response.message?._id || Date.now().toString(),
           text,
           sender: 'me',
-          timestamp: new Date()
+          timestamp: new Date(),
+          status: response.message?.status || 'sent'
         };
         this.handleNewMessage(currentChatId, newMessage);
       },
