@@ -114,26 +114,13 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       }
     });
 
-    // Emit to frontend
-    io.emit('new_message', {
-      chatId: conversationId,
-      message: {
-        id: imageMessage._id.toString(),
-        text: caption || '[Image]',
-        sender: 'other',
-        timestamp: imageMessage.timestamp,
-        type: 'image',
-        attachments: imageMessage.attachments
-      }
-    });
-
     // Check if conversation is assigned to agent
     const conversation = await Conversation.findById(conversationId).populate('assignedAgent');
 
     if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
       console.log(`📨 Image sent to assigned agent ${conversation.assignedAgent.email}`);
       
-      // Notify agent
+      // Emit ONLY to assigned agent (not broadcast)
       io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
         conversationId,
         customerId,
@@ -142,6 +129,19 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
         type: 'image',
         attachments: imageMessage.attachments,
         timestamp: new Date()
+      });
+    } else {
+      // Only broadcast if NOT assigned - AI is handling
+      io.emit('new_message', {
+        chatId: conversationId,
+        message: {
+          id: imageMessage._id.toString(),
+          text: caption || '[Image]',
+          sender: 'other',
+          timestamp: imageMessage.timestamp,
+          type: 'image',
+          attachments: imageMessage.attachments
+        }
       });
       
       return; // Don't process with AI
@@ -243,26 +243,13 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
       }
     });
 
-    // Emit to frontend
-    io.emit('new_message', {
-      chatId: conversationId,
-      message: {
-        id: locationMessage._id.toString(),
-        text: addressData.formatted_address,
-        sender: 'other',
-        timestamp: locationMessage.timestamp,
-        type: 'location',
-        location: locationMessage.location
-      }
-    });
-
     // Check if conversation is assigned to agent
     const conversation = await Conversation.findById(conversationId).populate('assignedAgent');
 
     if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
       console.log(`📨 Location sent to assigned agent ${conversation.assignedAgent.email}`);
       
-      // Notify agent
+      // Emit ONLY to assigned agent (not broadcast)
       io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
         conversationId,
         customerId,
@@ -271,6 +258,19 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
         type: 'location',
         location: locationMessage.location,
         timestamp: new Date()
+      });
+    } else {
+      // Only broadcast if NOT assigned - AI is handling  
+      io.emit('new_message', {
+        chatId: conversationId,
+        message: {
+          id: locationMessage._id.toString(),
+          text: addressData.formatted_address,
+          sender: 'other',
+          timestamp: locationMessage.timestamp,
+          type: 'location',
+          location: locationMessage.location
+        }
       });
       
       return; // Don't process with AI

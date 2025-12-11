@@ -119,10 +119,39 @@ async function processUserQueue(userId) {
         });
         await newMessage.save();
 
-        io.emit('new_message', {
-          chatId: conversationId,
-          message: {
-            id: newMessage._id.toString(),
+        // Message already sent to agent via customer_message event above
+        // No need to emit new_message here
+      }
+
+      // Clear queue
+      this.messageQueues.delete(userId);
+      return; // Exit early - message routed to agent
+    }
+
+    // ============================================
+    // AI PROCESSING (when NOT assigned to agent)
+    // ============================================
+    console.log(`🤖 Processing with AI...`);
+
+    // Save messages first
+    for (const msg of messagesToProcess) {
+      const newMessage = new Message({
+        conversationId: msg.conversationId,
+        customerId: msg.customerId,
+        content: msg.text,
+        type: msg.type || 'text',
+        direction: 'inbound',
+        sender: 'customer',
+        whatsappMessageId: msg.id,
+        status: 'delivered'
+      });
+      await newMessage.save();
+
+      // Emit customer message to frontend
+      io.emit('new_message', {
+        chatId: conversationId,
+        message: {
+          id: newMessage._id.toString(),
             text: newMessage.content,
             sender: 'other',
             timestamp: newMessage.timestamp
