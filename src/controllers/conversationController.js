@@ -198,15 +198,16 @@ async function sendReply(req, res) {
 async function getConversationMessages(req, res) {
     try {
         const conversationId = req.params.id;
-        const { limit = 100, skip = 0 } = req.query;
+        const { limit = 500, skip = 0 } = req.query;
 
+        // Get all messages for the conversation, sorted by timestamp ascending (oldest first)
         const messages = await Message.find({ conversationId })
             .populate('agentId', 'firstName lastName avatar')
             .sort({ timestamp: 1 })
             .limit(parseInt(limit))
             .skip(parseInt(skip));
 
-        return res.json({ messages });
+        return res.json({ messages, total: messages.length });
     } catch (error) {
         console.error('Get messages error:', error);
         return res.status(500).json({ error: error.message });
