@@ -203,18 +203,9 @@ export class ChatService {
         this.chatsSubject.next([...this.mockChats]);
       }
     } else {
-      // Create new chat if it doesn't exist (optional, for new users)
-      const newChat: Chat = {
-        id: chatId,
-        name: chatId, // Use phone number as name initially
-        avatar: 'https://i.pravatar.cc/150?u=' + chatId,
-        lastMessage: message.text,
-        lastMessageTime: new Date(message.timestamp),
-        unreadCount: 1,
-        messages: [message]
-      };
-      this.mockChats.unshift(newChat);
-      this.chatsSubject.next([...this.mockChats]);
+      // Chat not found - reload conversations from server instead of creating duplicate
+      console.log(`Chat ${chatId} not found locally, reloading conversations from server`);
+      this.loadConversations();
     }
   }
 
