@@ -11,7 +11,7 @@
                     <div class="flex items-center gap-2 text-xs">
                         <!-- Agent Assignment Indicator -->
                         <span *ngIf="chat.assignedAgent" class="text-blue-400">
-                            <i class="fas fa-user-tie"></i> {{ chat.assignedAgent.firstName }} {{ chat.assignedAgent.lastName }}
+                            <i class="fas fa-user-tie"></i> {{ getAssignedAgentName(chat) }}
                         </span>
                         <!-- AI Status Indicator -->
                         <span *ngIf="chat.isAIEnabled" class="text-green-400">
@@ -31,11 +31,6 @@
 
         <!-- Agent Control Buttons -->
         <div class="px-4 pb-2 flex gap-2">
-            <!-- Debug Info (temporary) -->
-            <div class="text-xs text-gray-400 mb-2">
-                Assigned Agent ID: {{ chat.assignedAgent?._id }} | IsAssignedToMe: {{ isAssignedToMe(chat) }}
-            </div>
-
             <!-- Take Over Button (show when not assigned) -->
             <button
                 *ngIf="!chat.assignedAgent"
@@ -59,7 +54,7 @@
                 *ngIf="chat.assignedAgent && !isAssignedToMe(chat)"
                 class="px-4 py-1.5 bg-gray-700 text-gray-300 text-sm rounded-md flex items-center gap-2">
                 <i class="fas fa-info-circle"></i>
-                Assigned to {{ chat.assignedAgent.firstName }}
+                Assigned to {{ getAssignedAgentFirstName(chat) }}
             </div>
         </div>
     </div>

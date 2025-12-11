@@ -27,20 +27,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   ngOnInit() {
-    // Listen for typing events from socket
-    this.chatService.onTyping().subscribe((data: any) => {
-      this.isTyping = true;
-
-      // Clear existing timeout
-      if (this.typingTimeout) {
-        clearTimeout(this.typingTimeout);
-      }
-
-      // Stop showing typing after 3 seconds
-      this.typingTimeout = setTimeout(() => {
-        this.isTyping = false;
-      }, 3000);
-    });
+    // Typing indicators disabled - WhatsApp webhooks don't provide customer typing events
+    // Agent typing is handled separately and shouldn't show customer typing indicator
   }
 
   ngAfterViewChecked() {
@@ -65,13 +53,23 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     console.log('Chat Assigned Agent:', chat.assignedAgent);
     console.log('Chat Assigned Agent type:', typeof chat.assignedAgent);
 
-    if (!currentAgent || !currentAgent._id || !chat.assignedAgent || !chat.assignedAgent._id) {
+    if (!currentAgent || !currentAgent._id || !chat.assignedAgent) {
       console.log('Check failed - missing data');
       return false;
     }
 
+    // Handle both cases: assignedAgent as string or as object
+    const assignedAgentId = typeof chat.assignedAgent === 'string' 
+      ? chat.assignedAgent 
+      : chat.assignedAgent._id;
+
+    if (!assignedAgentId) {
+      console.log('Check failed - no assigned agent ID');
+      return false;
+    }
+
     // Compare as strings to ensure match
-    const match = chat.assignedAgent._id.toString() === currentAgent._id.toString();
+    const match = assignedAgentId.toString() === currentAgent._id.toString();
     console.log('Agent IDs match:', match);
     console.log('===========================');
     return match;
@@ -105,5 +103,31 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         alert('Failed to release conversation: ' + (err.error?.error || 'Unknown error'));
       }
     });
+  }
+
+  /**
+   * Get assigned agent name (handles both string and object format)
+   */
+  getAssignedAgentName(chat: Chat): string {
+    if (!chat.assignedAgent) return '';
+    
+    if (typeof chat.assignedAgent === 'string') {
+      return 'Agent'; // Fallback when we only have ID
+    }
+    
+    return `${chat.assignedAgent.firstName} ${chat.assignedAgent.lastName}`;
+  }
+
+  /**
+   * Get assigned agent first name (handles both string and object format)
+   */
+  getAssignedAgentFirstName(chat: Chat): string {
+    if (!chat.assignedAgent) return '';
+    
+    if (typeof chat.assignedAgent === 'string') {
+      return 'Agent'; // Fallback when we only have ID
+    }
+    
+    return chat.assignedAgent.firstName;
   }
 }

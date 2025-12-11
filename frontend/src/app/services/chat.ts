@@ -35,7 +35,7 @@ export interface Chat {
   lastMessageTime: Date;
   unreadCount: number;
   messages: Message[];
-  assignedAgent?: {
+  assignedAgent?: string | {
     _id: string;
     firstName: string;
     lastName: string;
