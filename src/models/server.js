@@ -29,6 +29,10 @@ class Server {
     //conectar a DB
     this.conectarDB();
 
+    // Initialize background services
+    const autoTimeoutService = require('../services/autoTimeoutService');
+    autoTimeoutService.startAutoTimeoutService();
+
     //middlewares
     this.middlewares(io);
 
@@ -85,6 +89,8 @@ class Server {
 
   routes() {
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
+    this.app.use("/api/v2/agents", require("../routes/agentRoutes"));
+    this.app.use("/api/v2/conversations", require("../routes/conversationRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));
 

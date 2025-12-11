@@ -1,0 +1,54 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="bg-white p-8 rounded-lg shadow-md w-96">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Agent Login</h1>
+      <p class="text-gray-600 text-sm mt-2">WhatsApp CRM Agent Portal</p>
+    </div>
+
+    <form (ngSubmit)="login()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required
+          autocomplete="email"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="agent@example.com"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <div *ngIf="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+        {{ error }}
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading"
+        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+      >
+        <span *ngIf="!loading">Login</span>
+        <span *ngIf="loading">Logging in...</span>
+      </button>
+    </form>
+
+    <div class="mt-6 text-center text-sm text-gray-600">
+      <p>Default credentials:</p>
+      <p class="font-mono text-xs mt-1">admin@example.com / admin123</p>
+    </div>
+  </div>
+</div>

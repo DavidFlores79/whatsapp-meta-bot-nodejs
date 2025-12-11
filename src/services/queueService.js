@@ -75,6 +75,13 @@ async function processUserQueue(userId) {
   console.log(`\n🚀 PROCESSING QUEUE for ${userId} - ${messagesToProcess.length} message(s)`);
 
   try {
+    // Get conversationId from first message
+    const conversationId = messagesToProcess[0].conversationId;
+
+    // CHECK IF CONVERSATION IS ASSIGNED TO AN AGENT
+    const conversation = await Conversation.findById(conversationId)
+      .populate('assignedAgent');
+
     // Combine all text messages into one context
     const combinedText = messagesToProcess
       .map(msg => msg.text)
@@ -84,12 +91,65 @@ async function processUserQueue(userId) {
     console.log(`📝 Combined message (${combinedText.length} chars):`);
     console.log(`   "${combinedText.substring(0, 100)}${combinedText.length > 100 ? '...' : ''}"`);
 
+    // If assigned to agent, route to agent instead of AI
+    if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
+      console.log(`📨 Conversation assigned to agent ${conversation.assignedAgent.email} - Routing to agent`);
+
+      // Emit to specific agent via socket
+      io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
+        conversationId: conversation._id,
+        customerId: messagesToProcess[0].customerId,
+        customerPhone: userId,
+        message: combinedText,
+        messageCount: messagesToProcess.length,
+        timestamp: new Date()
+      });
+
+      // Save messages to database
+      for (const msg of messagesToProcess) {
+        const newMessage = new Message({
+          conversationId: msg.conversationId,
+          customerId: msg.customerId,
+          content: msg.text,
+          type: msg.type || 'text',
+          direction: 'inbound',
+          sender: 'customer',
+          whatsappMessageId: msg.id,
+          status: 'delivered'
+        });
+        await newMessage.save();
+
+        io.emit('new_message', {
+          chatId: userId,
+          message: {
+            id: newMessage._id.toString(),
+            text: newMessage.content,
+            sender: 'other',
+            timestamp: newMessage.timestamp
+          }
+        });
+      }
+
+      // Update conversation
+      await Conversation.findByIdAndUpdate(conversationId, {
+        $inc: { messageCount: messagesToProcess.length, unreadCount: messagesToProcess.length },
+        lastCustomerMessage: new Date(),
+        lastMessage: {
+          content: combinedText,
+          timestamp: new Date(),
+          from: 'customer',
+          type: 'text'
+        }
+      });
+
+      console.log(`✅ Messages routed to agent ${conversation.assignedAgent.email}`);
+      return;
+    }
+
+    // CONTINUE WITH AI PROCESSING (original code)
     // Show typing indicator
     const lastMessageId = messagesToProcess[messagesToProcess.length - 1].id;
     whatsappService.sendTypingIndicator(lastMessageId, "text");
-
-    // Get conversationId from first message
-    const conversationId = messagesToProcess[0].conversationId;
 
     // Send combined message to OpenAI
     console.log(`🤖 Calling OpenAI Assistant with combined context...`);
@@ -98,6 +158,10 @@ async function processUserQueue(userId) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
     console.log(`🤖 OpenAI response received in ${duration}s (length: ${aiReply.length} chars)`);
+
+    // ANALYZE FOR TAKEOVER SUGGESTION
+    const takeoverSuggestionService = require('./takeoverSuggestionService');
+    await takeoverSuggestionService.analyzeForTakeover(conversationId, combinedText, aiReply);
 
     // Send response to WhatsApp
     const replyPayload = buildTextJSON(userId, aiReply);

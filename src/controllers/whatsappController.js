@@ -110,6 +110,18 @@ const receivedMessage = async (req, res) => {
       await customer.save();
     }
 
+    // ============================================
+    // CHECK IF MESSAGE IS FROM AN AGENT
+    // ============================================
+    const agentMessageRelayService = require('../services/agentMessageRelayService');
+    const agent = await agentMessageRelayService.detectAgentMessage(userPhoneNumber);
+
+    if (agent) {
+      console.log(`📨 Message from agent ${agent.email} - Processing as agent relay`);
+      await agentMessageRelayService.handleAgentWhatsAppMessage(agent, messageObject, userPhoneNumber);
+      return; // Don't process as customer message
+    }
+
     // Find or create active conversation
     let conversation = await Conversation.findOne({
       customerId: customer._id,

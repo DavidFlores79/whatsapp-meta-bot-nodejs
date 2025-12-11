@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
+import { AuthService, Agent } from './auth';
 
 export interface Message {
   id: string;
@@ -19,6 +20,14 @@ export interface Chat {
   lastMessageTime: Date;
   unreadCount: number;
   messages: Message[];
+  assignedAgent?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  isAIEnabled?: boolean;
+  status?: string;
 }
 
 @Injectable({
@@ -37,7 +46,7 @@ export class ChatService {
     map(chatId => this.mockChats.find(c => c.id === chatId) || null)
   );
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private authService: AuthService) {
     this.initSocket();
     this.loadConversations();
   }
@@ -69,12 +78,55 @@ export class ChatService {
 
     this.socket.on('connect', () => {
       console.log('Connected to socket server');
+
+      // Authenticate agent if logged in
+      this.authService.currentAgent$.subscribe((agent: Agent | null) => {
+        if (agent) {
+          this.socket.emit('agent_authenticate', { agentId: agent._id });
+        }
+      });
     });
 
     this.socket.on('new_message', (data: { chatId: string, message: Message }) => {
       console.log('New message received:', data);
       this.handleNewMessage(data.chatId, data.message);
     });
+
+    // Listen for agent-specific events
+    this.socket.on('takeover_suggested', (data: any) => {
+      console.log('Takeover suggested:', data);
+      // You can emit this to a separate subject for UI notifications
+    });
+
+    this.socket.on('ai_resumed', (data: any) => {
+      console.log('AI resumed:', data);
+      // Update conversation in UI
+      this.handleAIResumed(data.conversationId);
+    });
+
+    this.socket.on('customer_message', (data: any) => {
+      console.log('Customer message (assigned to me):', data);
+      this.handleNewMessage(data.customerPhone, {
+        id: Date.now().toString(),
+        text: data.message,
+        sender: 'other',
+        timestamp: new Date(data.timestamp)
+      });
+    });
+
+    this.socket.on('conversation_assigned', (data: any) => {
+      console.log('Conversation assigned to me:', data);
+      this.loadConversations(); // Reload conversations
+    });
+  }
+
+  private handleAIResumed(conversationId: string) {
+    const chat = this.mockChats.find(c => c.id === conversationId);
+    if (chat) {
+      chat.assignedAgent = undefined;
+      chat.isAIEnabled = true;
+      this.chatsSubject.next([...this.mockChats]);
+    }
   }
 
   private handleNewMessage(chatId: string, message: Message) {
@@ -152,5 +204,67 @@ export class ChatService {
     };
 
     this.handleNewMessage(currentChatId, newMessage);
+  }
+
+  // ======================================
+  // AGENT-SPECIFIC METHODS
+  // ======================================
+
+  /**
+   * Assign conversation to current agent
+   */
+  assignToMe(conversationId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/assign`, {}).pipe(
+      tap(() => {
+        const chat = this.mockChats.find(c => c.id === conversationId);
+        if (chat) {
+          const currentAgent = this.authService.getCurrentAgent();
+          if (currentAgent) {
+            chat.assignedAgent = {
+              _id: currentAgent._id,
+              firstName: currentAgent.firstName,
+              lastName: currentAgent.lastName,
+              email: currentAgent.email
+            };
+            chat.isAIEnabled = false;
+            this.chatsSubject.next([...this.mockChats]);
+          }
+        }
+      })
+    );
+  }
+
+  /**
+   * Release conversation back to AI
+   */
+  releaseConversation(conversationId: string, reason?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/release`, {
+      reason
+    }).pipe(
+      tap(() => {
+        const chat = this.mockChats.find(c => c.id === conversationId);
+        if (chat) {
+          chat.assignedAgent = undefined;
+          chat.isAIEnabled = true;
+          this.chatsSubject.next([...this.mockChats]);
+        }
+      })
+    );
+  }
+
+  /**
+   * Send agent message (from Web UI)
+   */
+  sendAgentMessage(conversationId: string, text: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/reply`, {
+      message: text
+    });
+  }
+
+  /**
+   * Get conversations assigned to current agent
+   */
+  getAssignedConversations(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/conversations/assigned`);
   }
 }
