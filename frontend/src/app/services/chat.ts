@@ -181,7 +181,7 @@ export class ChatService {
   }
 
   private handleNewMessage(chatId: string, message: Message) {
-    const chatIndex = this.mockChats.findIndex(c => c.id === chatId);
+    let chatIndex = this.mockChats.findIndex(c => c.id === chatId);
 
     if (chatIndex !== -1) {
       const chat = this.mockChats[chatIndex];
@@ -203,9 +203,35 @@ export class ChatService {
         this.chatsSubject.next([...this.mockChats]);
       }
     } else {
-      // Chat not found - reload conversations from server instead of creating duplicate
-      console.log(`Chat ${chatId} not found locally, reloading conversations from server`);
-      this.loadConversations();
+      // Chat not found - fetch the specific conversation from server
+      console.log(`Chat ${chatId} not found locally, fetching from server`);
+      this.http.get<any>(`${this.apiUrl}/conversations/${chatId}`).subscribe({
+        next: (response) => {
+          const conv = response.conversation;
+          if (conv) {
+            // Create new chat entry with proper data
+            const newChat: Chat = {
+              id: conv._id,
+              name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
+              avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+              lastMessage: message.text,
+              lastMessageTime: new Date(message.timestamp),
+              unreadCount: 1,
+              messages: [message],
+              assignedAgent: conv.assignedAgent,
+              isAIEnabled: conv.isAIEnabled !== false,
+              status: conv.status
+            };
+            this.mockChats.unshift(newChat);
+            this.chatsSubject.next([...this.mockChats]);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching conversation:', err);
+          // Fallback: reload all conversations
+          this.loadConversations();
+        }
+      });
     }
   }
 
