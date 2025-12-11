@@ -5,16 +5,16 @@
     <!-- User Profile Header -->
     <div class="bg-whatsapp-gray px-4 py-3 border-b border-gray-700 shrink-0">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3" *ngIf="currentAgent">
           <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600">
-            <img *ngIf="currentAgent?.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
-            <div *ngIf="!currentAgent?.avatar" class="w-full h-full flex items-center justify-center text-white font-medium">
-              {{ (currentAgent?.firstName || 'A')[0] }}{{ (currentAgent?.lastName || '')[0] }}
+            <img *ngIf="currentAgent.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
+            <div *ngIf="!currentAgent.avatar" class="w-full h-full flex items-center justify-center text-white font-medium">
+              {{ (currentAgent.firstName || 'A')[0] }}{{ (currentAgent.lastName || '')[0] }}
             </div>
           </div>
           <div>
-            <h3 class="text-gray-100 font-medium text-sm">{{ currentAgent?.firstName }} {{ currentAgent?.lastName }}</h3>
-            <p class="text-xs text-gray-400">{{ currentAgent?.email }}</p>
+            <h3 class="text-gray-100 font-medium text-sm">{{ currentAgent.firstName }} {{ currentAgent.lastName }}</h3>
+            <p class="text-xs text-gray-400">{{ currentAgent.email }}</p>
           </div>
         </div>
         <button (click)="logout()"
