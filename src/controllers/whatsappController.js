@@ -155,45 +155,10 @@ const receivedMessage = async (req, res) => {
       console.log(`📢 New conversation created: ${conversation._id}`);
     }
 
-    // Create message record (only for text messages - handlers will save images/locations with metadata)
-    let newMessage;
-    if (messageType === 'text') {
-      newMessage = await Message.create({
-        conversationId: conversation._id,
-        customerId: customer._id,
-        content: messageObject.text.body,
-        type: messageType,
-        direction: 'inbound',
-        sender: 'customer',
-        whatsappMessageId: messageId,
-        whatsappTimestamp: new Date(parseInt(req.body.entry[0].changes[0].value.messages[0].timestamp) * 1000),
-        status: 'delivered'
-      });
-
-      // Update conversation stats
-      conversation.lastMessage = {
-        content: newMessage.content,
-        timestamp: newMessage.timestamp,
-        from: 'customer',
-        type: messageType
-      };
-      conversation.messageCount += 1;
-      conversation.unreadCount += 1;
-      conversation.lastCustomerMessage = new Date();
-      await conversation.save();
-
-      // Emit socket event (only for text - handlers will emit for images/locations)
-      req.io.emit('new_message', {
-        chatId: conversation._id.toString(),
-        message: {
-          id: newMessage._id.toString(),
-          text: newMessage.content,
-          sender: 'other',
-          timestamp: newMessage.timestamp
-        }
-      });
-    }
-    // For non-text messages, handlers will save message, update stats, and emit socket events
+    // NOTE: Message records are created by handlers/queueService, NOT here
+    // This prevents duplicate message creation and socket emissions
+    // - Text messages: queueService creates record and emits socket
+    // - Images/Locations: messageHandlers create record and emit socket
 
     // Route to message handlers (pass conversation context)
     switch (messageType) {
