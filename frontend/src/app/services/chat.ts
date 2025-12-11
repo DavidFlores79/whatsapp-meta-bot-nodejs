@@ -145,7 +145,7 @@ export class ChatService {
 
     this.socket.on('customer_message', (data: any) => {
       console.log('Customer message (assigned to me):', data);
-      this.handleNewMessage(data.customerPhone, {
+      this.handleNewMessage(data.conversationId, {
         id: Date.now().toString(),
         text: data.message,
         sender: 'other',
