@@ -59,8 +59,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     }
 
     // Handle both cases: assignedAgent as string or as object
-    const assignedAgentId = typeof chat.assignedAgent === 'string' 
-      ? chat.assignedAgent 
+    const assignedAgentId = typeof chat.assignedAgent === 'string'
+      ? chat.assignedAgent
       : chat.assignedAgent._id;
 
     if (!assignedAgentId) {
@@ -110,11 +110,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   getAssignedAgentName(chat: Chat): string {
     if (!chat.assignedAgent) return '';
-    
+
     if (typeof chat.assignedAgent === 'string') {
       return 'Agent'; // Fallback when we only have ID
     }
-    
+
     return `${chat.assignedAgent.firstName} ${chat.assignedAgent.lastName}`;
   }
 
@@ -123,11 +123,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   getAssignedAgentFirstName(chat: Chat): string {
     if (!chat.assignedAgent) return '';
-    
+
     if (typeof chat.assignedAgent === 'string') {
       return 'Agent'; // Fallback when we only have ID
     }
-    
+
     return chat.assignedAgent.firstName;
   }
 }

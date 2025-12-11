@@ -57,7 +57,7 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
 
         // Send friendly AI response before assigning
         const whatsappService = require('./whatsappService');
-        const { buildTextJSON } = require('../shared/processMessage');
+        const { buildTextJSON } = require('../shared/whatsappModels');
         const phoneNumber = conversation.customerId.phoneNumber;
 
         const assignmentMessage = buildTextJSON(
