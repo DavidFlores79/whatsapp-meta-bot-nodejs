@@ -1,11 +1,11 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 const mongoose = require('mongoose');
 const UserThread = require('../src/models/UserThread');
 const Customer = require('../src/models/Customer');
 const Conversation = require('../src/models/Conversation');
 const Message = require('../src/models/Message');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp_bot';
+const MONGODB_URI = process.env.MONGODB || process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp_bot';
 
 async function migrate() {
     try {
