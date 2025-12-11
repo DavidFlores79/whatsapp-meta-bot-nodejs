@@ -16,6 +16,7 @@ import { ChatService, Chat } from '../../../services/chat';
 export class MainLayoutComponent implements OnInit {
   currentAgent: Agent | null = null;
   hasSelectedChat = false;
+  showMenu = false;
 
   constructor(
     private authService: AuthService,
@@ -34,7 +35,28 @@ export class MainLayoutComponent implements OnInit {
     });
   }
 
+  toggleMenu() {
+    this.showMenu = !this.showMenu;
+  }
+
+  closeMenu() {
+    this.showMenu = false;
+  }
+
+  viewProfile() {
+    this.closeMenu();
+    // TODO: Implement profile view
+    console.log('View profile');
+  }
+
+  viewSettings() {
+    this.closeMenu();
+    // TODO: Implement settings view
+    console.log('View settings');
+  }
+
   logout() {
+    this.closeMenu();
     this.authService.logout().subscribe({
       next: () => {
         this.router.navigate(['/login']);
