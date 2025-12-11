@@ -102,6 +102,18 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       }]
     });
 
+    // Update conversation stats
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $inc: { messageCount: 1, unreadCount: 1 },
+      lastCustomerMessage: new Date(),
+      lastMessage: {
+        content: caption || '[Image]',
+        timestamp: new Date(),
+        from: 'customer',
+        type: 'image'
+      }
+    });
+
     // Emit to frontend
     io.emit('new_message', {
       chatId: conversationId,
@@ -197,6 +209,9 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
     const addressData = await geocodingService.reverseGeocode(latitude, longitude);
     console.log(`✅ Location geocoded: ${addressData.formatted_address}`);
 
+    // Generate Google Maps static map URL for preview
+    const mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=400x300&markers=color:red%7C${latitude},${longitude}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+
     // Save message to DB with location metadata
     const locationMessage = await Message.create({
       conversationId,
@@ -211,7 +226,20 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
         latitude,
         longitude,
         address: addressData.formatted_address,
-        name: locationName
+        name: locationName,
+        mapImageUrl: mapImageUrl
+      }
+    });
+
+    // Update conversation stats
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $inc: { messageCount: 1, unreadCount: 1 },
+      lastCustomerMessage: new Date(),
+      lastMessage: {
+        content: addressData.formatted_address,
+        timestamp: new Date(),
+        from: 'customer',
+        type: 'location'
       }
     });
 
