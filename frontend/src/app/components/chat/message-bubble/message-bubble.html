@@ -16,15 +16,17 @@
             <a [href]="'https://maps.google.com/?q=' + message.location.latitude + ',' + message.location.longitude"
                target="_blank"
                class="block bg-gray-800 rounded-t-lg overflow-hidden hover:opacity-90 transition-opacity">
-                <!-- Map preview using OpenStreetMap (no API key needed) -->
+                <!-- Map preview using Google Maps static image -->
                 <div class="w-full h-48 bg-gray-700 relative">
-                    <iframe
-                        [src]="'https://www.openstreetmap.org/export/embed.html?bbox=' + (message.location.longitude - 0.01) + '%2C' + (message.location.latitude - 0.01) + '%2C' + (message.location.longitude + 0.01) + '%2C' + (message.location.latitude + 0.01) + '&layer=mapnik&marker=' + message.location.latitude + '%2C' + message.location.longitude | safeUrl"
-                        class="w-full h-full border-0"
-                        style="pointer-events: none;">
-                    </iframe>
-                    <!-- Click overlay to open in new tab -->
-                    <div class="absolute inset-0 bg-transparent"></div>
+                    <img *ngIf="message.location.mapImageUrl"
+                         [src]="message.location.mapImageUrl"
+                         [alt]="'Map of ' + (message.location.address || 'location')"
+                         class="w-full h-full object-cover">
+                    <!-- Fallback if no map image -->
+                    <div *ngIf="!message.location.mapImageUrl" 
+                         class="w-full h-full flex items-center justify-center text-gray-400">
+                        <i class="fas fa-map-marker-alt text-4xl"></i>
+                    </div>
                 </div>
                 <!-- Location details -->
                 <div class="p-3 bg-gray-800">

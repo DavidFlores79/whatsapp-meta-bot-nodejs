@@ -22,6 +22,7 @@ export interface Message {
     longitude: number;
     address?: string;
     name?: string;
+    mapImageUrl?: string;
   };
 }
 
