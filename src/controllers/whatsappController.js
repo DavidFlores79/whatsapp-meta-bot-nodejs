@@ -206,11 +206,11 @@ const receivedMessage = async (req, res) => {
         break;
 
       case "image":
-        await messageHandlers.handleImageMessage(messageObject, userPhoneNumber, conversation._id);
+        await messageHandlers.handleImageMessage(messageObject, userPhoneNumber, conversation._id, customer._id);
         break;
 
       case "location":
-        await messageHandlers.handleLocationMessage(messageObject, userPhoneNumber, conversation._id);
+        await messageHandlers.handleLocationMessage(messageObject, userPhoneNumber, conversation._id, customer._id);
         break;
 
       default:

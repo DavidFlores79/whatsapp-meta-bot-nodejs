@@ -52,10 +52,16 @@ async function handleTextMessage(messageObject, phoneNumber, conversationId, cus
  * Handle image messages
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
+ * @param {string} conversationId - Conversation ID
+ * @param {string} customerId - Customer ID
  */
-async function handleImageMessage(messageObject, phoneNumber, conversationId) {
+async function handleImageMessage(messageObject, phoneNumber, conversationId, customerId) {
+  const Conversation = require('../models/Conversation');
+  const Message = require('../models/Message');
+  const { io } = require('../models/server');
+  
   const imageId = messageObject.image.id;
-  const caption = messageObject.image.caption || "Analyze this image";
+  const caption = messageObject.image.caption || "";
   const imageMimeType = messageObject.image.mime_type || "";
   const messageId = messageObject.id;
 
@@ -64,9 +70,6 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
   console.log("   MIME Type:", imageMimeType);
 
   try {
-    // Show typing indicator
-    whatsappService.sendTypingIndicator(messageId, "text");
-
     // Get the actual media URL from WhatsApp
     const imageUrl = await whatsappService.getMediaUrl(imageId);
     console.log("✅ Retrieved image URL from WhatsApp");
@@ -80,6 +83,62 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
 
     console.log(`✅ Image uploaded to Cloudinary: ${uploadResult.url}`);
 
+    // Save message to DB with image metadata
+    const imageMessage = await Message.create({
+      conversationId,
+      customerId,
+      content: caption || '[Image]',
+      type: 'image',
+      direction: 'inbound',
+      sender: 'customer',
+      whatsappMessageId: messageId,
+      status: 'delivered',
+      attachments: [{
+        type: 'image',
+        url: uploadResult.url,
+        filename: `image_${Date.now()}.jpg`,
+        mimeType: imageMimeType,
+        thumbnailUrl: uploadResult.url
+      }]
+    });
+
+    // Emit to frontend
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: imageMessage._id.toString(),
+        text: caption || '[Image]',
+        sender: 'other',
+        timestamp: imageMessage.timestamp,
+        type: 'image',
+        attachments: imageMessage.attachments
+      }
+    });
+
+    // Check if conversation is assigned to agent
+    const conversation = await Conversation.findById(conversationId).populate('assignedAgent');
+
+    if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
+      console.log(`📨 Image sent to assigned agent ${conversation.assignedAgent.email}`);
+      
+      // Notify agent
+      io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
+        conversationId,
+        customerId,
+        customerPhone: phoneNumber,
+        message: caption || '[Image]',
+        type: 'image',
+        attachments: imageMessage.attachments,
+        timestamp: new Date()
+      });
+      
+      return; // Don't process with AI
+    }
+
+    // Process with AI if not assigned
+    console.log('🤖 Processing image with AI');
+    whatsappService.sendTypingIndicator(messageId, "text");
+
     // Build message for AI assistant including image context
     let messageForAI = "El usuario ha enviado una imagen.";
     if (caption) {
@@ -92,7 +151,8 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
     const aiReply = await openaiService.getAIResponse(
       messageForAI,
       phoneNumber,
-      { imageUrl: uploadResult.url, imageCaption: caption }
+      { imageUrl: uploadResult.url, imageCaption: caption },
+      conversationId
     );
 
     // Send AI reply back to user
@@ -115,8 +175,14 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId) {
  * Handle location messages
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
+ * @param {string} conversationId - Conversation ID
+ * @param {string} customerId - Customer ID
  */
-async function handleLocationMessage(messageObject, phoneNumber) {
+async function handleLocationMessage(messageObject, phoneNumber, conversationId, customerId) {
+  const Conversation = require('../models/Conversation');
+  const Message = require('../models/Message');
+  const { io } = require('../models/server');
+  
   const location = messageObject.location;
   const latitude = location.latitude;
   const longitude = location.longitude;
@@ -127,13 +193,64 @@ async function handleLocationMessage(messageObject, phoneNumber) {
   console.log("📍 LOCATION received:", { latitude, longitude, locationName, locationAddress });
 
   try {
-    // Show typing indicator
-    whatsappService.sendTypingIndicator(messageId, "text");
-
     // Reverse geocode to get formatted address
     const addressData = await geocodingService.reverseGeocode(latitude, longitude);
-
     console.log(`✅ Location geocoded: ${addressData.formatted_address}`);
+
+    // Save message to DB with location metadata
+    const locationMessage = await Message.create({
+      conversationId,
+      customerId,
+      content: `[Location] ${addressData.formatted_address}`,
+      type: 'location',
+      direction: 'inbound',
+      sender: 'customer',
+      whatsappMessageId: messageId,
+      status: 'delivered',
+      location: {
+        latitude,
+        longitude,
+        address: addressData.formatted_address,
+        name: locationName
+      }
+    });
+
+    // Emit to frontend
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: locationMessage._id.toString(),
+        text: addressData.formatted_address,
+        sender: 'other',
+        timestamp: locationMessage.timestamp,
+        type: 'location',
+        location: locationMessage.location
+      }
+    });
+
+    // Check if conversation is assigned to agent
+    const conversation = await Conversation.findById(conversationId).populate('assignedAgent');
+
+    if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
+      console.log(`📨 Location sent to assigned agent ${conversation.assignedAgent.email}`);
+      
+      // Notify agent
+      io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
+        conversationId,
+        customerId,
+        customerPhone: phoneNumber,
+        message: addressData.formatted_address,
+        type: 'location',
+        location: locationMessage.location,
+        timestamp: new Date()
+      });
+      
+      return; // Don't process with AI
+    }
+
+    // Process with AI if not assigned
+    console.log('🤖 Processing location with AI');
+    whatsappService.sendTypingIndicator(messageId, "text");
 
     // Build message for AI assistant including location context
     let messageForAI = "El usuario ha enviado su ubicación.\n\n";
@@ -158,7 +275,8 @@ async function handleLocationMessage(messageObject, phoneNumber) {
     const aiReply = await openaiService.getAIResponse(
       messageForAI,
       phoneNumber,
-      { location: addressData }
+      { location: addressData },
+      conversationId
     );
 
     // Send AI reply back to user
