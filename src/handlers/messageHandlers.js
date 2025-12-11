@@ -130,22 +130,22 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
         attachments: imageMessage.attachments,
         timestamp: new Date()
       });
-    } else {
-      // Only broadcast if NOT assigned - AI is handling
-      io.emit('new_message', {
-        chatId: conversationId,
-        message: {
-          id: imageMessage._id.toString(),
-          text: caption || '[Image]',
-          sender: 'other',
-          timestamp: imageMessage.timestamp,
-          type: 'image',
-          attachments: imageMessage.attachments
-        }
-      });
       
-      return; // Don't process with AI
+      return; // Don't process with AI - agent is handling
     }
+    
+    // Broadcast for monitoring (AI is handling)
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: imageMessage._id.toString(),
+        text: caption || '[Image]',
+        sender: 'other',
+        timestamp: imageMessage.timestamp,
+        type: 'image',
+        attachments: imageMessage.attachments
+      }
+    });
 
     // Process with AI if not assigned
     console.log('🤖 Processing image with AI');
@@ -259,22 +259,22 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
         location: locationMessage.location,
         timestamp: new Date()
       });
-    } else {
-      // Only broadcast if NOT assigned - AI is handling  
-      io.emit('new_message', {
-        chatId: conversationId,
-        message: {
-          id: locationMessage._id.toString(),
-          text: addressData.formatted_address,
-          sender: 'other',
-          timestamp: locationMessage.timestamp,
-          type: 'location',
-          location: locationMessage.location
-        }
-      });
       
-      return; // Don't process with AI
+      return; // Don't process with AI - agent is handling
     }
+    
+    // Broadcast for monitoring (AI is handling)
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: locationMessage._id.toString(),
+        text: addressData.formatted_address,
+        sender: 'other',
+        timestamp: locationMessage.timestamp,
+        type: 'location',
+        location: locationMessage.location
+      }
+    });
 
     // Process with AI if not assigned
     console.log('🤖 Processing location with AI');

@@ -46,7 +46,8 @@
 
         <!-- Text content -->
         <div class="p-2">
-            <p class="mb-1 break-words whitespace-pre-wrap">{{ message.text }}</p>
+            <p *ngIf="message.text && message.text !== '[Image]' && message.text !== '[Location]'" 
+               class="mb-1 break-words whitespace-pre-wrap">{{ message.text }}</p>
 
             <div class="flex justify-end items-center gap-1">
                 <span class="text-[10px] text-gray-400 min-w-fit">
