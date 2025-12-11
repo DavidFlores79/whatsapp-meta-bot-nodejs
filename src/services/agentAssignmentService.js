@@ -47,9 +47,22 @@ async function autoAssignConversation(conversationId) {
  */
 async function assignConversationToAgent(conversationId, agentId, assignedBy = null) {
     const { io } = require('../models/server');
+    const Customer = require('../models/Customer');
 
-    const conversation = await Conversation.findById(conversationId)
+    let conversation = await Conversation.findById(conversationId)
         .populate('customerId');
+
+    // Fallback: if not found by ID, try to find by phone number (legacy support)
+    if (!conversation && conversationId.match(/^\d+$/)) {
+        console.log(`⚠️ Conversation not found by ID, trying phone number lookup: ${conversationId}`);
+        const customer = await Customer.findOne({ phoneNumber: conversationId });
+        if (customer) {
+            conversation = await Conversation.findOne({
+                customerId: customer._id,
+                status: { $in: ['open', 'assigned', 'waiting'] }
+            }).populate('customerId');
+        }
+    }
 
     if (!conversation) {
         throw new Error('Conversation not found');
@@ -109,8 +122,21 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
  */
 async function releaseConversation(conversationId, agentId, reason = null) {
     const { io } = require('../models/server');
+    const Customer = require('../models/Customer');
 
-    const conversation = await Conversation.findById(conversationId);
+    let conversation = await Conversation.findById(conversationId);
+
+    // Fallback: if not found by ID, try to find by phone number (legacy support)
+    if (!conversation && conversationId.match(/^\d+$/)) {
+        console.log(`⚠️ Conversation not found by ID, trying phone number lookup: ${conversationId}`);
+        const customer = await Customer.findOne({ phoneNumber: conversationId });
+        if (customer) {
+            conversation = await Conversation.findOne({
+                customerId: customer._id,
+                status: { $in: ['open', 'assigned', 'waiting'] }
+            });
+        }
+    }
 
     if (!conversation) {
         throw new Error('Conversation not found');
