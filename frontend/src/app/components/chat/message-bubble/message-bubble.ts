@@ -11,4 +11,8 @@ import { Message } from '../../../services/chat';
 })
 export class MessageBubbleComponent {
   @Input() message!: Message;
+
+  openImage(url: string) {
+    window.open(url, '_blank');
+  }
 }

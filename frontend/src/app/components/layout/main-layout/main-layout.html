@@ -1,16 +1,48 @@
 <div class="flex h-screen overflow-hidden bg-whatsapp-gray">
   <!-- Sidebar -->
-  <div class="w-full md:w-[400px] flex flex-col border-r border-gray-700 bg-whatsapp-dark">
+  <div class="w-full md:w-[400px] flex flex-col border-r border-gray-700 bg-whatsapp-dark"
+       [ngClass]="{'hidden md:flex': hasSelectedChat}">
+    <!-- User Profile Header -->
+    <div class="bg-whatsapp-gray px-4 py-3 border-b border-gray-700 shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600">
+            <img *ngIf="currentAgent?.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
+            <div *ngIf="!currentAgent?.avatar" class="w-full h-full flex items-center justify-center text-white font-medium">
+              {{ (currentAgent?.firstName || 'A')[0] }}{{ (currentAgent?.lastName || '')[0] }}
+            </div>
+          </div>
+          <div>
+            <h3 class="text-gray-100 font-medium text-sm">{{ currentAgent?.firstName }} {{ currentAgent?.lastName }}</h3>
+            <p class="text-xs text-gray-400">{{ currentAgent?.email }}</p>
+          </div>
+        </div>
+        <button (click)="logout()"
+                class="text-gray-400 hover:text-red-400 transition-colors p-2"
+                title="Logout">
+          <i class="fas fa-sign-out-alt text-lg"></i>
+        </button>
+      </div>
+    </div>
+
     <app-chat-list class="flex-1 overflow-hidden"></app-chat-list>
   </div>
 
   <!-- Main Chat Area -->
-  <div class="hidden md:flex flex-1 flex-col bg-whatsapp-dark relative">
+  <div class="flex flex-1 flex-col bg-whatsapp-dark relative"
+       [ngClass]="{'flex': hasSelectedChat, 'hidden md:flex': !hasSelectedChat}">
     <!-- Background Pattern -->
-    <div class="absolute inset-0 opacity-5 pointer-events-none" 
+    <div class="absolute inset-0 opacity-5 pointer-events-none"
          style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');">
     </div>
-    
+
+    <!-- Mobile Back Button -->
+    <button *ngIf="hasSelectedChat"
+            (click)="backToList()"
+            class="md:hidden absolute top-4 left-4 z-20 bg-whatsapp-gray/80 backdrop-blur-sm text-gray-200 p-2 rounded-full shadow-lg hover:bg-whatsapp-gray transition-colors">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+
     <app-chat-window class="flex-1 overflow-hidden z-10"></app-chat-window>
   </div>
 </div>

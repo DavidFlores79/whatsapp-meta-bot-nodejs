@@ -10,6 +10,19 @@ export interface Message {
   text: string;
   sender: 'me' | 'other';
   timestamp: Date;
+  type?: string;
+  attachments?: Array<{
+    type: string;
+    url: string;
+    filename?: string;
+    thumbnailUrl?: string;
+  }>;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    name?: string;
+  };
 }
 
 export interface Chat {
@@ -40,6 +53,7 @@ export class ChatService {
 
   private chatsSubject = new BehaviorSubject<Chat[]>(this.mockChats);
   private selectedChatIdSubject = new BehaviorSubject<string | null>(null);
+  private typingSubject = new BehaviorSubject<any>(null);
 
   chats$ = this.chatsSubject.asObservable();
   selectedChat$ = this.selectedChatIdSubject.asObservable().pipe(
@@ -75,11 +89,23 @@ export class ChatService {
   }
 
   private loadMessages(chatId: string) {
-    return this.http.get<Message[]>(`${this.apiUrl}/messages/${chatId}`).pipe(
-      tap(messages => {
+    return this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/messages`).pipe(
+      tap(response => {
         const chat = this.mockChats.find(c => c.id === chatId);
         if (chat) {
-          chat.messages = messages;
+          // Map backend message format to frontend Message format
+          const backendMessages = response.messages || [];
+          chat.messages = backendMessages.map((msg: any) => ({
+            id: msg._id,
+            text: msg.content,
+            // AI and agent messages should show on the right (sender: 'me')
+            // Customer messages show on the left (sender: 'other')
+            sender: (msg.sender === 'ai' || msg.sender === 'agent') ? 'me' : 'other',
+            timestamp: new Date(msg.timestamp),
+            type: msg.type,
+            attachments: msg.attachments,
+            location: msg.location
+          }));
           this.chatsSubject.next([...this.mockChats]);
         }
       })
@@ -131,6 +157,18 @@ export class ChatService {
       console.log('Conversation assigned to me:', data);
       this.loadConversations(); // Reload conversations
     });
+
+    this.socket.on('agent_typing', (data: any) => {
+      console.log('Agent typing:', data);
+      this.typingSubject.next(data);
+    });
+  }
+
+  /**
+   * Observable for typing indicator
+   */
+  onTyping(): Observable<any> {
+    return this.typingSubject.asObservable();
   }
 
   private handleAIResumed(conversationId: string) {
@@ -202,21 +240,24 @@ export class ChatService {
     const currentChatId = this.selectedChatIdSubject.value;
     if (!currentChatId) return;
 
-    // In a real app, you'd send this to the backend via API
-    // For now, we'll just simulate the local update and assume backend will emit the event back
-    // Or we can emit to socket if backend supports it
-
-    // this.socket.emit('send_message', { chatId: currentChatId, text });
-
-    // Optimistic update
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      sender: 'me',
-      timestamp: new Date()
-    };
-
-    this.handleNewMessage(currentChatId, newMessage);
+    // Send via agent message API
+    this.sendAgentMessage(currentChatId, text).subscribe({
+      next: (response) => {
+        console.log('Message sent successfully:', response);
+        // Optionally add optimistic update
+        const newMessage: Message = {
+          id: response.message?._id || Date.now().toString(),
+          text,
+          sender: 'me',
+          timestamp: new Date()
+        };
+        this.handleNewMessage(currentChatId, newMessage);
+      },
+      error: (err) => {
+        console.error('Failed to send message:', err);
+        alert('Failed to send message: ' + (err.error?.error || 'Unknown error'));
+      }
+    });
   }
 
   // ======================================

@@ -16,6 +16,8 @@ import { MessageInputComponent } from '../message-input/message-input';
 export class ChatWindowComponent implements OnInit, AfterViewChecked {
   selectedChat$: Observable<Chat | null>;
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  isTyping = false;
+  private typingTimeout: any;
 
   constructor(
     private chatService: ChatService,
@@ -24,7 +26,22 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
 
-  ngOnInit() { }
+  ngOnInit() {
+    // Listen for typing events from socket
+    this.chatService.onTyping().subscribe((data: any) => {
+      this.isTyping = true;
+
+      // Clear existing timeout
+      if (this.typingTimeout) {
+        clearTimeout(this.typingTimeout);
+      }
+
+      // Stop showing typing after 3 seconds
+      this.typingTimeout = setTimeout(() => {
+        this.isTyping = false;
+      }, 3000);
+    });
+  }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
