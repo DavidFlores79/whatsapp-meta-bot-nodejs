@@ -15,4 +15,12 @@ export class MessageBubbleComponent {
   openImage(url: string) {
     window.open(url, '_blank');
   }
+
+  onMapImageError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    console.error('Failed to load map image:', img.src);
+    console.log('Location data:', this.message.location);
+    // Hide the broken image
+    img.style.display = 'none';
+  }
 }
