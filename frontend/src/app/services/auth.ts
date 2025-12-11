@@ -12,6 +12,7 @@ export interface Agent {
   avatar?: string;
   status: 'online' | 'offline' | 'busy' | 'away';
   phoneNumber?: string;
+  autoAssign?: boolean;
   statistics: {
     activeAssignments: number;
     totalAssignments: number;
@@ -106,6 +107,15 @@ export class AuthService {
 
   updateStatus(status: Agent['status']): Observable<{ agent: Agent }> {
     return this.http.patch<{ agent: Agent }>(`${this.apiUrl}/status`, { status }).pipe(
+      tap(response => {
+        this.currentAgentSubject.next(response.agent);
+        localStorage.setItem('agent', JSON.stringify(response.agent));
+      })
+    );
+  }
+
+  toggleAutoAssign(autoAssign: boolean): Observable<{ agent: Agent }> {
+    return this.http.patch<{ agent: Agent }>(`${this.apiUrl}/profile`, { autoAssign }).pipe(
       tap(response => {
         this.currentAgentSubject.next(response.agent);
         localStorage.setItem('agent', JSON.stringify(response.agent));

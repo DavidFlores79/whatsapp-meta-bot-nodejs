@@ -55,6 +55,21 @@ export class MainLayoutComponent implements OnInit {
     console.log('View settings');
   }
 
+  toggleAutoAssign() {
+    if (!this.currentAgent) return;
+
+    const newValue = !this.currentAgent.autoAssign;
+    this.authService.toggleAutoAssign(newValue).subscribe({
+      next: () => {
+        console.log(`Auto-assign ${newValue ? 'enabled' : 'disabled'}`);
+      },
+      error: (err) => {
+        console.error('Failed to toggle auto-assign:', err);
+        alert('Failed to update auto-assign setting');
+      }
+    });
+  }
+
   logout() {
     this.closeMenu();
     this.authService.logout().subscribe({

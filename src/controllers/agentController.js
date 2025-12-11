@@ -91,7 +91,7 @@ async function getProfile(req, res) {
  */
 async function updateProfile(req, res) {
     try {
-        const { firstName, lastName, avatar, phoneNumber, settings } = req.body;
+        const { firstName, lastName, avatar, phoneNumber, settings, autoAssign } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
@@ -99,6 +99,7 @@ async function updateProfile(req, res) {
         if (avatar) updateData.avatar = avatar;
         if (phoneNumber) updateData.phoneNumber = phoneNumber;
         if (settings) updateData.settings = settings;
+        if (typeof autoAssign === 'boolean') updateData.autoAssign = autoAssign;
 
         const agent = await Agent.findByIdAndUpdate(
             req.agent._id,
