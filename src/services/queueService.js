@@ -185,6 +185,33 @@ async function processUserQueue(userId) {
       }
     });
 
+    // CHECK FOR TAKEOVER TRIGGERS BEFORE AI PROCESSING
+    // This detects if customer requested human help (e.g., "hablar con humano")
+    const takeoverSuggestionService = require('./takeoverSuggestionService');
+    const takeoverResult = await takeoverSuggestionService.analyzeForTakeover(conversationId, combinedText, null);
+    
+    // If auto-assigned to agent, stop AI processing
+    if (takeoverResult && takeoverResult.autoAssigned) {
+      console.log(`🛑 Conversation auto-assigned to human - Skipping AI response`);
+      
+      // Emit messages to the newly assigned agent
+      const updatedConversation = await Conversation.findById(conversationId).populate('assignedAgent');
+      if (updatedConversation?.assignedAgent) {
+        io.to(`agent_${updatedConversation.assignedAgent._id}`).emit('customer_message', {
+          conversationId: conversationId,
+          customerId: messagesToProcess[0].customerId,
+          customerPhone: userId,
+          message: combinedText,
+          messageCount: messagesToProcess.length,
+          timestamp: new Date()
+        });
+      }
+      
+      // Clear queue and exit - human agent will respond
+      userQueues.delete(userId);
+      return;
+    }
+
     // CONTINUE WITH AI PROCESSING
     // Show typing indicator
     const lastMessageId = messagesToProcess[messagesToProcess.length - 1].id;
@@ -197,10 +224,6 @@ async function processUserQueue(userId) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
     console.log(`🤖 OpenAI response received in ${duration}s (length: ${aiReply.length} chars)`);
-
-    // ANALYZE FOR TAKEOVER SUGGESTION
-    const takeoverSuggestionService = require('./takeoverSuggestionService');
-    await takeoverSuggestionService.analyzeForTakeover(conversationId, combinedText, aiReply);
 
     // Send response to WhatsApp
     const replyPayload = buildTextJSON(userId, aiReply);
