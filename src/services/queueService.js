@@ -272,7 +272,7 @@ async function processUserQueue(userId) {
         message: {
           id: aiMessage._id.toString(),
           text: aiMessage.content,
-          sender: 'other',
+          sender: 'me',
           isAI: true,
           timestamp: aiMessage.timestamp,
           type: 'text'

@@ -2,9 +2,9 @@
     [ngClass]="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
     <div class="max-w-[65%] rounded-lg relative shadow-md text-sm"
         [ngClass]="{
-            'bg-outgoing-message text-white rounded-tr-none': message.sender === 'me',
-            'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other' && !message.isAI,
-            'bg-gradient-to-r from-blue-900 to-blue-800 text-gray-100 rounded-tl-none border border-blue-700': message.sender === 'other' && message.isAI
+            'bg-outgoing-message text-white rounded-tr-none': message.sender === 'me' && !message.isAI,
+            'bg-gradient-to-r from-blue-900 to-blue-800 text-gray-100 rounded-tr-none border border-blue-700': message.sender === 'me' && message.isAI,
+            'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other'
         }">
 
         <!-- Image attachment -->
@@ -86,14 +86,14 @@
         </div>
 
         <!-- Tail SVG (Optional polish) -->
-        <div *ngIf="message.sender === 'me'" class="absolute top-0 -right-2 w-2 h-2 overflow-hidden">
+        <div *ngIf="message.sender === 'me' && !message.isAI" class="absolute top-0 -right-2 w-2 h-2 overflow-hidden">
             <div class="w-3 h-3 bg-outgoing-message rotate-45 transform origin-bottom-left"></div>
         </div>
-        <div *ngIf="message.sender === 'other' && !message.isAI" class="absolute top-0 -left-2 w-2 h-2 overflow-hidden">
-            <div class="w-3 h-3 bg-whatsapp-gray rotate-45 transform origin-bottom-right"></div>
+        <div *ngIf="message.sender === 'me' && message.isAI" class="absolute top-0 -right-2 w-2 h-2 overflow-hidden">
+            <div class="w-3 h-3 bg-blue-800 rotate-45 transform origin-bottom-left border-r border-t border-blue-700"></div>
         </div>
-        <div *ngIf="message.sender === 'other' && message.isAI" class="absolute top-0 -left-2 w-2 h-2 overflow-hidden">
-            <div class="w-3 h-3 bg-blue-800 rotate-45 transform origin-bottom-right border-l border-t border-blue-700"></div>
+        <div *ngIf="message.sender === 'other'" class="absolute top-0 -left-2 w-2 h-2 overflow-hidden">
+            <div class="w-3 h-3 bg-whatsapp-gray rotate-45 transform origin-bottom-right"></div>
         </div>
     </div>
 </div>
