@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
 import { AuthService, Agent } from '../../../services/auth';
@@ -9,7 +9,7 @@ import { ChatService, Chat } from '../../../services/chat';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, ChatListComponent, ChatWindowComponent],
+  imports: [CommonModule, RouterModule, ChatListComponent, ChatWindowComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
@@ -17,6 +17,8 @@ export class MainLayoutComponent implements OnInit {
   currentAgent: Agent | null = null;
   hasSelectedChat = false;
   showMenu = false;
+  currentView: 'chat' | 'customers' | 'templates' | 'reports' | 'settings' = 'chat';
+  sidebarCollapsed = false;
 
   // Resizable sidebar
   sidebarWidth = 400;
@@ -45,6 +47,57 @@ export class MainLayoutComponent implements OnInit {
     if (savedWidth) {
       this.sidebarWidth = parseInt(savedWidth, 10);
     }
+
+    // Detect current route
+    this.updateCurrentView();
+
+    // Load sidebar collapsed state
+    const collapsed = localStorage.getItem('sidebarCollapsed');
+    if (collapsed === 'true') {
+      this.sidebarCollapsed = true;
+    }
+  }
+
+  toggleSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+  }
+
+  updateCurrentView() {
+    const url = this.router.url;
+    if (url.includes('/customers')) {
+      this.currentView = 'customers';
+    } else {
+      this.currentView = 'chat';
+    }
+  }
+
+  navigateToConversations() {
+    this.currentView = 'chat';
+    this.router.navigate(['/']);
+  }
+
+  navigateToCustomers() {
+    this.currentView = 'customers';
+    this.router.navigate(['/customers']);
+  }
+
+  navigateToTemplates() {
+    this.currentView = 'templates';
+    // TODO: Implement templates route
+    alert('Templates feature coming soon!');
+  }
+
+  navigateToReports() {
+    this.currentView = 'reports';
+    // TODO: Implement reports route
+    alert('Reports feature coming soon!');
+  }
+
+  navigateToSettings() {
+    this.currentView = 'settings';
+    // TODO: Implement settings route
+    alert('Settings feature coming soon!');
   }
 
   toggleMenu() {

@@ -22,9 +22,15 @@ const authGuard = () => {
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
-    { path: '', component: MainLayoutComponent, canActivate: [authGuard] },
-    { path: 'customers', component: CustomerListComponent, canActivate: [authGuard] },
-    { path: 'customers/new', component: CustomerFormComponent, canActivate: [authGuard] },
-    { path: 'customers/:id', component: CustomerDetailComponent, canActivate: [authGuard] },
-    { path: 'customers/:id/edit', component: CustomerFormComponent, canActivate: [authGuard] }
+    { 
+        path: '', 
+        component: MainLayoutComponent, 
+        canActivate: [authGuard],
+        children: [
+            { path: 'customers', component: CustomerListComponent },
+            { path: 'customers/new', component: CustomerFormComponent },
+            { path: 'customers/:id', component: CustomerDetailComponent },
+            { path: 'customers/:id/edit', component: CustomerFormComponent }
+        ]
+    }
 ];
