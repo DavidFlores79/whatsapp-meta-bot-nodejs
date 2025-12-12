@@ -83,6 +83,30 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         this.threadMetadata = null;
       }
     });
+
+    // Subscribe to metadata updates via socket
+    this.chatService.onMetadataUpdate().subscribe((data: any) => {
+      this.selectedChat$.subscribe(chat => {
+        if (chat && chat.id === data.conversationId) {
+          console.log('Metadata updated via socket, refreshing...', data);
+          this.threadMetadata = { metadata: data.metadata };
+        }
+      });
+    });
+
+    // Subscribe to new messages to refresh metadata
+    this.chatService.onNewMessage().subscribe((data: any) => {
+      this.selectedChat$.subscribe(chat => {
+        if (chat && chat.id === data.conversationId) {
+          // Refresh metadata when new AI messages arrive
+          if (data.message?.sender === 'me' || data.message?.isAI) {
+            setTimeout(() => {
+              this.loadThreadMetadata(chat.id);
+            }, 2000); // Wait 2 seconds for AI to process and update metadata
+          }
+        }
+      });
+    });
   }
 
   ngAfterViewChecked() {

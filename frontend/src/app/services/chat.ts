@@ -67,6 +67,8 @@ export class ChatService {
   private chatsSubject = new BehaviorSubject<Chat[]>(this.mockChats);
   private selectedChatIdSubject = new BehaviorSubject<string | null>(null);
   private typingSubject = new BehaviorSubject<any>(null);
+  private metadataUpdateSubject = new BehaviorSubject<any>(null);
+  private newMessageSubject = new BehaviorSubject<any>(null);
 
   chats$ = this.chatsSubject.asObservable();
   selectedChat$ = this.selectedChatIdSubject.asObservable().pipe(
@@ -193,6 +195,14 @@ export class ChatService {
     this.socket.on('new_message', (data: { chatId: string, message: Message }) => {
       console.log('New message received:', data);
       this.handleNewMessage(data.chatId, data.message);
+      // Emit to subject for components to subscribe
+      this.newMessageSubject.next(data);
+    });
+
+    // Listen for metadata updates
+    this.socket.on('metadata_updated', (data: any) => {
+      console.log('Metadata updated:', data);
+      this.metadataUpdateSubject.next(data);
     });
 
     // Listen for new conversations
@@ -317,6 +327,20 @@ export class ChatService {
    */
   onTyping(): Observable<any> {
     return this.typingSubject.asObservable();
+  }
+
+  /**
+   * Observable for metadata updates
+   */
+  onMetadataUpdate(): Observable<any> {
+    return this.metadataUpdateSubject.asObservable();
+  }
+
+  /**
+   * Observable for new messages
+   */
+  onNewMessage(): Observable<any> {
+    return this.newMessageSubject.asObservable();
   }
 
   private handleAIResumed(conversationId: string) {

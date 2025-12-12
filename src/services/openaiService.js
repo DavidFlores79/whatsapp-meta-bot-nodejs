@@ -362,6 +362,26 @@ Return ONLY valid JSON, nothing else.`;
 
     console.log(`✅ Updated thread metadata for ${userId}:`, updatedMetadata);
 
+    // Emit socket event to notify frontend of metadata update
+    const Conversation = require('../models/Conversation');
+    const Customer = require('../models/Customer');
+    const customer = await Customer.findOne({ phoneNumber: userId });
+    if (customer) {
+      const conversation = await Conversation.findOne({
+        customerId: customer._id,
+        status: { $in: ['open', 'assigned', 'waiting', 'closed'] }
+      }).sort({ updatedAt: -1 });
+      
+      if (conversation) {
+        io.emit('metadata_updated', {
+          conversationId: conversation._id.toString(),
+          userId,
+          metadata: updatedMetadata
+        });
+        console.log(`📡 Emitted metadata update for conversation ${conversation._id}`);
+      }
+    }
+
   } catch (error) {
     console.error("⚠️ Error updating thread metadata:", error.message);
     // Don't throw - metadata update is not critical
