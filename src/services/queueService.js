@@ -272,8 +272,10 @@ async function processUserQueue(userId) {
         message: {
           id: aiMessage._id.toString(),
           text: aiMessage.content,
-          sender: 'self',
-          timestamp: aiMessage.timestamp
+          sender: 'other',
+          isAI: true,
+          timestamp: aiMessage.timestamp,
+          type: 'text'
         }
       });
     } catch (dbError) {

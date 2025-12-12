@@ -1,6 +1,6 @@
 <div class="flex mb-2"
     [ngClass]="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
-    <div class="max-w-[65%] rounded-lg relative shadow-sm text-sm"
+    <div class="max-w-[65%] rounded-lg relative shadow-md text-sm"
         [ngClass]="{
             'bg-outgoing-message text-white rounded-tr-none': message.sender === 'me',
             'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other' && !message.isAI,
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Text content -->
-        <div class="p-2">
+        <div class="p-2.5">
             <!-- AI Badge -->
             <div *ngIf="message.isAI" class="flex items-center gap-1 mb-1 text-blue-300">
                 <i class="fas fa-robot text-xs"></i>
@@ -58,22 +58,26 @@
             </div>
 
             <p *ngIf="message.text && message.type !== 'image' && message.type !== 'location'"
-               class="mb-1 break-words whitespace-pre-wrap">{{ message.text }}</p>
+               class="mb-1 break-words whitespace-pre-wrap leading-relaxed">{{ message.text }}</p>
 
-            <div class="flex justify-end items-center gap-1">
-                <span class="text-[10px] text-gray-400 min-w-fit">
+            <div class="flex justify-end items-center gap-1 mt-1">
+                <span class="text-[10px] min-w-fit"
+                      [ngClass]="{
+                          'text-gray-200': message.sender === 'me',
+                          'text-gray-400': message.sender === 'other'
+                      }">
                     {{ message.timestamp | date:'shortTime' }}
                 </span>
                 <span *ngIf="message.sender === 'me'" class="text-[10px]">
                     <!-- Pending/Sent: single check -->
                     <i *ngIf="!message.status || message.status === 'pending' || message.status === 'sent'"
-                       class="fas fa-check text-gray-400"></i>
+                       class="fas fa-check text-gray-300"></i>
                     <!-- Delivered: double check gray -->
                     <i *ngIf="message.status === 'delivered'"
-                       class="fas fa-check-double text-gray-400"></i>
+                       class="fas fa-check-double text-gray-300"></i>
                     <!-- Read: double check blue -->
                     <i *ngIf="message.status === 'read'"
-                       class="fas fa-check-double text-blue-400"></i>
+                       class="fas fa-check-double text-blue-300"></i>
                     <!-- Failed: exclamation -->
                     <i *ngIf="message.status === 'failed'"
                        class="fas fa-exclamation-circle text-red-500"></i>

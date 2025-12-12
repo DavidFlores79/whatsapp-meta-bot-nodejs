@@ -11,7 +11,7 @@ module.exports = {
         'whatsapp-gray': '#202c33',
         'whatsapp-light': '#f0f2f5',
         'incoming-message': '#202c33',
-        'outgoing-message': '#005c4b',
+        'outgoing-message': '#056162',
       }
     },
   },
