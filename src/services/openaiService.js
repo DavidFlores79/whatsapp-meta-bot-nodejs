@@ -278,12 +278,94 @@ async function getAssistantResponse(threadId, runId, userId, conversationId) {
     const textContent = assistantMessages[0].content.find(c => c.type === "text");
     const aiResponseText = textContent?.text?.value || "No response";
 
+    // Extract and update metadata from conversation context
+    await updateThreadMetadataFromConversation(threadId, userId, headers);
+
     // NOTE: Socket emission is handled in queueService.js after saving to DB
     // Removed duplicate io.emit here to prevent duplicate messages in frontend
 
     return aiResponseText;
   }
   return "No response from AI.";
+}
+
+/**
+ * Extract information from conversation and update thread metadata
+ */
+async function updateThreadMetadataFromConversation(threadId, userId, headers) {
+  try {
+    // Get recent messages to extract information
+    const messagesResponse = await axios.get(
+      `${BASE_URL}/threads/${threadId}/messages?limit=20&order=desc`,
+      { headers }
+    );
+
+    const messages = messagesResponse.data.data;
+    const conversationText = messages
+      .map(m => {
+        const content = m.content.find(c => c.type === "text");
+        return `${m.role}: ${content?.text?.value || ""}`;
+      })
+      .join("\n");
+
+    // Use AI to extract structured information
+    const extractionPrompt = `Analyze this conversation and extract ONLY the following information if explicitly mentioned by the customer. Return ONLY a JSON object with these exact keys (use null for missing values):
+
+{
+  "customer_name": "full name if mentioned",
+  "email": "email if mentioned",
+  "address": "full address if mentioned",
+  "city": "city if mentioned",
+  "issue_type": "brief category like 'billing', 'support', 'sales'",
+  "product_interest": "product or service mentioned"
+}
+
+Conversation:
+${conversationText}
+
+Return ONLY valid JSON, nothing else.`;
+
+    const extraction = await getChatCompletion(
+      [{ role: "user", content: extractionPrompt }],
+      { 
+        model: "gpt-4o-mini",
+        temperature: 0,
+        max_tokens: 300,
+        response_format: { type: "json_object" }
+      }
+    );
+
+    const extractedData = JSON.parse(extraction);
+    
+    // Get current metadata
+    const threadResponse = await axios.get(
+      `${BASE_URL}/threads/${threadId}`,
+      { headers }
+    );
+
+    const currentMetadata = threadResponse.data.metadata || {};
+    
+    // Merge with existing metadata, only adding non-null values
+    const updatedMetadata = { ...currentMetadata };
+    Object.keys(extractedData).forEach(key => {
+      if (extractedData[key] && extractedData[key] !== null && extractedData[key] !== "null") {
+        updatedMetadata[key] = extractedData[key];
+      }
+    });
+
+    // Update thread metadata
+    await axios.post(
+      `${BASE_URL}/threads/${threadId}`,
+      { metadata: updatedMetadata },
+      { headers }
+    );
+
+    console.log(`✅ Updated thread metadata for ${userId}:`, updatedMetadata);
+
+  } catch (error) {
+    console.error("⚠️ Error updating thread metadata:", error.message);
+    // Don't throw - metadata update is not critical
+  }
 }
 
 // ============================================
