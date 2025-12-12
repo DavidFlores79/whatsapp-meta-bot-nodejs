@@ -198,9 +198,11 @@ export class ChatService {
 
     this.socket.on('new_message', (data: { chatId: string, message: Message }) => {
       console.log('New message received:', data);
-      this.handleNewMessage(data.chatId, data.message);
-      // Emit to subject for components to subscribe
-      this.newMessageSubject.next(data);
+      if (data && data.chatId && data.message) {
+        this.handleNewMessage(data.chatId, data.message);
+        // Emit to subject for components to subscribe
+        this.newMessageSubject.next(data);
+      }
     });
 
     // Listen for metadata updates
@@ -224,27 +226,33 @@ export class ChatService {
     this.socket.on('ai_resumed', (data: any) => {
       console.log('AI resumed:', data);
       // Update conversation in UI
-      this.handleAIResumed(data.conversationId);
+      if (data && data.conversationId) {
+        this.handleAIResumed(data.conversationId);
+      }
     });
 
     this.socket.on('conversation_released', (data: any) => {
       console.log('Conversation released:', data);
       // Update conversation in UI (same as AI resumed)
-      this.handleAIResumed(data.conversationId);
+      if (data && data.conversationId) {
+        this.handleAIResumed(data.conversationId);
+      }
     });
 
     this.socket.on('customer_message', (data: any) => {
       console.log('Customer message (assigned to me):', data);
-      this.handleNewMessage(data.conversationId, {
-        id: Date.now().toString(),
-        text: data.message,
-        sender: 'other',
-        timestamp: new Date(data.timestamp),
-        type: data.type || 'text',
-        status: data.status,
-        attachments: data.attachments,
-        location: data.location
-      });
+      if (data && data.conversationId && data.message) {
+        this.handleNewMessage(data.conversationId, {
+          id: Date.now().toString(),
+          text: data.message,
+          sender: 'other',
+          timestamp: new Date(data.timestamp),
+          type: data.type || 'text',
+          status: data.status,
+          attachments: data.attachments,
+          location: data.location
+        });
+      }
     });
 
     this.socket.on('conversation_assigned', (data: any) => {
@@ -291,12 +299,16 @@ export class ChatService {
     // AI typing indicators
     this.socket.on('ai_typing_start', (data: any) => {
       console.log('AI typing start:', data);
-      this.typingSubject.next({ conversationId: data.conversationId, isTyping: true, isAI: true });
+      if (data && data.conversationId) {
+        this.typingSubject.next({ conversationId: data.conversationId, isTyping: true, isAI: true });
+      }
     });
 
     this.socket.on('ai_typing_end', (data: any) => {
       console.log('AI typing end:', data);
-      this.typingSubject.next({ conversationId: data.conversationId, isTyping: false, isAI: true });
+      if (data && data.conversationId) {
+        this.typingSubject.next({ conversationId: data.conversationId, isTyping: false, isAI: true });
+      }
     });
   }
 
