@@ -228,10 +228,10 @@ export class ChatService {
 
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
-      
+
       // Play notification sound
       this.playNotificationSound();
-      
+
       // Update existing conversation or add it if not present
       const existingChat = this.mockChats.find(c => c.id === data.conversationId);
       if (existingChat) {
@@ -243,11 +243,11 @@ export class ChatService {
         existingChat.lastMessage = data.lastMessage || existingChat.lastMessage;
         this.chatsSubject.next([...this.mockChats]);
         console.log(`✅ Updated conversation ${data.conversationId} with assignment to agent ${this.currentAgent?._id}`);
-        
+
         // Show notification with customer name
         const customerName = data.customerName || existingChat.name || 'Unknown Customer';
         this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
-        
+
         // Check if agent is viewing a different conversation
         const currentChatId = this.selectedChatIdSubject.value;
         if (currentChatId && currentChatId !== data.conversationId) {
@@ -288,16 +288,16 @@ export class ChatService {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800; // Frequency in Hz
       oscillator.type = 'sine';
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
     } catch (error) {

@@ -87,7 +87,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
     const imageMessage = await Message.create({
       conversationId,
       customerId,
-      content: caption || '',
+      content: caption || '[Image]',
       type: 'image',
       direction: 'inbound',
       sender: 'customer',
