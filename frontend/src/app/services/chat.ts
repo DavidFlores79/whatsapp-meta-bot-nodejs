@@ -121,7 +121,11 @@ export class ChatService {
       (response) => {
         // Map backend conversation format to frontend Chat format
         const conversations = response.conversations || [];
-        const newChats = conversations.map((conv: any) => ({
+        
+        // Filter out closed conversations to prevent duplicates
+        const activeConversations = conversations.filter((conv: any) => conv.status !== 'closed');
+        
+        const newChats = activeConversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
           name: this.getCustomerName(conv.customerId),
           avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
