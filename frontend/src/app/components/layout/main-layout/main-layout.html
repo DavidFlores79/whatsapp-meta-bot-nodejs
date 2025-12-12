@@ -234,9 +234,9 @@
     </ng-container>
 
     <!-- Show Reports Component -->
-    <ng-container *ngIf="currentView === 'reports'">
+    <div [class.hidden]="currentView !== 'reports'" class="flex flex-1 flex-col overflow-hidden">
       <app-reports class="flex-1 overflow-hidden"></app-reports>
-    </ng-container>
+    </div>
 
     <!-- Show Router Outlet for other views (customers, templates, settings) -->
     <ng-container *ngIf="currentView !== 'chat' && currentView !== 'reports'">

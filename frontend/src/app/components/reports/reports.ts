@@ -97,31 +97,42 @@ export class ReportsComponent implements OnInit {
       agentPerformance: this.agentPerformance
     });
     
-    this.loadAgents();
-    this.loadConversations();
-
-    // Set default agent to current user
-    const currentAgent = this.authService.getCurrentAgent();
-    if (currentAgent) {
-      this.selectedAgentId = currentAgent._id;
-      console.log('[Reports] Auto-loading performance for current agent:', this.selectedAgentId);
-      // Add small delay to ensure view is initialized
-      setTimeout(() => {
+    // Load agents first, then auto-select
+    this.loadAgents().then(() => {
+      // After agents load, set default agent to current user
+      const currentAgent = this.authService.getCurrentAgent();
+      if (currentAgent && this.agents.length > 0) {
+        this.selectedAgentId = currentAgent._id;
+        console.log('[Reports] Auto-loading performance for current agent:', this.selectedAgentId);
         this.loadAgentPerformance();
-      }, 50);
-    } else {
-      console.log('[Reports] No current agent found, skipping auto-load');
-    }
+      } else if (this.agents.length > 0) {
+        // Fallback: select first agent if current agent not found
+        this.selectedAgentId = this.agents[0]._id;
+        console.log('[Reports] Auto-selecting first agent:', this.selectedAgentId);
+        this.loadAgentPerformance();
+      } else {
+        console.log('[Reports] No agents available');
+      }
+    });
+    
+    this.loadConversations();
   }
 
-  loadAgents() {
-    this.http.get<any>(`${this.apiUrl}/agents`).subscribe({
-      next: (response) => {
-        this.agents = response.agents || [];
-      },
-      error: (err) => {
-        console.error('Failed to load agents:', err);
-      }
+  loadAgents(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      console.log('[Reports] Loading agents...');
+      this.http.get<any>(`${this.apiUrl}/agents`).subscribe({
+        next: (response) => {
+          this.agents = response.agents || [];
+          console.log('[Reports] Agents loaded:', this.agents.length);
+          resolve();
+        },
+        error: (err) => {
+          console.error('[Reports] Failed to load agents:', err);
+          this.toastService.error('Failed to load agents');
+          reject(err);
+        }
+      });
     });
   }
 
