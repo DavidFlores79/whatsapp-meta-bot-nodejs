@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, HostListener, ElementRef } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService, Customer, CustomerFilters } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ImportCustomersModalComponent } from '../import-customers-modal/import-customers-modal';
@@ -9,7 +10,7 @@ import { ImportCustomersModalComponent } from '../import-customers-modal/import-
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, CustomerModalComponent, ImportCustomersModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, ImportCustomersModalComponent],
   templateUrl: './customer-list.html',
   styleUrls: ['./customer-list.css']
 })

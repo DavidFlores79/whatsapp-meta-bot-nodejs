@@ -1,6 +1,7 @@
 import { Component, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService } from '../../../services/customer';
 
 interface ImportResult {
@@ -24,7 +25,7 @@ interface ImportResult {
 @Component({
   selector: 'app-import-customers-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './import-customers-modal.html',
   styleUrls: ['./import-customers-modal.css']
 })

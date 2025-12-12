@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService, Customer, CustomerDetailResponse } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ToastService } from '../../../services/toast';
@@ -8,7 +9,7 @@ import { ToastService } from '../../../services/toast';
 @Component({
   selector: 'app-customer-detail',
   standalone: true,
-  imports: [CommonModule, CustomerModalComponent],
+  imports: [CommonModule, TranslateModule, CustomerModalComponent],
   templateUrl: './customer-detail.html',
   styleUrls: ['./customer-detail.css']
 })
