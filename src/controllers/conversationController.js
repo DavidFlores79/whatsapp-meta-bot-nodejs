@@ -319,6 +319,8 @@ async function getAgentPerformance(req, res) {
         const agentId = req.params.agentId;
         const { startDate, endDate, limit = 50 } = req.query;
 
+        console.log('[getAgentPerformance] Query params:', { agentId, startDate, endDate, limit });
+
         const filter = { agentId };
         
         if (startDate || endDate) {
@@ -327,11 +329,16 @@ async function getAgentPerformance(req, res) {
             if (endDate) filter.assignedAt.$lte = new Date(endDate);
         }
 
+        console.log('[getAgentPerformance] Filter:', filter);
+
+        // Optimize query - remove heavy populates, limit results early
         const assignments = await AgentAssignmentHistory.find(filter)
-            .populate('conversationId')
-            .populate('customerId', 'firstName lastName phoneNumber')
+            .select('-contextSummary') // Exclude large text fields
             .sort({ assignedAt: -1 })
-            .limit(parseInt(limit));
+            .limit(parseInt(limit))
+            .lean(); // Use lean for better performance
+
+        console.log('[getAgentPerformance] Found', assignments.length, 'assignments');
 
         // Calculate aggregate performance metrics
         const withAnalysis = assignments.filter(a => a.aiAnalysis?.agentPerformance?.overallScore);
