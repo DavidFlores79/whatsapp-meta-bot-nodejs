@@ -228,18 +228,37 @@ export class ChatService {
 
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
+      
+      // Play notification sound
+      this.playNotificationSound();
+      
       // Update existing conversation or add it if not present
       const existingChat = this.mockChats.find(c => c.id === data.conversationId);
       if (existingChat) {
-        // Update assignment info
-        existingChat.assignedAgent = data.agent;
+        // Update assignment info - use current agent as assignedAgent
+        existingChat.assignedAgent = this.currentAgent?._id || 'unknown';
         existingChat.isAIEnabled = false;
         existingChat.status = 'assigned';
+        existingChat.name = data.customerName || existingChat.name;
+        existingChat.lastMessage = data.lastMessage || existingChat.lastMessage;
         this.chatsSubject.next([...this.mockChats]);
-        console.log(`Updated conversation ${data.conversationId} with assignment`);
+        console.log(`✅ Updated conversation ${data.conversationId} with assignment to agent ${this.currentAgent?._id}`);
+        
+        // Show notification with customer name
+        const customerName = data.customerName || existingChat.name || 'Unknown Customer';
+        this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
+        
+        // Check if agent is viewing a different conversation
+        const currentChatId = this.selectedChatIdSubject.value;
+        if (currentChatId && currentChatId !== data.conversationId) {
+          this.toastService.warning(`⚠️ You have a new assigned conversation while viewing another chat!`, 8000);
+        }
       } else {
-        // Conversation not in list, reload all
+        // Conversation not in list, reload all to get the new conversation
+        console.log('🔄 Conversation not found in list, reloading...');
         this.loadConversations(this.currentAgent);
+        const customerName = data.customerName || 'Unknown Customer';
+        this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
       }
     });
 
@@ -258,6 +277,32 @@ export class ChatService {
       console.log('AI typing end:', data);
       this.typingSubject.next({ conversationId: data.conversationId, isTyping: false, isAI: true });
     });
+  }
+
+  /**
+   * Play notification sound
+   */
+  private playNotificationSound() {
+    try {
+      // Create a short notification sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800; // Frequency in Hz
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.warn('Could not play notification sound:', error);
+    }
   }
 
   /**
@@ -379,10 +424,14 @@ export class ChatService {
       console.error('Error loading messages:', error);
     }
 
-    // Reset unread count
+    // Reset unread count and clear "assigned" status for NEW indicator
     const chatIndex = this.mockChats.findIndex(c => c.id === chatId);
     if (chatIndex !== -1) {
       this.mockChats[chatIndex].unreadCount = 0;
+      // Clear the "assigned" status once viewed (keeps assignedAgent but removes NEW badge)
+      if (this.mockChats[chatIndex].status === 'assigned') {
+        this.mockChats[chatIndex].status = 'active';
+      }
       this.chatsSubject.next([...this.mockChats]);
     }
   }

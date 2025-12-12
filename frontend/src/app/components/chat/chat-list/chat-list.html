@@ -45,7 +45,16 @@
     <div class="flex-1 overflow-y-auto custom-scrollbar">
         <div *ngFor="let chat of getDisplayChats() | async" (click)="selectChat(chat.id)"
             [class.bg-whatsapp-gray]="(selectedChatId$ | async) === chat.id"
-            class="flex items-center p-3 cursor-pointer hover:bg-whatsapp-gray transition-colors border-b border-gray-800">
+            [class.border-l-4]="chat.status === 'assigned' && chat.assignedAgent"
+            [class.border-l-blue-500]="chat.status === 'assigned' && chat.assignedAgent"
+            [class.animate-pulse-slow]="chat.status === 'assigned' && (selectedChatId$ | async) !== chat.id"
+            class="flex items-center p-3 cursor-pointer hover:bg-whatsapp-gray transition-colors border-b border-gray-800 relative">
+
+            <!-- New Assignment Badge -->
+            <div *ngIf="chat.status === 'assigned' && (selectedChatId$ | async) !== chat.id"
+                 class="absolute top-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-bounce z-10">
+                NEW
+            </div>
 
             <!-- Avatar -->
             <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 mr-3 relative">

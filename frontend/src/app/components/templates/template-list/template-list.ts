@@ -236,7 +236,7 @@ export class TemplateListComponent implements OnInit {
         }
       }
     }
-    
+
     this.toast.info(`Sending template to ${this.selectedCustomers.size} customer(s)...`, 3000);
     this.isSendingBulk = true;
     this.showBulkProgress = true;
