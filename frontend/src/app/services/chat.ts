@@ -239,12 +239,9 @@ export class ChatService {
       return;
     }
 
-    // For agents, only add unassigned conversations (they can claim them)
-    // Assigned conversations will come through conversation_assigned event
-    if (this.currentAgent && data.assignedAgent) {
-      console.log('Conversation already assigned, ignoring (will come through assignment event)');
-      return;
-    }
+    // Add all new conversations - let the tabs filter them
+    // Queue tab will show unassigned, My Chats will show mine, All will show everything
+    console.log('Adding new conversation:', data.conversationId, 'Assigned:', data.assignedAgent ? 'Yes' : 'No');
 
     // Create new chat entry
     const newChat: Chat = {
