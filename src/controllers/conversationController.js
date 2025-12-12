@@ -375,9 +375,60 @@ async function getAgentPerformance(req, res) {
 
         console.log('[getAgentPerformance] Found', assignments.length, 'assignments');
 
+        // Show actual date range of assignments for debugging
+        if (assignments.length > 0) {
+            const dates = assignments.map(a => a.assignedAt).sort();
+            console.log('[getAgentPerformance] Assignment date range:', {
+                earliest: dates[0],
+                latest: dates[dates.length - 1]
+            });
+        }
+
         // If no assignments found with date filter, log helpful message
         if (assignments.length === 0 && (startDate || endDate)) {
-            console.log('[getAgentPerformance] ⚠️ No assignments found in date range. Try removing date filters.');
+            console.log('[getAgentPerformance] ⚠️ No assignments found in date range.');
+            console.log('[getAgentPerformance] Try querying without date filter to see all assignments.');
+            
+            // Return helpful response
+            return res.json({
+                analytics: {
+                    totalAssignments: 0,
+                    analyzedAssignments: 0,
+                    releasedAssignments: 0,
+                    activeAssignments: 0,
+                    totalDuration: 0,
+                    averageDuration: 0,
+                    performance: null,
+                    resolution: {
+                        totalResolved: 0,
+                        resolutionRate: 0,
+                        qualityBreakdown: {
+                            excellent: 0,
+                            good: 0,
+                            partial: 0,
+                            poor: 0,
+                            unresolved: 0
+                        }
+                    },
+                    sentiment: {
+                        improved: 0,
+                        worsened: 0,
+                        unchanged: 0,
+                        improvementRate: 0
+                    },
+                    commonStrengths: [],
+                    commonImprovements: [],
+                    riskLevels: {
+                        none: 0,
+                        low: 0,
+                        medium: 0,
+                        high: 0,
+                        critical: 0
+                    }
+                },
+                recentAssignments: [],
+                message: 'No assignments found in the selected date range. Try removing date filters or selecting a different date range.'
+            });
         }
 
         // Calculate aggregate performance metrics

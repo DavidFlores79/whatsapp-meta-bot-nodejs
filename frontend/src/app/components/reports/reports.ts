@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -41,6 +41,7 @@ interface AgentPerformance {
     riskLevels: any;
   };
   recentAssignments: any[];
+  message?: string;
 }
 
 interface ConversationHistory {
@@ -91,7 +92,8 @@ export class ReportsComponent implements OnInit {
     private http: HttpClient,
     private authService: AuthService,
     private toastService: ToastService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -193,18 +195,31 @@ export class ReportsComponent implements OnInit {
           }
           this.toastService.error(errorMessage);
           return throwError(() => err);
-        }),
-        finalize(() => {
-          this.loadingPerformance = false;
         })
       )
       .subscribe({
         next: (data) => {
           console.log('[Reports] Agent performance loaded:', data);
           this.agentPerformance = data;
+          this.loadingPerformance = false;
+          this.cdr.detectChanges(); // Force change detection
+          
+          console.log('[Reports] State check:', {
+            loadingPerformance: this.loadingPerformance,
+            hasData: !!this.agentPerformance,
+            totalAssignments: data?.analytics?.totalAssignments
+          });
+          
+          // Show helpful message if no results with date filter
+          if (data?.message) {
+            this.toastService.info(data.message);
+          }
         },
         error: () => {
+          console.log('[Reports] Error occurred, clearing agentPerformance');
           this.agentPerformance = null;
+          this.loadingPerformance = false;
+          this.cdr.detectChanges(); // Force change detection
         }
       });
   }
