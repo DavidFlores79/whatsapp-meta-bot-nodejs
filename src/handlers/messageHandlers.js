@@ -327,14 +327,128 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
  * Handle interactive messages (buttons, lists)
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
+ * @param {string} conversationId - Conversation ID
  */
-async function handleInteractiveMessage(messageObject, phoneNumber) {
+async function handleInteractiveMessage(messageObject, phoneNumber, conversationId) {
   console.log("🔘 INTERACTIVE message received");
-  const { type: interactiveType } = messageObject.interactive;
+  const { interactive, id: messageId, timestamp } = messageObject;
+  const { type: interactiveType } = interactive;
 
-  // TODO: Implement interactive message handling
-  console.log("   Type:", interactiveType);
-  console.log("   (Not yet implemented)");
+  try {
+    let messageText = '';
+    let interactionData = {};
+
+    // Extract content based on interactive type
+    if (interactiveType === 'button_reply') {
+      // User clicked a button
+      const { id: buttonId, title } = interactive.button_reply;
+      messageText = title;
+      interactionData = {
+        type: 'button_reply',
+        buttonId,
+        title
+      };
+      console.log(`   Button clicked: "${title}" (ID: ${buttonId})`);
+    } else if (interactiveType === 'list_reply') {
+      // User selected from a list
+      const { id: listItemId, title, description } = interactive.list_reply;
+      messageText = title;
+      interactionData = {
+        type: 'list_reply',
+        listItemId,
+        title,
+        description
+      };
+      console.log(`   List item selected: "${title}" (ID: ${listItemId})`);
+    } else if (interactiveType === 'nfm_reply') {
+      // Flow response (new WhatsApp feature)
+      messageText = interactive.nfm_reply?.body || 'Flow response received';
+      interactionData = {
+        type: 'nfm_reply',
+        data: interactive.nfm_reply
+      };
+      console.log(`   Flow response received`);
+    } else {
+      // Unknown interactive type
+      messageText = `Interactive message: ${interactiveType}`;
+      interactionData = {
+        type: interactiveType,
+        data: interactive
+      };
+      console.log(`   Unknown interactive type: ${interactiveType}`);
+    }
+
+    // Find customer
+    const customer = await Customer.findOne({ phoneNumber });
+    if (!customer) {
+      console.error(`   Customer not found: ${phoneNumber}`);
+      return;
+    }
+
+    // Create message record in database
+    const newMessage = await Message.create({
+      messageId,
+      conversationId,
+      customerId: customer._id,
+      sender: 'customer',
+      type: 'interactive',
+      content: messageText,
+      interactive: interactionData,
+      timestamp: new Date(parseInt(timestamp) * 1000),
+      status: 'delivered'
+    });
+
+    // Update conversation
+    await Conversation.findByIdAndUpdate(conversationId, {
+      lastMessage: {
+        content: messageText,
+        timestamp: new Date(),
+        from: 'customer',
+        type: 'interactive'
+      },
+      lastCustomerMessage: new Date(),
+      $inc: { messageCount: 1 }
+    });
+
+    // Update customer
+    customer.lastInteraction = new Date();
+    await customer.save();
+
+    // Emit to frontend via socket
+    const { io } = require('../models/server');
+    io.emit('new_message', {
+      conversationId: conversationId.toString(),
+      message: {
+        id: newMessage._id.toString(),
+        text: messageText,
+        sender: 'other',
+        timestamp: newMessage.timestamp,
+        type: 'interactive',
+        interactive: interactionData
+      }
+    });
+
+    console.log(`   ✅ Interactive message saved and emitted to frontend`);
+
+    // Add to queue for AI processing if AI is enabled
+    const conversation = await Conversation.findById(conversationId);
+    if (conversation && conversation.isAIEnabled && !conversation.assignedAgent) {
+      const queueService = require('../services/queueService');
+      await queueService.addMessageToQueue({
+        messageId,
+        phoneNumber,
+        message: messageText,
+        messageType: 'interactive',
+        conversationId,
+        customerId: customer._id,
+        timestamp: new Date(parseInt(timestamp) * 1000)
+      });
+      console.log(`   📋 Added interactive message to AI queue`);
+    }
+
+  } catch (error) {
+    console.error("❌ Error handling interactive message:", error);
+  }
 }
 
 /**
