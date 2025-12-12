@@ -2,7 +2,7 @@
     [ngClass]="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
     <div class="max-w-[65%] rounded-lg relative shadow-sm text-sm"
         [ngClass]="{
-            'bg-outgoing-message text-white rounded-tr-none': message.sender === 'me', 
+            'bg-outgoing-message text-white rounded-tr-none': message.sender === 'me',
             'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other' && !message.isAI,
             'bg-gradient-to-r from-blue-900 to-blue-800 text-gray-100 rounded-tl-none border border-blue-700': message.sender === 'other' && message.isAI
         }">
@@ -56,7 +56,7 @@
                 <i class="fas fa-robot text-xs"></i>
                 <span class="text-[10px] font-medium uppercase tracking-wide">AI Assistant</span>
             </div>
-            
+
             <p *ngIf="message.text && message.type !== 'image' && message.type !== 'location'"
                class="mb-1 break-words whitespace-pre-wrap">{{ message.text }}</p>
 

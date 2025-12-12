@@ -75,10 +75,8 @@ export class ChatService {
   }
 
   private loadConversations(agent?: Agent | null) {
-    // If agent is logged in, load only their assigned conversations
-    const endpoint = agent
-      ? `${this.apiUrl}/conversations/assigned`
-      : `${this.apiUrl}/conversations`;
+    // Always load all conversations, let the tabs filter them
+    const endpoint = `${this.apiUrl}/conversations`;
 
     this.http.get<any>(endpoint).subscribe(
       (response) => {
@@ -106,7 +104,7 @@ export class ChatService {
 
         this.chatsSubject.next(this.mockChats);
 
-        console.log(`Loaded ${newChats.length} conversation(s)${agent ? ' assigned to agent' : ''}`);
+        console.log(`Loaded ${newChats.length} conversation(s)`);
       },
       (error) => console.error('Error loading conversations:', error)
     );
