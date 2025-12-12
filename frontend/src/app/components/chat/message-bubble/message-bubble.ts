@@ -17,7 +17,7 @@ export class MessageBubbleComponent {
    */
   get displayText(): string {
     if (!this.message.text) return '';
-    
+
     // If it's a template message with parameters, replace placeholders
     if (this.message.type === 'template' && this.message.template?.parameters) {
       let text = this.message.text;
@@ -27,7 +27,7 @@ export class MessageBubbleComponent {
       });
       return text;
     }
-    
+
     return this.message.text;
   }
 
@@ -40,19 +40,19 @@ export class MessageBubbleComponent {
    */
   get formattedText(): string {
     let text = this.displayText;
-    
+
     // Bold: *text*
     text = text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
-    
+
     // Italic: _text_
     text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
-    
+
     // Strikethrough: ~text~
     text = text.replace(/~([^~]+)~/g, '<del>$1</del>');
-    
+
     // Monospace: ```text```
     text = text.replace(/```([^`]+)```/g, '<code>$1</code>');
-    
+
     return text;
   }
 

@@ -1,14 +1,15 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomerService, Customer, CustomerFilters } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
+import { ImportCustomersModalComponent } from '../import-customers-modal/import-customers-modal';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, CustomerModalComponent],
+  imports: [CommonModule, FormsModule, CustomerModalComponent, ImportCustomersModalComponent],
   templateUrl: './customer-list.html',
   styleUrls: ['./customer-list.css']
 })
@@ -48,6 +49,13 @@ export class CustomerListComponent implements OnInit {
   isCustomerModalOpen = false;
   selectedCustomerId?: string;
 
+  // Import modal
+  isImportModalOpen = false;
+
+  // Export state
+  isExporting = false;
+  showImportExportDropdown = false;
+
   // Statistics
   stats = {
     totalCustomers: 0,
@@ -60,7 +68,8 @@ export class CustomerListComponent implements OnInit {
   constructor(
     private customerService: CustomerService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private elementRef: ElementRef
   ) {}
 
   ngOnInit() {
@@ -187,9 +196,86 @@ export class CustomerListComponent implements OnInit {
     return this.customers.length > 0 && this.selectedCustomers.size === this.customers.length;
   }
 
-  exportCustomers(format: 'json' | 'csv') {
-    const url = this.customerService.exportCustomers(format, this.filters);
-    window.open(url, '_blank');
+  openImportModal() {
+    this.isImportModalOpen = true;
+    this.showImportExportDropdown = false;
+  }
+
+  closeImportModal() {
+    this.isImportModalOpen = false;
+  }
+
+  onImportComplete() {
+    this.loadCustomers();
+    this.loadStats();
+  }
+
+  toggleImportExportDropdown() {
+    this.showImportExportDropdown = !this.showImportExportDropdown;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Close dropdown when clicking outside
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    if (!clickedInside && this.showImportExportDropdown) {
+      this.showImportExportDropdown = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  exportCustomers(format: 'xlsx' | 'csv') {
+    // Close dropdown IMMEDIATELY
+    this.showImportExportDropdown = false;
+    this.cdr.detectChanges();
+
+    // Then start export
+    this.isExporting = true;
+
+    this.customerService.exportCustomersToFile(format, this.filters).subscribe({
+      next: (blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `customers_${Date.now()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        this.isExporting = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error exporting customers:', err);
+        this.error = 'Failed to export customers';
+        this.isExporting = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  downloadTemplate() {
+    this.showImportExportDropdown = false;
+
+    this.customerService.downloadImportTemplate().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'customer_import_template.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      },
+      error: (err) => {
+        console.error('Error downloading template:', err);
+        this.error = 'Failed to download template';
+      }
+    });
   }
 
   deleteSelected() {

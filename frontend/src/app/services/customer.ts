@@ -218,14 +218,77 @@ export class CustomerService {
   }
 
   /**
-   * Bulk import customers
+   * Bulk import customers from file
+   */
+  importCustomersFromFile(
+    file: File,
+    updateExisting: boolean = false
+  ): Observable<{
+    success: boolean;
+    message: string;
+    results: {
+      total: number;
+      imported: number;
+      updated: number;
+      duplicates: number;
+      failed: number;
+    };
+    details: {
+      success: Array<{ row: number; phoneNumber: string; id: string }>;
+      updated: Array<{ row: number; phoneNumber: string; id: string }>;
+      duplicates: Array<{ row: number; phoneNumber: string; reason: string }>;
+      failed: Array<{ row: number; data: any; reason: string }>;
+    };
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (updateExisting) {
+      formData.append('updateExisting', 'true');
+    }
+
+    return this.http.post<any>(`${this.apiUrl}/bulk/import`, formData);
+  }
+
+  /**
+   * Download import template
+   */
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/template`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Export customers to file
+   */
+  exportCustomersToFile(
+    format: 'xlsx' | 'csv' = 'xlsx',
+    filters: CustomerFilters = {}
+  ): Observable<Blob> {
+    let params = new HttpParams().set('format', format);
+
+    Object.keys(filters).forEach(key => {
+      const value = (filters as any)[key];
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, value.toString());
+      }
+    });
+
+    return this.http.get(`${this.apiUrl}/export`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Bulk import customers (legacy - kept for backward compatibility)
    */
   bulkImportCustomers(customers: Partial<Customer>[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/bulk/import`, { customers });
   }
 
   /**
-   * Export customers
+   * Export customers (legacy - kept for backward compatibility)
    */
   exportCustomers(format: 'json' | 'csv' = 'json', filters: CustomerFilters = {}): string {
     let params = new HttpParams().set('format', format);

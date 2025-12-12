@@ -5,3 +5,8 @@ uploads/*.png
 uploads/*.jpeg
 .env
 logs.txt
+
+# Test files
+test-customers*.xlsx
+test-customers*.csv
+test-customers*.xls

@@ -67,24 +67,52 @@
         <span>{{ selectedCustomers.size }} Selected</span>
       </button>
 
-      <!-- Export -->
+      <!-- Import/Export Dropdown -->
       <div class="relative">
-        <button class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2"
-                onclick="this.nextElementSibling.classList.toggle('hidden')">
-          <i class="fas fa-download"></i>
-          <span>Export</span>
+        <button (click)="toggleImportExportDropdown(); $event.stopPropagation()"
+                class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
+          <i class="fas fa-exchange-alt"></i>
+          <span>Import/Export</span>
+          <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showImportExportDropdown"></i>
         </button>
-        <div class="hidden absolute right-0 mt-2 w-48 bg-whatsapp-dark border border-gray-600 rounded-lg shadow-xl z-10">
-          <button (click)="exportCustomers('csv')"
-                  class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
-            <i class="fas fa-file-csv w-5"></i>
-            <span>Export as CSV</span>
-          </button>
-          <button (click)="exportCustomers('json')"
-                  class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
-            <i class="fas fa-file-code w-5"></i>
-            <span>Export as JSON</span>
-          </button>
+        <div *ngIf="showImportExportDropdown"
+             class="absolute right-0 mt-2 w-56 bg-whatsapp-dark border border-gray-600 rounded-lg shadow-xl z-10 overflow-hidden"
+             (click)="$event.stopPropagation()">
+          <!-- Import Section -->
+          <div class="border-b border-gray-600">
+            <div class="px-3 py-2 bg-whatsapp-gray text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Import
+            </div>
+            <button (click)="openImportModal()"
+                    class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
+              <i class="fas fa-file-upload w-5 text-green-400"></i>
+              <span>Import from File</span>
+            </button>
+            <button (click)="downloadTemplate()"
+                    class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
+              <i class="fas fa-file-download w-5 text-blue-400"></i>
+              <span>Download Template</span>
+            </button>
+          </div>
+
+          <!-- Export Section -->
+          <div>
+            <div class="px-3 py-2 bg-whatsapp-gray text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Export
+            </div>
+            <button (click)="exportCustomers('xlsx')"
+                    [disabled]="isExporting"
+                    class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+              <i class="fas fa-file-excel w-5 text-green-500"></i>
+              <span>{{ isExporting ? 'Exporting...' : 'Export as XLSX' }}</span>
+            </button>
+            <button (click)="exportCustomers('csv')"
+                    [disabled]="isExporting"
+                    class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+              <i class="fas fa-file-csv w-5 text-yellow-500"></i>
+              <span>{{ isExporting ? 'Exporting...' : 'Export as CSV' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -308,3 +336,10 @@
   (closeModal)="closeCustomerModal()"
   (customerSaved)="onCustomerSaved($event)">
 </app-customer-modal>
+
+<!-- Import Customers Modal -->
+<app-import-customers-modal
+  *ngIf="isImportModalOpen"
+  (close)="closeImportModal()"
+  (imported)="onImportComplete()">
+</app-import-customers-modal>

@@ -83,6 +83,8 @@ src/
 - File upload handling
 - Socket.io integration for real-time updates
 - Custom logging system
+- **CRM System** with customer management
+- **Customer Import/Export** (XLSX, XLS, CSV) - See [Import/Export Guide](docs/CUSTOMER_IMPORT_EXPORT_GUIDE.md)
 
 ## OpenAI Assistant Integration
 
