@@ -1,0 +1,276 @@
+<div class="settings-container h-full flex flex-col bg-white dark:bg-gray-900">
+  <!-- Header -->
+  <div class="settings-header p-6 border-b border-gray-200 dark:border-gray-700">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+      {{ 'settings.title' | translate }}
+    </h1>
+  </div>
+
+  <!-- Main Content -->
+  <div class="settings-content flex-1 flex overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <div class="settings-sidebar w-64 border-r border-gray-200 dark:border-gray-700 p-4">
+      <nav class="space-y-1">
+        <button
+          (click)="switchTab('general')"
+          [class.bg-blue-50]="activeTab === 'general'"
+          [class.dark:bg-blue-900]="activeTab === 'general'"
+          [class.text-blue-600]="activeTab === 'general'"
+          [class.dark:text-blue-300]="activeTab === 'general'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          {{ 'settings.general' | translate }}
+        </button>
+
+        <button
+          (click)="switchTab('notifications')"
+          [class.bg-blue-50]="activeTab === 'notifications'"
+          [class.dark:bg-blue-900]="activeTab === 'notifications'"
+          [class.text-blue-600]="activeTab === 'notifications'"
+          [class.dark:text-blue-300]="activeTab === 'notifications'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          {{ 'settings.notifications' | translate }}
+        </button>
+
+        <button
+          (click)="switchTab('preferences')"
+          [class.bg-blue-50]="activeTab === 'preferences'"
+          [class.dark:bg-blue-900]="activeTab === 'preferences'"
+          [class.text-blue-600]="activeTab === 'preferences'"
+          [class.dark:text-blue-300]="activeTab === 'preferences'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          {{ 'settings.preferences' | translate }}
+        </button>
+
+        <button
+          (click)="switchTab('account')"
+          [class.bg-blue-50]="activeTab === 'account'"
+          [class.dark:bg-blue-900]="activeTab === 'account'"
+          [class.text-blue-600]="activeTab === 'account'"
+          [class.dark:text-blue-300]="activeTab === 'account'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          {{ 'settings.account' | translate }}
+        </button>
+      </nav>
+    </div>
+
+    <!-- Content Area -->
+    <div class="settings-panel flex-1 overflow-y-auto p-6">
+      <!-- General Settings -->
+      <div *ngIf="activeTab === 'general'" class="space-y-6">
+        <div class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ 'settings.general' | translate }}
+          </h2>
+
+          <!-- Language Selection -->
+          <div class="setting-item mb-6">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'settings.language' | translate }}
+            </label>
+            <select
+              [(ngModel)]="selectedLanguage"
+              (change)="changeLanguage()"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option *ngFor="let lang of availableLanguages" [value]="lang.code">
+                {{ lang.flag }} {{ lang.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Theme Selection -->
+          <div class="setting-item">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'settings.theme' | translate }}
+            </label>
+            <select
+              [(ngModel)]="selectedTheme"
+              (change)="changeTheme()"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="light">{{ 'settings.light' | translate }}</option>
+              <option value="dark">{{ 'settings.dark' | translate }}</option>
+              <option value="auto">{{ 'settings.auto' | translate }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Settings -->
+      <div *ngIf="activeTab === 'notifications'" class="space-y-6">
+        <div class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ 'settings.notifications' | translate }}
+          </h2>
+
+          <!-- Enable Notifications -->
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'settings.enableNotifications' | translate }}
+            </label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="notificationsEnabled"
+                (change)="toggleNotifications()"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          <!-- Sound Enabled -->
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'settings.soundEnabled' | translate }}
+            </label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="soundEnabled"
+                (change)="toggleSound()"
+                [disabled]="!notificationsEnabled"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+            </label>
+          </div>
+
+          <!-- Desktop Notifications -->
+          <div class="setting-item flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'settings.desktopNotifications' | translate }}
+            </label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="desktopNotificationsEnabled"
+                (change)="toggleDesktopNotifications()"
+                [disabled]="!notificationsEnabled"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences Settings -->
+      <div *ngIf="activeTab === 'preferences'" class="space-y-6">
+        <div class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ 'settings.preferences' | translate }}
+          </h2>
+
+          <!-- Auto-assign -->
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'settings.autoAssignEnabled' | translate }}
+            </label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="autoAssignEnabled"
+                (change)="toggleAutoAssign()"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          <!-- Max Concurrent Chats -->
+          <div class="setting-item">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'settings.maxConcurrentChats' | translate }}
+            </label>
+            <input
+              type="number"
+              [(ngModel)]="maxConcurrentChats"
+              (change)="updateMaxConcurrentChats()"
+              min="1"
+              max="20"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div *ngIf="activeTab === 'account'" class="space-y-6">
+        <div class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ 'settings.account' | translate }}
+          </h2>
+
+          <!-- Personal Info -->
+          <div class="mb-6">
+            <h3 class="text-lg font-medium mb-3 text-gray-900 dark:text-white">
+              {{ 'settings.personalInfo' | translate }}
+            </h3>
+            <div *ngIf="currentAgent" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <p><strong>{{ 'common.name' | translate }}:</strong> {{ currentAgent.firstName }} {{ currentAgent.lastName }}</p>
+              <p><strong>{{ 'common.email' | translate }}:</strong> {{ currentAgent.email }}</p>
+              <p><strong>{{ 'common.status' | translate }}:</strong> {{ currentAgent.status }}</p>
+            </div>
+          </div>
+
+          <!-- Change Password -->
+          <div>
+            <h3 class="text-lg font-medium mb-3 text-gray-900 dark:text-white">
+              {{ 'settings.changePassword' | translate }}
+            </h3>
+            <form class="space-y-4 max-w-md">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'settings.currentPassword' | translate }}
+                </label>
+                <input
+                  type="password"
+                  [(ngModel)]="passwordForm.currentPassword"
+                  name="currentPassword"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'settings.newPassword' | translate }}
+                </label>
+                <input
+                  type="password"
+                  [(ngModel)]="passwordForm.newPassword"
+                  name="newPassword"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'settings.confirmPassword' | translate }}
+                </label>
+                <input
+                  type="password"
+                  [(ngModel)]="passwordForm.confirmPassword"
+                  name="confirmPassword"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <button
+                type="button"
+                (click)="updatePassword()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {{ 'settings.updateProfile' | translate }}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

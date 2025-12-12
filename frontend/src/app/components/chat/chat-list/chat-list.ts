@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService, Agent } from '../../../services/auth';
 import { Observable } from 'rxjs';
@@ -8,7 +9,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './chat-list.html',
   styleUrls: ['./chat-list.css']
 })

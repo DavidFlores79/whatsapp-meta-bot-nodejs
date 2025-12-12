@@ -1,0 +1,42 @@
+.settings-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-header {
+  flex-shrink: 0;
+}
+
+.settings-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.settings-sidebar {
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.settings-panel {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.settings-section {
+  max-width: 800px;
+}
+
+.setting-item {
+  padding: 1rem 0;
+}
+
+/* Toggle switch animations */
+input[type="checkbox"]:checked + div {
+  background-color: rgb(37, 99, 235);
+}
+
+input[type="checkbox"]:disabled + div {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

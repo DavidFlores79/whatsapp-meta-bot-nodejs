@@ -3,7 +3,7 @@
     <div class="p-2 bg-whatsapp-dark border-b border-gray-700 shrink-0">
         <div class="bg-whatsapp-gray rounded-lg flex items-center px-4 py-1.5">
             <i class="fas fa-search text-gray-400 text-sm"></i>
-            <input type="text" placeholder="Search or start new chat"
+            <input type="text" [placeholder]="'chat.searchPlaceholder' | translate"
                 class="bg-transparent border-none text-gray-200 text-sm ml-4 w-full focus:outline-none placeholder-gray-400">
         </div>
     </div>
@@ -15,7 +15,7 @@
             [class.border-whatsapp-green]="activeTab === 'queue'"
             [class.text-whatsapp-green]="activeTab === 'queue'"
             class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors relative">
-            Queue
+            {{ 'chat.queue' | translate }}
             <span *ngIf="(queueChats$ | async)?.length as count"
                   class="ml-2 bg-whatsapp-green text-whatsapp-dark text-xs font-bold rounded-full px-2 py-0.5">
                 {{ count }}
@@ -26,7 +26,7 @@
             [class.border-whatsapp-green]="activeTab === 'mine'"
             [class.text-whatsapp-green]="activeTab === 'mine'"
             class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors relative">
-            My Chats
+            {{ 'chat.myChats' | translate }}
             <span *ngIf="(myChats$ | async)?.length as count"
                   class="ml-2 bg-blue-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
                 {{ count }}
@@ -37,7 +37,7 @@
             [class.border-whatsapp-green]="activeTab === 'all'"
             [class.text-whatsapp-green]="activeTab === 'all'"
             class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors">
-            All
+            {{ 'chat.all' | translate }}
         </button>
     </div>
 
@@ -78,9 +78,9 @@
              class="flex flex-col items-center justify-center h-full text-gray-500 p-8 text-center">
             <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
             <p class="text-sm">
-                <ng-container *ngIf="activeTab === 'queue'">No conversations in queue</ng-container>
-                <ng-container *ngIf="activeTab === 'mine'">No conversations assigned to you</ng-container>
-                <ng-container *ngIf="activeTab === 'all'">No conversations yet</ng-container>
+                <ng-container *ngIf="activeTab === 'queue'">{{ 'chat.noConversationsInQueue' | translate }}</ng-container>
+                <ng-container *ngIf="activeTab === 'mine'">{{ 'chat.noConversationsAssigned' | translate }}</ng-container>
+                <ng-container *ngIf="activeTab === 'all'">{{ 'chat.noConversationsYet' | translate }}</ng-container>
             </p>
         </div>
     </div>

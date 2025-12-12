@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
 import { timeout, catchError, finalize } from 'rxjs/operators';
@@ -54,7 +55,7 @@ interface ConversationHistory {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
@@ -86,7 +87,8 @@ export class ReportsComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit() {
@@ -96,7 +98,7 @@ export class ReportsComponent implements OnInit {
       performanceInitialized: this.performanceInitialized,
       agentPerformance: this.agentPerformance
     });
-    
+
     // Load agents first, then auto-select
     this.loadAgents().then(() => {
       // After agents load, set default agent to current user
@@ -114,7 +116,7 @@ export class ReportsComponent implements OnInit {
         console.log('[Reports] No agents available');
       }
     });
-    
+
     this.loadConversations();
   }
 
@@ -129,7 +131,7 @@ export class ReportsComponent implements OnInit {
         },
         error: (err) => {
           console.error('[Reports] Failed to load agents:', err);
-          this.toastService.error('Failed to load agents');
+          this.toastService.error(this.translate.instant('reports.loadError'));
           reject(err);
         }
       });
@@ -146,14 +148,14 @@ export class ReportsComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Reports] Failed to load conversations:', err);
-        this.toastService.error('Failed to load conversations');
+        this.toastService.error(this.translate.instant('reports.loadError'));
       }
     });
   }
 
   loadAgentPerformance() {
     if (!this.selectedAgentId) {
-      this.toastService.warning('Please select an agent');
+      this.toastService.warning(this.translate.instant('reports.selectAgentPrompt'));
       return;
     }
 
@@ -178,9 +180,9 @@ export class ReportsComponent implements OnInit {
         timeout(30000),
         catchError((err) => {
           console.error('[Reports] Failed to load agent performance:', err);
-          let errorMessage = 'Failed to load performance data';
+          let errorMessage = this.translate.instant('reports.loadError');
           if (err.name === 'TimeoutError') {
-            errorMessage = 'Request timed out. Please try again.';
+            errorMessage = this.translate.instant('reports.timeout');
           } else if (err.error?.error) {
             errorMessage = err.error.error;
           }
@@ -204,7 +206,7 @@ export class ReportsComponent implements OnInit {
 
   loadConversationHistory() {
     if (!this.selectedConversationId) {
-      this.toastService.warning('Please select a conversation');
+      this.toastService.warning(this.translate.instant('reports.selectConversationPrompt'));
       return;
     }
 
@@ -223,9 +225,9 @@ export class ReportsComponent implements OnInit {
           console.error('[Reports] Error status:', err.status);
           console.error('[Reports] Error message:', err.message);
 
-          let errorMessage = 'Failed to load conversation history';
+          let errorMessage = this.translate.instant('reports.loadError');
           if (err.name === 'TimeoutError') {
-            errorMessage = 'Request timed out. Please try again.';
+            errorMessage = this.translate.instant('reports.timeout');
           } else if (err.error?.error) {
             errorMessage = err.error.error;
           } else if (err.message) {
@@ -298,6 +300,6 @@ export class ReportsComponent implements OnInit {
   }
 
   exportToCSV() {
-    this.toastService.info('Export feature coming soon!');
+    this.toastService.info(this.translate.instant('reports.exportFeatureComingSoon'));
   }
 }

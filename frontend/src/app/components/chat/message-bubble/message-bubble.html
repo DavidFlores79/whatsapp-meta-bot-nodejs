@@ -8,7 +8,7 @@
         }">
 
         <!-- Image attachment -->
-        <div *ngIf="message.type === 'image' && message.attachments && message.attachments.length > 0" class="mb-1">
+        <div *ngIf="message.type === 'image' && message.attachments && message.attachments.length > 0">
             <img [src]="message.attachments[0].url"
                  [alt]="message.attachments[0].filename || 'Image'"
                  class="max-w-full rounded-t-lg cursor-pointer hover:opacity-90"
@@ -37,7 +37,7 @@
                 <div class="p-3 bg-gray-800">
                     <div class="flex items-center gap-2 text-blue-400 mb-1">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span class="text-sm font-medium">{{ message.location.name || 'Location' }}</span>
+                        <span class="text-sm font-medium">{{ message.location.name || ('chat.location' | translate) }}</span>
                     </div>
                     <div class="text-xs text-gray-300">
                         {{ message.location.address }}
@@ -54,10 +54,11 @@
             <!-- AI Badge -->
             <div *ngIf="message.isAI" class="flex items-center gap-1 mb-1 text-blue-300">
                 <i class="fas fa-robot text-xs"></i>
-                <span class="text-[10px] font-medium uppercase tracking-wide">AI Assistant</span>
+                <span class="text-[10px] font-medium uppercase tracking-wide">{{ 'chat.aiAssistant' | translate }}</span>
             </div>
 
-            <div *ngIf="message.text && message.type !== 'image' && message.type !== 'location'"
+            <!-- Text/Caption (shown for all types except standalone location without text) -->
+            <div *ngIf="message.text && message.type !== 'location'"
                  class="mb-1 break-words whitespace-pre-wrap leading-relaxed"
                  [innerHTML]="formattedText"></div>
 

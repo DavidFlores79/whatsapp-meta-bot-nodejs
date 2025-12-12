@@ -11,7 +11,7 @@
             type="text"
             [(ngModel)]="messageText"
             (keyup.enter)="sendMessage()"
-            [placeholder]="canSendMessage() ? 'Type a message' : 'Take over conversation to send messages'"
+            [placeholder]="canSendMessage() ? ('chat.typeMessage' | translate) : ('chat.takeOverToSendMessages' | translate)"
             [disabled]="!canSendMessage()"
             [class.cursor-not-allowed]="!canSendMessage()"
             [class.opacity-60]="!canSendMessage()"

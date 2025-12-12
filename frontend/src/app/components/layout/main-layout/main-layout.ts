@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
 import { ReportsComponent } from '../../reports/reports';
@@ -13,7 +14,7 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ChatListComponent, ChatWindowComponent, ReportsComponent],
+  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, ChatListComponent, ChatWindowComponent, ReportsComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
@@ -81,6 +82,8 @@ export class MainLayoutComponent implements OnInit {
       this.currentView = 'customers';
     } else if (url.includes('/templates')) {
       this.currentView = 'templates';
+    } else if (url.includes('/settings')) {
+      this.currentView = 'settings';
     } else {
       this.currentView = 'chat';
     }
@@ -107,8 +110,7 @@ export class MainLayoutComponent implements OnInit {
 
   navigateToSettings() {
     this.currentView = 'settings';
-    // TODO: Implement settings route
-    this.toastService.info('Settings feature coming soon!');
+    this.router.navigate(['/settings']);
   }
 
   toggleMenu() {
@@ -132,8 +134,7 @@ export class MainLayoutComponent implements OnInit {
 
   viewSettings() {
     this.closeMenu();
-    // TODO: Implement settings view
-    console.log('View settings');
+    this.router.navigate(['/settings']);
   }
 
   toggleAutoAssign() {

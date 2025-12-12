@@ -10,7 +10,11 @@
       "Bash(git push:*)",
       "Bash(cat:*)",
       "Bash(python:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(dir /b)",
+      "Bash(taskkill:*)",
+      "Bash(npm start)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

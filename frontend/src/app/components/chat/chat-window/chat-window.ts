@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
@@ -13,7 +14,7 @@ import { Customer } from '../../../services/customer';
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent],
+  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })

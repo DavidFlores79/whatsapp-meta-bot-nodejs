@@ -35,7 +35,7 @@
         class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
         [title]="sidebarCollapsed ? 'Conversations' : ''">
         <i class="fas fa-comments text-xl flex-shrink-0"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Conversations</span>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.conversations' | translate }}</span>
       </button>
 
       <button
@@ -45,9 +45,9 @@
         [class.border-l-whatsapp-green]="currentView === 'customers'"
         [class.justify-center]="sidebarCollapsed"
         class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
-        [title]="sidebarCollapsed ? 'Customers' : ''">
+        [title]="sidebarCollapsed ? ('navigation.customers' | translate) : ''">
         <i class="fas fa-users text-xl flex-shrink-0"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Customers</span>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.customers' | translate }}</span>
       </button>
 
       <button
@@ -57,9 +57,9 @@
         [class.border-l-whatsapp-green]="currentView === 'templates'"
         [class.justify-center]="sidebarCollapsed"
         class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
-        [title]="sidebarCollapsed ? 'Templates' : ''">
+        [title]="sidebarCollapsed ? ('navigation.templates' | translate) : ''">
         <i class="fas fa-file-alt text-xl flex-shrink-0"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Templates</span>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.templates' | translate }}</span>
       </button>
 
       <button
@@ -69,9 +69,9 @@
         [class.border-l-whatsapp-green]="currentView === 'reports'"
         [class.justify-center]="sidebarCollapsed"
         class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
-        [title]="sidebarCollapsed ? 'Reports & Analytics' : ''">
+        [title]="sidebarCollapsed ? ('navigation.reports' | translate) : ''">
         <i class="fas fa-chart-bar text-xl flex-shrink-0"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Reports</span>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.reports' | translate }}</span>
       </button>
     </nav>
 
@@ -84,9 +84,9 @@
         [class.border-l-whatsapp-green]="currentView === 'settings'"
         [class.justify-center]="sidebarCollapsed"
         class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent"
-        [title]="sidebarCollapsed ? 'Settings' : ''">
+        [title]="sidebarCollapsed ? ('navigation.settings' | translate) : ''">
         <i class="fas fa-cog text-xl flex-shrink-0"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Settings</span>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.settings' | translate }}</span>
       </button>
 
       <!-- Collapse Button (when expanded) -->
@@ -139,7 +139,7 @@
           <button (click)="viewProfile()"
                   class="w-full px-4 py-3 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3 text-gray-200">
             <i class="fas fa-user w-5"></i>
-            <span>My Profile</span>
+            <span>{{ 'navigation.myProfile' | translate }}</span>
           </button>
 
           <div class="border-t border-gray-700 my-2"></div>
@@ -149,7 +149,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 text-gray-200">
                 <i class="fas fa-user-clock w-5"></i>
-                <span class="text-sm">Auto-Assign</span>
+                <span class="text-sm">{{ 'navigation.autoAssign' | translate }}</span>
               </div>
               <button
                 (click)="toggleAutoAssign()"
@@ -162,7 +162,7 @@
               </button>
             </div>
             <p class="text-xs text-gray-400 mt-1 ml-8">
-              {{ currentAgent?.autoAssign ? 'Available for customer requests' : 'Not accepting new assignments' }}
+              {{ currentAgent?.autoAssign ? ('navigation.online' | translate) : ('navigation.offline' | translate) }}
             </p>
           </div>
 
@@ -171,7 +171,7 @@
           <button (click)="logout()"
                   class="w-full px-4 py-3 text-left hover:bg-red-900/30 transition-colors flex items-center gap-3 text-red-400">
             <i class="fas fa-sign-out-alt w-5"></i>
-            <span>Logout</span>
+            <span>{{ 'common.logout' | translate }}</span>
           </button>
         </div>
 
