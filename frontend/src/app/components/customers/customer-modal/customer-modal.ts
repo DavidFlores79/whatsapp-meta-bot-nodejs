@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService, Customer } from '../../../services/customer';
@@ -10,7 +10,7 @@ import { CustomerService, Customer } from '../../../services/customer';
   templateUrl: './customer-modal.html',
   styleUrls: ['./customer-modal.css']
 })
-export class CustomerModalComponent implements OnInit {
+export class CustomerModalComponent implements OnInit, OnChanges {
   @Input() isOpen = false;
   @Input() customerId?: string;
   @Input() phoneNumber?: string; // Pre-fill phone number from chat
@@ -48,21 +48,52 @@ export class CustomerModalComponent implements OnInit {
     { value: 'inactive', label: 'Inactive', color: 'gray' }
   ];
 
-  constructor(private customerService: CustomerService) {}
+  constructor(
+    private customerService: CustomerService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
+    this.initializeCustomer();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Reset and reload when modal opens or customerId changes
+    if (changes['isOpen'] && changes['isOpen'].currentValue) {
+      this.initializeCustomer();
+    } else if (changes['customerId'] && !changes['customerId'].firstChange) {
+      this.initializeCustomer();
+    }
+  }
+
+  initializeCustomer() {
+    // Reset state
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.isLoading = false;
+    
     if (this.customerId) {
       this.isEditMode = true;
       this.loadCustomer();
     } else if (this.phoneNumber) {
       // Pre-fill phone number from chat
-      this.customer.phoneNumber = this.phoneNumber;
-      this.customer.source = 'whatsapp';
-      this.customer.segment = 'new';
+      this.isEditMode = false;
+      this.customer = {
+        phoneNumber: this.phoneNumber,
+        source: 'whatsapp',
+        segment: 'new',
+        tags: [],
+        customFields: {}
+      };
     } else {
       // Default values for new customer
-      this.customer.source = 'whatsapp';
-      this.customer.segment = 'new';
+      this.isEditMode = false;
+      this.customer = {
+        source: 'whatsapp',
+        segment: 'new',
+        tags: [],
+        customFields: {}
+      };
     }
   }
 
@@ -75,11 +106,13 @@ export class CustomerModalComponent implements OnInit {
         // API returns wrapped response: { success, customer, statistics, recentConversations }
         this.customer = { ...response.customer };
         this.isLoading = false;
+        this.cdr.detectChanges(); // Manually trigger change detection
       },
       error: (error) => {
         console.error('Error loading customer:', error);
-        this.errorMessage = 'Failed to load customer details';
+        this.errorMessage = `Failed to load customer details: ${error.message || error.error?.error || 'Unknown error'}`;
         this.isLoading = false;
+        this.cdr.detectChanges(); // Manually trigger change detection
       }
     });
   }
