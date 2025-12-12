@@ -57,8 +57,9 @@
                 <span class="text-[10px] font-medium uppercase tracking-wide">AI Assistant</span>
             </div>
 
-            <p *ngIf="message.text && message.type !== 'image' && message.type !== 'location'"
-               class="mb-1 break-words whitespace-pre-wrap leading-relaxed">{{ displayText }}</p>
+            <div *ngIf="message.text && message.type !== 'image' && message.type !== 'location'"
+                 class="mb-1 break-words whitespace-pre-wrap leading-relaxed"
+                 [innerHTML]="formattedText"></div>
 
             <div class="flex justify-between items-center gap-2 mt-1">
                 <!-- Template indicator (left side, subtle) -->

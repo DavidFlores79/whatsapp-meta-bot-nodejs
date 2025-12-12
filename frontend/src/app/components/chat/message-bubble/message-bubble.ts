@@ -31,6 +31,31 @@ export class MessageBubbleComponent {
     return this.message.text;
   }
 
+  /**
+   * Get HTML formatted message text with WhatsApp formatting
+   * *bold* -> <strong>bold</strong>
+   * _italic_ -> <em>italic</em>
+   * ~strikethrough~ -> <del>strikethrough</del>
+   * ```monospace``` -> <code>monospace</code>
+   */
+  get formattedText(): string {
+    let text = this.displayText;
+    
+    // Bold: *text*
+    text = text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+    
+    // Italic: _text_
+    text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+    
+    // Strikethrough: ~text~
+    text = text.replace(/~([^~]+)~/g, '<del>$1</del>');
+    
+    // Monospace: ```text```
+    text = text.replace(/```([^`]+)```/g, '<code>$1</code>');
+    
+    return text;
+  }
+
   openImage(url: string) {
     window.open(url, '_blank');
   }
