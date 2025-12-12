@@ -27,11 +27,11 @@
                 <!-- AI Metadata Toggle Button -->
                 <button
                     *ngIf="hasMetadata()"
-                    (click)="isMetadataVisible = !isMetadataVisible; $event.stopPropagation()"
+                    (click)="toggleMetadata(chat); $event.stopPropagation()"
                     class="hover:text-gray-200 relative"
                     [class.text-blue-400]="isMetadataVisible"
                     [title]="'AI Collected Information'">
-                    <i class="fas fa-database"></i>
+                    <i class="fas" [ngClass]="isLoadingMetadata ? 'fa-spinner fa-spin' : 'fa-database'"></i>
                     <span *ngIf="!isMetadataVisible" class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                 </button>
                 <button

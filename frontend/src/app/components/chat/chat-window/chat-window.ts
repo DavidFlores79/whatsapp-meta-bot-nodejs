@@ -247,6 +247,17 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   /**
+   * Toggle metadata visibility and refresh data when opening
+   */
+  toggleMetadata(chat: Chat) {
+    // If opening, refresh metadata first
+    if (!this.isMetadataVisible) {
+      this.loadThreadMetadata(chat.id);
+    }
+    this.isMetadataVisible = !this.isMetadataVisible;
+  }
+
+  /**
    * Close summary modal
    */
   closeSummaryModal() {
