@@ -97,6 +97,22 @@
             <!-- Performance Data -->
             <div *ngIf="!loadingPerformance && agentPerformance && agentPerformance.analytics.totalAssignments > 0" class="space-y-6">
 
+                <!-- Warning: All assignments are active (not released yet) -->
+                <div *ngIf="agentPerformance.analytics.activeAssignments > 0 && agentPerformance.analytics.releasedAssignments === 0" 
+                     class="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-info-circle text-blue-500 text-xl mt-1"></i>
+                        <div>
+                            <p class="text-sm text-gray-300 font-medium mb-1">
+                                {{ agentPerformance.analytics.activeAssignments }} conversación(es) activa(s)
+                            </p>
+                            <p class="text-xs text-gray-400">
+                                El análisis de rendimiento completo estará disponible cuando el agente libere las conversaciones haciendo clic en "Reanudar IA".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-4 text-white">
@@ -105,7 +121,12 @@
                             <span class="text-sm opacity-80">{{ 'reports.total' | translate }}</span>
                         </div>
                         <div class="text-3xl font-bold">{{ agentPerformance.analytics.totalAssignments }}</div>
-                        <div class="text-sm opacity-80">{{ 'reports.assignments' | translate }}</div>
+                        <div class="text-sm opacity-80">
+                            {{ 'reports.assignments' | translate }}
+                            <span *ngIf="agentPerformance.analytics.activeAssignments > 0" class="ml-1">
+                                ({{ agentPerformance.analytics.activeAssignments }} activas)
+                            </span>
+                        </div>
                     </div>
 
                     <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-4 text-white">

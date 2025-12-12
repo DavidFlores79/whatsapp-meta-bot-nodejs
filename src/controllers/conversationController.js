@@ -329,11 +329,19 @@ async function getAgentPerformance(req, res) {
         
         if (startDate || endDate) {
             filter.assignedAt = {};
-            if (startDate) filter.assignedAt.$gte = new Date(startDate);
-            if (endDate) filter.assignedAt.$lte = new Date(endDate);
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                filter.assignedAt.$gte = start;
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // End of day
+                filter.assignedAt.$lte = end;
+            }
         }
 
-        console.log('[getAgentPerformance] Filter:', filter);
+        console.log('[getAgentPerformance] Filter:', JSON.stringify(filter, null, 2));
 
         // OPTIMIZED: Only select fields needed for analytics, exclude heavy nested objects
         const assignments = await AgentAssignmentHistory.find(filter)
@@ -367,12 +375,40 @@ async function getAgentPerformance(req, res) {
 
         console.log('[getAgentPerformance] Found', assignments.length, 'assignments');
 
+        // If no assignments found with date filter, log helpful message
+        if (assignments.length === 0 && (startDate || endDate)) {
+            console.log('[getAgentPerformance] ⚠️ No assignments found in date range. Try removing date filters.');
+        }
+
         // Calculate aggregate performance metrics
         const withAnalysis = assignments.filter(a => a.aiAnalysis?.agentPerformance?.overallScore);
+        const releasedAssignments = assignments.filter(a => a.releasedAt);
+        const activeAssignments = assignments.filter(a => !a.releasedAt);
+        
+        console.log('[getAgentPerformance] Stats:', {
+            total: assignments.length,
+            withAnalysis: withAnalysis.length,
+            released: releasedAssignments.length,
+            active: activeAssignments.length
+        });
+
+        // Log sample of first assignment for debugging
+        if (assignments.length > 0 && withAnalysis.length === 0) {
+            console.log('[getAgentPerformance] ⚠️ Assignments exist but none have AI analysis yet');
+            console.log('[getAgentPerformance] Sample assignment:', {
+                id: assignments[0]._id,
+                assignedAt: assignments[0].assignedAt,
+                releasedAt: assignments[0].releasedAt,
+                hasAiAnalysis: !!assignments[0].aiAnalysis,
+                hasPerformanceScore: !!assignments[0].aiAnalysis?.agentPerformance?.overallScore
+            });
+        }
         
         const analytics = {
             totalAssignments: assignments.length,
             analyzedAssignments: withAnalysis.length,
+            releasedAssignments: releasedAssignments.length,
+            activeAssignments: activeAssignments.length,
             totalDuration: assignments.reduce((sum, a) => sum + (a.duration || 0), 0),
             averageDuration: assignments.length > 0 
                 ? Math.floor(assignments.reduce((sum, a) => sum + (a.duration || 0), 0) / assignments.length)
@@ -436,7 +472,15 @@ async function getAgentPerformance(req, res) {
             recentAssignments: assignments.slice(0, 10) // Last 10 for detail view
         });
     } catch (error) {
-        console.error('Get agent performance error:', error);
+        console.error('[getAgentPerformance] Error:', error);
+        
+        // Handle timeout errors specifically
+        if (error.name === 'MongooseError' && error.message?.includes('buffering timed out')) {
+            return res.status(504).json({ 
+                error: 'Query timeout - too much data. Try using date filters to narrow the search.' 
+            });
+        }
+        
         return res.status(500).json({ error: error.message });
     }
 }

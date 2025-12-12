@@ -13,6 +13,8 @@ interface AgentPerformance {
   analytics: {
     totalAssignments: number;
     analyzedAssignments: number;
+    releasedAssignments: number;
+    activeAssignments: number;
     totalDuration: number;
     averageDuration: number;
     performance: {
@@ -22,7 +24,7 @@ interface AgentPerformance {
       knowledgeability: number;
       empathy: number;
       problemSolving: number;
-    };
+    } | null;
     resolution: {
       totalResolved: number;
       resolutionRate: number;
