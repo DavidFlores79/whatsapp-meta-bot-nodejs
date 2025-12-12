@@ -24,6 +24,12 @@
                 </div>
             </div>
             <div class="flex gap-4 text-gray-400">
+                <button
+                    (click)="openCustomerModal(chat)"
+                    class="hover:text-gray-200"
+                    title="Save as Customer">
+                    <i class="fas fa-user-plus"></i>
+                </button>
                 <button class="hover:text-gray-200"><i class="fas fa-search"></i></button>
                 <button class="hover:text-gray-200"><i class="fas fa-ellipsis-v"></i></button>
             </div>
@@ -79,6 +85,15 @@
     <div class="bg-whatsapp-gray p-2 shrink-0 z-10">
         <app-message-input></app-message-input>
     </div>
+
+    <!-- Customer Modal -->
+    <app-customer-modal
+        [isOpen]="isCustomerModalOpen"
+        [phoneNumber]="selectedPhoneNumber"
+        [customerId]="selectedCustomerId"
+        (closeModal)="closeCustomerModal()"
+        (customerSaved)="onCustomerSaved($event)">
+    </app-customer-modal>
 </div>
 
 <ng-template #noChat>

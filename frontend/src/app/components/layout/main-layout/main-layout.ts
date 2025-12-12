@@ -61,6 +61,11 @@ export class MainLayoutComponent implements OnInit {
     console.log('View profile');
   }
 
+  viewCustomers() {
+    this.closeMenu();
+    this.router.navigate(['/customers']);
+  }
+
   viewSettings() {
     this.closeMenu();
     // TODO: Implement settings view

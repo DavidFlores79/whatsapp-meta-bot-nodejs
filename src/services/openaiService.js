@@ -302,12 +302,24 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
   const processingResolver = startUserProcessing(userId);
 
   try {
+    // Emit AI typing start
+    if (conversationId) {
+      io.emit('ai_typing_start', { conversationId, userId });
+    }
+
     const threadId = await getOrCreateThread(userId, headers);
     await ensureNoActiveRun(threadId, headers);
     await addMessageToThread(threadId, message, { ...context, userId }, headers);
     const runId = await runAssistant(threadId, userId, headers);
     await handleRunStatus(threadId, runId, headers, userId);
-    return await getAssistantResponse(threadId, runId, userId, conversationId);
+    const response = await getAssistantResponse(threadId, runId, userId, conversationId);
+
+    // Emit AI typing end
+    if (conversationId) {
+      io.emit('ai_typing_end', { conversationId, userId });
+    }
+
+    return response;
   } catch (error) {
     // Enhanced error logging
     console.error("🚨 OpenAI Service Error:", {
@@ -328,6 +340,10 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
     
     return "Lo siento, hubo un error con el asistente IA.";
   } finally {
+    // Ensure AI typing indicator is cleared on error
+    if (conversationId) {
+      io.emit('ai_typing_end', { conversationId, userId });
+    }
     endUserProcessing(userId);
     if (processingResolver) processingResolver();
   }

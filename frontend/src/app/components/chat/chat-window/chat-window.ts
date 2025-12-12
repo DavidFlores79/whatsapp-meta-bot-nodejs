@@ -5,11 +5,13 @@ import { AuthService } from '../../../services/auth';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
+import { CustomerModalComponent } from '../../customers/customer-modal/customer-modal';
+import { Customer } from '../../../services/customer';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, MessageBubbleComponent, MessageInputComponent],
+  imports: [CommonModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })
@@ -19,6 +21,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTyping = false;
   private typingTimeout: any;
 
+  // Customer Modal
+  isCustomerModalOpen = false;
+  selectedPhoneNumber?: string;
+  selectedCustomerId?: string;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService
@@ -27,8 +34,28 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   ngOnInit() {
-    // Typing indicators disabled - WhatsApp webhooks don't provide customer typing events
-    // Agent typing is handled separately and shouldn't show customer typing indicator
+    // Subscribe to typing indicators
+    this.chatService.onTyping().subscribe(typingData => {
+      if (!typingData) {
+        this.isTyping = false;
+        return;
+      }
+
+      // Show typing indicator for current chat only
+      this.selectedChat$.subscribe(chat => {
+        if (chat && chat.id === typingData.conversationId) {
+          this.isTyping = typingData.isTyping !== false; // Default to true if not specified
+
+          // Auto-clear typing indicator after 10 seconds as safety
+          if (this.isTyping) {
+            clearTimeout(this.typingTimeout);
+            this.typingTimeout = setTimeout(() => {
+              this.isTyping = false;
+            }, 10000);
+          }
+        }
+      });
+    });
   }
 
   ngAfterViewChecked() {
@@ -129,5 +156,32 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     }
 
     return chat.assignedAgent.firstName;
+  }
+
+  /**
+   * Open customer modal to save or edit customer
+   */
+  openCustomerModal(chat: Chat) {
+    this.selectedPhoneNumber = chat.phoneNumber;
+    this.selectedCustomerId = chat.customerId;
+    this.isCustomerModalOpen = true;
+  }
+
+  /**
+   * Close customer modal
+   */
+  closeCustomerModal() {
+    this.isCustomerModalOpen = false;
+    this.selectedPhoneNumber = undefined;
+    this.selectedCustomerId = undefined;
+  }
+
+  /**
+   * Handle customer saved event
+   */
+  onCustomerSaved(customer: Customer) {
+    console.log('Customer saved:', customer);
+    // Optionally refresh the conversation to show updated customer info
+    this.chatService.refreshConversations();
   }
 }

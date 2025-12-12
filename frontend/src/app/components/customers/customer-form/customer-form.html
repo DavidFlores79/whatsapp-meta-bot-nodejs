@@ -1,0 +1,260 @@
+<div class="flex flex-col h-screen bg-whatsapp-dark text-gray-100">
+  <!-- Header -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-100">
+          {{ isEditMode ? 'Edit Customer' : 'New Customer' }}
+        </h1>
+        <p class="text-sm text-gray-400 mt-1">
+          {{ isEditMode ? 'Update customer information' : 'Add a new customer to your database' }}
+        </p>
+      </div>
+      <button (click)="cancel()"
+              class="text-gray-400 hover:text-gray-200 flex items-center gap-2">
+        <i class="fas fa-times"></i>
+        <span>Cancel</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="mx-6 mt-4 bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg">
+    <i class="fas fa-exclamation-circle mr-2"></i>
+    {{ error }}
+  </div>
+
+  <!-- Form -->
+  <div class="flex-1 overflow-auto px-6 py-4">
+    <form (ngSubmit)="saveCustomer()" class="max-w-4xl mx-auto space-y-6">
+      <!-- Basic Information -->
+      <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+          <i class="fas fa-user text-whatsapp-green"></i> Basic Information
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              Phone Number <span class="text-red-400">*</span>
+            </label>
+            <input type="text"
+                   [(ngModel)]="customer.phoneNumber"
+                   name="phoneNumber"
+                   placeholder="529991234567"
+                   required
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Email</label>
+            <input type="email"
+                   [(ngModel)]="customer.email"
+                   name="email"
+                   placeholder="customer@example.com"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">First Name</label>
+            <input type="text"
+                   [(ngModel)]="customer.firstName"
+                   name="firstName"
+                   placeholder="John"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Last Name</label>
+            <input type="text"
+                   [(ngModel)]="customer.lastName"
+                   name="lastName"
+                   placeholder="Doe"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Classification -->
+      <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+          <i class="fas fa-tags text-whatsapp-green"></i> Classification
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Segment</label>
+            <select [(ngModel)]="customer.segment"
+                    name="segment"
+                    class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+              <option *ngFor="let segment of segments" [value]="segment">{{ segment | titlecase }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Status</label>
+            <select [(ngModel)]="customer.status"
+                    name="status"
+                    class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+              <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Source</label>
+            <select [(ngModel)]="customer.source"
+                    name="source"
+                    class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+              <option *ngFor="let source of sources" [value]="source">{{ formatSource(source) }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="mt-4">
+          <label class="block text-sm text-gray-400 mb-2">Tags</label>
+          <div class="flex gap-2 mb-2">
+            <input type="text"
+                   [(ngModel)]="tagInput"
+                   name="tagInput"
+                   (keyup.enter)="addTag()"
+                   placeholder="Add tag and press Enter"
+                   class="flex-1 bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+            <button type="button"
+                    (click)="addTag()"
+                    class="bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span *ngFor="let tag of customer.tags"
+                  class="px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full text-sm flex items-center gap-2">
+              {{ tag }}
+              <button type="button" (click)="removeTag(tag)" class="hover:text-red-400">
+                <i class="fas fa-times text-xs"></i>
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+          <i class="fas fa-map-marker-alt text-whatsapp-green"></i> Address
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm text-gray-400 mb-2">Street</label>
+            <input type="text"
+                   [(ngModel)]="customer.address!.street"
+                   name="street"
+                   placeholder="123 Main Street"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">City</label>
+            <input type="text"
+                   [(ngModel)]="customer.address!.city"
+                   name="city"
+                   placeholder="Cancún"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">State</label>
+            <input type="text"
+                   [(ngModel)]="customer.address!.state"
+                   name="state"
+                   placeholder="Quintana Roo"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Country</label>
+            <input type="text"
+                   [(ngModel)]="customer.address!.country"
+                   name="country"
+                   placeholder="México"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Postal Code</label>
+            <input type="text"
+                   [(ngModel)]="customer.address!.postalCode"
+                   name="postalCode"
+                   placeholder="77500"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+          <i class="fas fa-sticky-note text-whatsapp-green"></i> Notes
+        </h3>
+
+        <textarea [(ngModel)]="customer.notes"
+                  name="notes"
+                  rows="4"
+                  placeholder="Add any internal notes about this customer..."
+                  class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none resize-none"></textarea>
+      </div>
+
+      <!-- Preferences -->
+      <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+          <i class="fas fa-cog text-whatsapp-green"></i> Preferences
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Language</label>
+            <select [(ngModel)]="customer.preferences!.language"
+                    name="language"
+                    class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+              <option value="es">Spanish</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Communication Start</label>
+            <input type="time"
+                   [(ngModel)]="customer.preferences!.communicationHours!.start"
+                   name="commStart"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Communication End</label>
+            <input type="time"
+                   [(ngModel)]="customer.preferences!.communicationHours!.end"
+                   name="commEnd"
+                   class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex gap-3 justify-end pb-6">
+        <button type="button"
+                (click)="cancel()"
+                class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+                [disabled]="loading"
+                class="px-6 py-3 bg-whatsapp-green hover:bg-green-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+          <i *ngIf="!loading" class="fas fa-save"></i>
+          <span>{{ isEditMode ? 'Update Customer' : 'Create Customer' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

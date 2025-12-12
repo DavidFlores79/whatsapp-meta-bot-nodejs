@@ -1,0 +1,302 @@
+<div class="flex flex-col h-screen bg-whatsapp-dark text-gray-100">
+  <!-- Header with Stats -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-100">Customers</h1>
+        <p class="text-sm text-gray-400 mt-1">Manage your customer database</p>
+      </div>
+      <button (click)="createCustomer()"
+              class="bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-plus"></i>
+        <span>New Customer</span>
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total</div>
+        <div class="text-2xl font-bold text-gray-100">{{ stats.totalCustomers }}</div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Active</div>
+        <div class="text-2xl font-bold text-green-400">{{ stats.activeCustomers }}</div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">VIP</div>
+        <div class="text-2xl font-bold text-yellow-400">{{ stats.vipCustomers }}</div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Blocked</div>
+        <div class="text-2xl font-bold text-red-400">{{ stats.blockedCustomers }}</div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">New (Month)</div>
+        <div class="text-2xl font-bold text-blue-400">{{ stats.newThisMonth }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-3 shrink-0">
+    <div class="flex flex-col md:flex-row gap-3">
+      <!-- Search -->
+      <div class="flex-1 relative">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text"
+               [(ngModel)]="filters.search"
+               (keyup.enter)="onSearch()"
+               placeholder="Search by name, email, or phone..."
+               class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+      </div>
+
+      <!-- Filter Toggle -->
+      <button (click)="toggleFilters()"
+              class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
+        <i class="fas fa-filter"></i>
+        <span>Filters</span>
+        <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showFilters"></i>
+      </button>
+
+      <!-- Bulk Actions -->
+      <button *ngIf="selectedCustomers.size > 0"
+              (click)="toggleBulkActions()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-tasks"></i>
+        <span>{{ selectedCustomers.size }} Selected</span>
+      </button>
+
+      <!-- Export -->
+      <div class="relative">
+        <button class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2"
+                onclick="this.nextElementSibling.classList.toggle('hidden')">
+          <i class="fas fa-download"></i>
+          <span>Export</span>
+        </button>
+        <div class="hidden absolute right-0 mt-2 w-48 bg-whatsapp-dark border border-gray-600 rounded-lg shadow-xl z-10">
+          <button (click)="exportCustomers('csv')"
+                  class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
+            <i class="fas fa-file-csv w-5"></i>
+            <span>Export as CSV</span>
+          </button>
+          <button (click)="exportCustomers('json')"
+                  class="w-full px-4 py-2 text-left hover:bg-whatsapp-gray transition-colors flex items-center gap-3">
+            <i class="fas fa-file-code w-5"></i>
+            <span>Export as JSON</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Filters (Collapsible) -->
+    <div *ngIf="showFilters" class="mt-3 pt-3 border-t border-gray-700 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Status</label>
+        <select [(ngModel)]="filters.status"
+                (change)="onFilterChange()"
+                class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Segment</label>
+        <select [(ngModel)]="filters.segment"
+                (change)="onFilterChange()"
+                class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          <option value="">All Segments</option>
+          <option *ngFor="let segment of segments" [value]="segment">{{ segment | titlecase }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Tags (comma-separated)</label>
+        <input type="text"
+               [(ngModel)]="filters.tags"
+               (blur)="onFilterChange()"
+               placeholder="premium, loyal"
+               class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+      </div>
+
+      <div class="flex items-end">
+        <button (click)="clearFilters()"
+                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Menu -->
+    <div *ngIf="showBulkActions && selectedCustomers.size > 0"
+         class="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+      <button (click)="deleteSelected()"
+              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-trash"></i>
+        <span>Deactivate Selected</span>
+      </button>
+      <button (click)="selectedCustomers.clear()"
+              class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+        Clear Selection
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="flex-1 overflow-auto px-6 py-4">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center h-full">
+      <div class="text-center">
+        <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green mb-4"></i>
+        <p class="text-gray-400">Loading customers...</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg">
+      <i class="fas fa-exclamation-circle mr-2"></i>
+      {{ error }}
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && customers.length === 0" class="flex items-center justify-center h-full">
+      <div class="text-center">
+        <i class="fas fa-users text-6xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-300 mb-2">No customers found</h3>
+        <p class="text-gray-400 mb-4">Start by creating your first customer</p>
+        <button (click)="createCustomer()"
+                class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-2 rounded-lg inline-flex items-center gap-2">
+          <i class="fas fa-plus"></i>
+          <span>Create Customer</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div *ngIf="!loading && !error && customers.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-whatsapp-dark border-b border-gray-700">
+          <tr>
+            <th class="px-4 py-3 text-left w-12">
+              <input type="checkbox"
+                     [checked]="allSelected"
+                     (change)="toggleSelectAll()"
+                     class="rounded border-gray-600 text-whatsapp-green focus:ring-whatsapp-green">
+            </th>
+            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green" (click)="onSort('phoneNumber')">
+              <div class="flex items-center gap-2">
+                <span>Customer</span>
+                <i class="fas fa-sort text-xs" *ngIf="filters.sortBy !== 'phoneNumber'"></i>
+                <i class="fas fa-sort-up text-xs" *ngIf="filters.sortBy === 'phoneNumber' && filters.sortOrder === 'asc'"></i>
+                <i class="fas fa-sort-down text-xs" *ngIf="filters.sortBy === 'phoneNumber' && filters.sortOrder === 'desc'"></i>
+              </div>
+            </th>
+            <th class="px-4 py-3 text-left">Contact</th>
+            <th class="px-4 py-3 text-left">Segment</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Tags</th>
+            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green" (click)="onSort('lastInteraction')">
+              <div class="flex items-center gap-2">
+                <span>Last Contact</span>
+                <i class="fas fa-sort text-xs" *ngIf="filters.sortBy !== 'lastInteraction'"></i>
+                <i class="fas fa-sort-up text-xs" *ngIf="filters.sortBy === 'lastInteraction' && filters.sortOrder === 'asc'"></i>
+                <i class="fas fa-sort-down text-xs" *ngIf="filters.sortBy === 'lastInteraction' && filters.sortOrder === 'desc'"></i>
+              </div>
+            </th>
+            <th class="px-4 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let customer of customers"
+              class="border-b border-gray-700 hover:bg-whatsapp-dark transition-colors cursor-pointer"
+              (click)="viewCustomer(customer)">
+            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+              <input type="checkbox"
+                     [checked]="isSelected(customer._id)"
+                     (change)="toggleSelectCustomer(customer._id)"
+                     class="rounded border-gray-600 text-whatsapp-green focus:ring-whatsapp-green">
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600 flex-shrink-0">
+                  <img *ngIf="customer.avatar" [src]="customer.avatar" [alt]="getCustomerName(customer)" class="w-full h-full object-cover">
+                  <div *ngIf="!customer.avatar" class="w-full h-full flex items-center justify-center text-white font-medium text-sm">
+                    {{ (customer.firstName || customer.phoneNumber)[0] }}
+                  </div>
+                </div>
+                <div>
+                  <div class="font-medium text-gray-100">{{ getCustomerName(customer) }}</div>
+                  <div class="text-xs text-gray-400">{{ customer.phoneNumber }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-sm text-gray-300">{{ customer.email || '-' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs font-medium" [ngClass]="getSegmentColor(customer.segment)">
+                {{ customer.segment | titlecase }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs font-medium" [ngClass]="getStatusColor(customer.status)">
+                {{ customer.status | titlecase }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let tag of customer.tags.slice(0, 2)"
+                      class="px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded text-xs">
+                  {{ tag }}
+                </span>
+                <span *ngIf="customer.tags.length > 2"
+                      class="px-2 py-0.5 bg-gray-700 text-gray-400 rounded text-xs">
+                  +{{ customer.tags.length - 2 }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-400">
+              {{ formatDate(customer.lastInteraction) }}
+            </td>
+            <td class="px-4 py-3 text-center" (click)="$event.stopPropagation()">
+              <button (click)="viewCustomer(customer)"
+                      class="text-gray-400 hover:text-whatsapp-green transition-colors px-2">
+                <i class="fas fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && customers.length > 0" class="mt-4 flex items-center justify-between">
+      <div class="text-sm text-gray-400">
+        Showing {{ (pagination.page - 1) * pagination.limit + 1 }} to {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of {{ pagination.total }} customers
+      </div>
+
+      <div class="flex gap-2">
+        <button (click)="onPageChange(pagination.page - 1)"
+                [disabled]="pagination.page === 1"
+                class="px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <button *ngFor="let page of pageNumbers"
+                (click)="onPageChange(page)"
+                [class.bg-whatsapp-green]="page === pagination.page"
+                [class.bg-whatsapp-dark]="page !== pagination.page"
+                class="px-3 py-1 rounded text-gray-100 border border-gray-600 hover:border-whatsapp-green transition-colors">
+          {{ page }}
+        </button>
+
+        <button (click)="onPageChange(pagination.page + 1)"
+                [disabled]="pagination.page === pagination.pages"
+                class="px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

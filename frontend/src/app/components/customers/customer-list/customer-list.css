@@ -1,0 +1,44 @@
+/* Custom scrollbar */
+:host ::ng-deep .overflow-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:host ::ng-deep .overflow-auto::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+:host ::ng-deep .overflow-auto::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+:host ::ng-deep .overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Rotate animation for filter chevron */
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+/* Table hover effects */
+table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Button hover effects */
+button:not(:disabled) {
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

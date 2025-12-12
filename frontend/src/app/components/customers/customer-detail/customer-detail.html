@@ -1,0 +1,355 @@
+<div class="flex flex-col h-screen bg-whatsapp-dark text-gray-100">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex items-center justify-center h-full">
+    <div class="text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green mb-4"></i>
+      <p class="text-gray-400">Loading customer details...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="flex items-center justify-center h-full">
+    <div class="text-center">
+      <i class="fas fa-exclamation-circle text-6xl text-red-500 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-300 mb-2">Error Loading Customer</h3>
+      <p class="text-gray-400 mb-4">{{ error }}</p>
+      <button (click)="goBack()"
+              class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+        Go Back
+      </button>
+    </div>
+  </div>
+
+  <!-- Customer Details -->
+  <div *ngIf="!loading && !error && customer" class="flex flex-col h-full">
+    <!-- Header -->
+    <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
+      <div class="flex items-center justify-between mb-4">
+        <button (click)="goBack()"
+                class="text-gray-400 hover:text-gray-200 flex items-center gap-2">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Customers</span>
+        </button>
+
+        <div class="flex gap-2">
+          <button (click)="editCustomer()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-edit"></i>
+            <span>Edit</span>
+          </button>
+          <button (click)="toggleBlock()"
+                  [class.bg-red-600]="!customer.isBlocked"
+                  [class.bg-green-600]="customer.isBlocked"
+                  class="hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <i [class.fa-ban]="!customer.isBlocked" [class.fa-check]="customer.isBlocked" class="fas"></i>
+            <span>{{ customer.isBlocked ? 'Unblock' : 'Block' }}</span>
+          </button>
+          <button (click)="deleteCustomer()"
+                  class="bg-gray-700 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Customer Profile Card -->
+      <div class="bg-whatsapp-dark rounded-lg p-6 border border-gray-700">
+        <div class="flex items-start gap-6">
+          <!-- Avatar -->
+          <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-600 flex-shrink-0">
+            <img *ngIf="customer.avatar" [src]="customer.avatar" [alt]="getCustomerName()" class="w-full h-full object-cover">
+            <div *ngIf="!customer.avatar" class="w-full h-full flex items-center justify-center text-white font-bold text-3xl">
+              {{ (customer.firstName || customer.phoneNumber)[0] }}
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-100">{{ getCustomerName() }}</h2>
+                <p class="text-gray-400 mt-1">{{ customer.phoneNumber }}</p>
+              </div>
+              <div class="flex gap-2">
+                <span class="px-3 py-1 rounded-full text-sm font-medium" [ngClass]="getSegmentColor(customer.segment)">
+                  {{ customer.segment | titlecase }}
+                </span>
+                <span class="px-3 py-1 rounded-full text-sm font-medium" [ngClass]="getStatusColor(customer.status)">
+                  {{ customer.status | titlecase }}
+                </span>
+                <button *ngIf="customer.segment !== 'vip'" (click)="upgradeToVIP()"
+                        class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full text-sm font-medium">
+                  <i class="fas fa-crown mr-1"></i> Upgrade to VIP
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Email</div>
+                <div class="text-gray-100">{{ customer.email || '-' }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Contact</div>
+                <div class="text-gray-100">{{ formatRelativeDate(customer.firstContact) }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Last Interaction</div>
+                <div class="text-gray-100">{{ formatRelativeDate(customer.lastInteraction) }}</div>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-2">Tags</div>
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let tag of customer.tags"
+                      class="px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full text-sm flex items-center gap-2">
+                  {{ tag }}
+                  <button (click)="removeTag(tag)" class="hover:text-red-400">
+                    <i class="fas fa-times text-xs"></i>
+                  </button>
+                </span>
+                <button (click)="addTag()"
+                        class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-full text-sm">
+                  <i class="fas fa-plus mr-1"></i> Add Tag
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Banner for Blocked Customers -->
+        <div *ngIf="customer.isBlocked" class="mt-4 bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+              <strong>Customer is Blocked</strong>
+              <p class="text-sm mt-1">Reason: {{ customer.blockReason || 'No reason provided' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Conversations</div>
+          <div class="text-2xl font-bold text-gray-100">{{ statistics?.totalConversations || 0 }}</div>
+        </div>
+        <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Open</div>
+          <div class="text-2xl font-bold text-yellow-400">{{ statistics?.openConversations || 0 }}</div>
+        </div>
+        <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Resolved</div>
+          <div class="text-2xl font-bold text-green-400">{{ statistics?.resolvedConversations || 0 }}</div>
+        </div>
+        <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Messages</div>
+          <div class="text-2xl font-bold text-blue-400">{{ customer.statistics?.totalMessages || 0 }}</div>
+        </div>
+        <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Satisfaction</div>
+          <div class="text-2xl font-bold text-purple-400">
+            <span *ngIf="customer.statistics?.satisfactionScore">{{ customer.statistics?.satisfactionScore }}/5</span>
+            <span *ngIf="!customer.statistics?.satisfactionScore">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-whatsapp-gray border-b border-gray-700 px-6 shrink-0">
+      <div class="flex gap-6">
+        <button (click)="activeTab = 'overview'"
+                [class.text-whatsapp-green]="activeTab === 'overview'"
+                [class.border-whatsapp-green]="activeTab === 'overview'"
+                class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
+          <i class="fas fa-info-circle mr-2"></i> Overview
+        </button>
+        <button (click)="activeTab = 'conversations'"
+                [class.text-whatsapp-green]="activeTab === 'conversations'"
+                [class.border-whatsapp-green]="activeTab === 'conversations'"
+                class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
+          <i class="fas fa-comments mr-2"></i> Conversations ({{ recentConversations.length }})
+        </button>
+        <button (click)="activeTab = 'activity'"
+                [class.text-whatsapp-green]="activeTab === 'activity'"
+                [class.border-whatsapp-green]="activeTab === 'activity'"
+                class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
+          <i class="fas fa-clock mr-2"></i> Activity
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="flex-1 overflow-auto px-6 py-4">
+      <!-- Overview Tab -->
+      <div *ngIf="activeTab === 'overview'" class="space-y-6">
+        <!-- Contact Information -->
+        <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-address-card text-whatsapp-green"></i> Contact Information
+          </h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Phone Number</div>
+              <div class="text-gray-100">{{ customer.phoneNumber }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Email</div>
+              <div class="text-gray-100">{{ customer.email || '-' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Source</div>
+              <div class="text-gray-100">{{ customer.source | titlecase }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Language</div>
+              <div class="text-gray-100">{{ customer.preferences?.language || 'Not set' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div *ngIf="customer.address" class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-map-marker-alt text-whatsapp-green"></i> Address
+          </h3>
+          <div class="text-gray-100">
+            <div *ngIf="customer.address.street">{{ customer.address.street }}</div>
+            <div>{{ customer.address.city }}, {{ customer.address.state }}</div>
+            <div>{{ customer.address.country }} {{ customer.address.postalCode }}</div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div *ngIf="customer.notes" class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-sticky-note text-whatsapp-green"></i> Notes
+          </h3>
+          <div class="text-gray-100 whitespace-pre-wrap">{{ customer.notes }}</div>
+        </div>
+
+        <!-- Custom Fields -->
+        <div *ngIf="customer.customFields && Object.keys(customer.customFields || {}).length > 0"
+             class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-list text-whatsapp-green"></i> Custom Fields
+          </h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div *ngFor="let field of Object.keys(customer.customFields || {})">
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ field }}</div>
+              <div class="text-gray-100">{{ customer.customFields![field] }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conversations Tab -->
+      <div *ngIf="activeTab === 'conversations'">
+        <div *ngIf="recentConversations.length === 0" class="text-center py-12">
+          <i class="fas fa-comments text-6xl text-gray-600 mb-4"></i>
+          <p class="text-gray-400">No conversations yet</p>
+        </div>
+
+        <div *ngIf="recentConversations.length > 0" class="space-y-3">
+          <div *ngFor="let conversation of recentConversations"
+               (click)="viewConversation(conversation._id)"
+               class="bg-whatsapp-gray rounded-lg p-4 border border-gray-700 hover:border-whatsapp-green transition-colors cursor-pointer">
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-1 rounded text-xs font-medium"
+                      [class.bg-yellow-900/30]="conversation.status === 'open'"
+                      [class.text-yellow-400]="conversation.status === 'open'"
+                      [class.bg-green-900/30]="conversation.status === 'resolved'"
+                      [class.text-green-400]="conversation.status === 'resolved'">
+                  {{ conversation.status | titlecase }}
+                </span>
+                <span *ngIf="conversation.assignedAgent"
+                      class="text-xs text-gray-400">
+                  Agent: {{ conversation.assignedAgent.firstName }} {{ conversation.assignedAgent.lastName }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-400">
+                {{ formatRelativeDate(conversation.updatedAt) }}
+              </div>
+            </div>
+            <div class="text-gray-300 text-sm">
+              {{ conversation.lastMessage?.content || 'No messages yet' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Tab -->
+      <div *ngIf="activeTab === 'activity'" class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-green-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-user-plus text-green-400"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-gray-100 font-medium">Customer Created</div>
+              <div class="text-xs text-gray-400">{{ formatDate(customer.createdAt) }}</div>
+            </div>
+          </div>
+
+          <div *ngIf="customer.lastInteraction" class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-comment text-blue-400"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-gray-100 font-medium">Last Interaction</div>
+              <div class="text-xs text-gray-400">{{ formatDate(customer.lastInteraction) }}</div>
+            </div>
+          </div>
+
+          <div *ngIf="customer.updatedAt && customer.updatedAt !== customer.createdAt" class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-edit text-yellow-400"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-gray-100 font-medium">Profile Updated</div>
+              <div class="text-xs text-gray-400">{{ formatDate(customer.updatedAt) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteConfirm"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+       (click)="showDeleteConfirm = false">
+    <div class="bg-whatsapp-dark rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700"
+         (click)="$event.stopPropagation()">
+      <h3 class="text-xl font-semibold text-gray-100 mb-4">Confirm Delete</h3>
+      <p class="text-gray-400 mb-6">
+        Are you sure you want to deactivate this customer? This action can be reversed later.
+      </p>
+      <div class="flex gap-3 justify-end">
+        <button (click)="showDeleteConfirm = false"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">
+          Cancel
+        </button>
+        <button (click)="confirmDelete()"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+          Delete Customer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Modal -->
+  <app-customer-modal
+    [isOpen]="isCustomerModalOpen"
+    [customerId]="customer?._id"
+    (closeModal)="closeCustomerModal()"
+    (customerSaved)="onCustomerSaved($event)">
+  </app-customer-modal>
+</div>

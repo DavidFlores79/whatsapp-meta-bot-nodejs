@@ -44,6 +44,8 @@ export interface Chat {
   };
   isAIEnabled?: boolean;
   status?: string;
+  customerId?: string;
+  phoneNumber?: string;
 }
 
 @Injectable({
@@ -92,7 +94,9 @@ export class ChatService {
           messages: [],
           assignedAgent: conv.assignedAgent,
           isAIEnabled: conv.isAIEnabled !== false, // Default to true if not specified
-          status: conv.status
+          status: conv.status,
+          customerId: conv.customerId?._id,
+          phoneNumber: conv.customerId?.phoneNumber
         }));
 
         // Deduplicate: Remove any existing conversations with same IDs
@@ -213,6 +217,17 @@ export class ChatService {
     this.socket.on('agent_typing', (data: any) => {
       console.log('Agent typing:', data);
       this.typingSubject.next(data);
+    });
+
+    // AI typing indicators
+    this.socket.on('ai_typing_start', (data: any) => {
+      console.log('AI typing start:', data);
+      this.typingSubject.next({ conversationId: data.conversationId, isTyping: true, isAI: true });
+    });
+
+    this.socket.on('ai_typing_end', (data: any) => {
+      console.log('AI typing end:', data);
+      this.typingSubject.next({ conversationId: data.conversationId, isTyping: false, isAI: true });
     });
   }
 
@@ -428,5 +443,12 @@ export class ChatService {
    */
   getAssignedConversations(): Observable<any> {
     return this.http.get(`${this.apiUrl}/conversations/assigned`);
+  }
+
+  /**
+   * Refresh conversations from server
+   */
+  refreshConversations(): void {
+    this.loadConversations(this.currentAgent);
   }
 }
