@@ -82,6 +82,8 @@ export class MainLayoutComponent implements OnInit {
       this.currentView = 'customers';
     } else if (url.includes('/templates')) {
       this.currentView = 'templates';
+    } else if (url.includes('/reports')) {
+      this.currentView = 'reports';
     } else if (url.includes('/settings')) {
       this.currentView = 'settings';
     } else {
@@ -106,6 +108,7 @@ export class MainLayoutComponent implements OnInit {
 
   navigateToReports() {
     this.currentView = 'reports';
+    this.router.navigate(['/reports']);
   }
 
   navigateToSettings() {

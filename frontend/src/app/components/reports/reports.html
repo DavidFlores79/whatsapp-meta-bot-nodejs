@@ -5,14 +5,14 @@
             <div>
                 <h1 class="text-2xl font-bold text-white flex items-center gap-3">
                     <i class="fas fa-chart-line text-blue-500"></i>
-                    Performance Analytics
+                    {{ 'reports.performanceAnalytics' | translate }}
                 </h1>
-                <p class="text-sm text-gray-400 mt-1">AI-powered agent performance insights and conversation history</p>
+                <p class="text-sm text-gray-400 mt-1">{{ 'reports.subtitle' | translate }}</p>
             </div>
             <button (click)="exportToCSV()"
                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
                 <i class="fas fa-file-export"></i>
-                Export Report
+                {{ 'reports.exportReport' | translate }}
             </button>
         </div>
 
@@ -22,13 +22,13 @@
                     [class]="activeTab === 'agent-performance' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
                     class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                 <i class="fas fa-user-tie"></i>
-                Agent Performance
+                {{ 'reports.agentPerformance' | translate }}
             </button>
             <button (click)="switchTab('conversation-history')"
                     [class]="activeTab === 'conversation-history' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
                     class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                 <i class="fas fa-history"></i>
-                Conversation History
+                {{ 'reports.conversationHistory' | translate }}
             </button>
         </div>
     </div>
@@ -42,36 +42,34 @@
             <div class="bg-gray-800 rounded-lg p-4 mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Agent</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'reports.selectAgent' | translate }}</label>
                         <select [(ngModel)]="selectedAgentId"
                                 (change)="loadAgentPerformance()"
                                 class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
-                            <option value="">Choose an agent</option>
+                            <option value="">{{ 'reports.chooseAgent' | translate }}</option>
                             <option *ngFor="let agent of agents" [value]="agent._id">
                                 {{ agent.firstName }} {{ agent.lastName }}
                             </option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                        <input type="date"
-                               [(ngModel)]="dateRange.startDate"
-                               (change)="loadAgentPerformance()"
-                               class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
-                        <input type="date"
-                               [(ngModel)]="dateRange.endDate"
-                               (change)="loadAgentPerformance()"
-                               class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
-                    </div>
+                    <app-date-picker
+                        [label]="'reports.startDate' | translate"
+                        [(value)]="dateRange.startDate"
+                        [placeholder]="'reports.startDate' | translate"
+                        [maxDate]="dateRange.endDate || ''"
+                    ></app-date-picker>
+                    <app-date-picker
+                        [label]="'reports.endDate' | translate"
+                        [(value)]="dateRange.endDate"
+                        [placeholder]="'reports.endDate' | translate"
+                        [minDate]="dateRange.startDate || ''"
+                    ></app-date-picker>
                     <div class="flex items-end">
                         <button (click)="loadAgentPerformance()"
                                 [disabled]="loadingPerformance"
                                 class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                             <i class="fas" [ngClass]="loadingPerformance ? 'fa-spinner fa-spin' : 'fa-sync'"></i>
-                            {{ loadingPerformance ? 'Loading...' : 'Refresh' }}
+                            {{ loadingPerformance ? ('reports.loading' | translate) : ('reports.refresh' | translate) }}
                         </button>
                     </div>
                 </div>
@@ -80,20 +78,20 @@
             <!-- Loading State -->
             <div *ngIf="loadingPerformance" class="text-center py-12">
                 <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-gray-400">Loading performance data...</p>
+                <p class="text-gray-400">{{ 'reports.loadingPerformance' | translate }}</p>
             </div>
 
             <!-- Empty State - No data loaded yet -->
             <div *ngIf="!loadingPerformance && !agentPerformance && !performanceInitialized" class="text-center py-12">
                 <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
-                <p class="text-gray-400 text-lg">Select an agent to view performance analytics</p>
+                <p class="text-gray-400 text-lg">{{ 'reports.selectAgentPrompt' | translate }}</p>
             </div>
 
             <!-- No Results State - After loading -->
             <div *ngIf="!loadingPerformance && !agentPerformance && performanceInitialized" class="text-center py-12">
                 <i class="fas fa-exclamation-circle text-6xl text-yellow-600 mb-4"></i>
-                <p class="text-gray-400 text-lg">No performance data available for this agent</p>
-                <p class="text-gray-500 text-sm mt-2">Try selecting a different date range or agent</p>
+                <p class="text-gray-400 text-lg">{{ 'reports.noPerformanceData' | translate }}</p>
+                <p class="text-gray-500 text-sm mt-2">{{ 'reports.tryDifferentDateRange' | translate }}</p>
             </div>
 
             <!-- Performance Data -->
@@ -104,39 +102,39 @@
                     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-4 text-white">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-tasks text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">Total</span>
+                            <span class="text-sm opacity-80">{{ 'reports.total' | translate }}</span>
                         </div>
                         <div class="text-3xl font-bold">{{ agentPerformance.analytics.totalAssignments }}</div>
-                        <div class="text-sm opacity-80">Assignments</div>
+                        <div class="text-sm opacity-80">{{ 'reports.assignments' | translate }}</div>
                     </div>
 
                     <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-4 text-white">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-check-circle text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">Success Rate</span>
+                            <span class="text-sm opacity-80">{{ 'reports.successRate' | translate }}</span>
                         </div>
                         <div class="text-3xl font-bold">{{ agentPerformance.analytics.resolution.resolutionRate }}%</div>
-                        <div class="text-sm opacity-80">Resolved Issues</div>
+                        <div class="text-sm opacity-80">{{ 'reports.resolvedIssues' | translate }}</div>
                     </div>
 
                     <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-4 text-white">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-star text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">Performance</span>
+                            <span class="text-sm opacity-80">{{ 'reports.performance' | translate }}</span>
                         </div>
                         <div class="text-3xl font-bold">
                             {{ agentPerformance.analytics.performance?.overallScore || 'N/A' }}
                         </div>
-                        <div class="text-sm opacity-80">Average Score (1-10)</div>
+                        <div class="text-sm opacity-80">{{ 'reports.averageScore' | translate }}</div>
                     </div>
 
                     <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-4 text-white">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-clock text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">Avg Duration</span>
+                            <span class="text-sm opacity-80">{{ 'reports.avgDuration' | translate }}</span>
                         </div>
                         <div class="text-3xl font-bold">{{ formatDuration(agentPerformance.analytics.averageDuration) }}</div>
-                        <div class="text-sm opacity-80">Per Conversation</div>
+                        <div class="text-sm opacity-80">{{ 'reports.perConversation' | translate }}</div>
                     </div>
                 </div>
 
@@ -144,11 +142,11 @@
                 <div *ngIf="agentPerformance.analytics.performance" class="bg-gray-800 rounded-lg p-6">
                     <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fas fa-chart-bar text-blue-500"></i>
-                        Performance Breakdown
+                        {{ 'reports.performanceBreakdown' | translate }}
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-400 mb-2">Professionalism</div>
+                            <div class="text-sm text-gray-400 mb-2">{{ 'reports.professionalism' | translate }}</div>
                             <div class="flex items-center gap-2">
                                 <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.professionalism)">
                                     {{ agentPerformance.analytics.performance.professionalism }}
@@ -157,7 +155,7 @@
                             </div>
                         </div>
                         <div class="bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-400 mb-2">Responsiveness</div>
+                            <div class="text-sm text-gray-400 mb-2">{{ 'reports.responsiveness' | translate }}</div>
                             <div class="flex items-center gap-2">
                                 <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.responsiveness)">
                                     {{ agentPerformance.analytics.performance.responsiveness }}
@@ -166,7 +164,7 @@
                             </div>
                         </div>
                         <div class="bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-400 mb-2">Knowledgeability</div>
+                            <div class="text-sm text-gray-400 mb-2">{{ 'reports.knowledgeability' | translate }}</div>
                             <div class="flex items-center gap-2">
                                 <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.knowledgeability)">
                                     {{ agentPerformance.analytics.performance.knowledgeability }}
@@ -175,7 +173,7 @@
                             </div>
                         </div>
                         <div class="bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-400 mb-2">Empathy</div>
+                            <div class="text-sm text-gray-400 mb-2">{{ 'reports.empathy' | translate }}</div>
                             <div class="flex items-center gap-2">
                                 <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.empathy)">
                                     {{ agentPerformance.analytics.performance.empathy }}
@@ -184,7 +182,7 @@
                             </div>
                         </div>
                         <div class="bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-400 mb-2">Problem Solving</div>
+                            <div class="text-sm text-gray-400 mb-2">{{ 'reports.problemSolving' | translate }}</div>
                             <div class="flex items-center gap-2">
                                 <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.problemSolving)">
                                     {{ agentPerformance.analytics.performance.problemSolving }}
@@ -199,27 +197,27 @@
                 <div class="bg-gray-800 rounded-lg p-6">
                     <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fas fa-smile text-yellow-500"></i>
-                        Customer Sentiment Impact
+                        {{ 'reports.customerSentiment' | translate }}
                     </h3>
                     <div class="grid grid-cols-3 gap-4">
                         <div class="text-center p-4 bg-green-900 bg-opacity-30 rounded-lg">
                             <div class="text-3xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improved }}</div>
-                            <div class="text-sm text-gray-400 mt-1">Improved</div>
+                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.improved' | translate }}</div>
                             <i class="fas fa-arrow-up text-green-400 text-2xl mt-2"></i>
                         </div>
                         <div class="text-center p-4 bg-gray-700 rounded-lg">
                             <div class="text-3xl font-bold text-gray-400">{{ agentPerformance.analytics.sentiment.unchanged }}</div>
-                            <div class="text-sm text-gray-400 mt-1">Unchanged</div>
+                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.unchanged' | translate }}</div>
                             <i class="fas fa-minus text-gray-400 text-2xl mt-2"></i>
                         </div>
                         <div class="text-center p-4 bg-red-900 bg-opacity-30 rounded-lg">
                             <div class="text-3xl font-bold text-red-400">{{ agentPerformance.analytics.sentiment.worsened }}</div>
-                            <div class="text-sm text-gray-400 mt-1">Worsened</div>
+                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.worsened' | translate }}</div>
                             <i class="fas fa-arrow-down text-red-400 text-2xl mt-2"></i>
                         </div>
                     </div>
                     <div class="mt-4 text-center">
-                        <span class="text-sm text-gray-400">Improvement Rate: </span>
+                        <span class="text-sm text-gray-400">{{ 'reports.improvementRate' | translate }}: </span>
                         <span class="text-xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improvementRate }}%</span>
                     </div>
                 </div>
@@ -229,7 +227,7 @@
                     <div class="bg-gray-800 rounded-lg p-6">
                         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                             <i class="fas fa-thumbs-up text-green-500"></i>
-                            Top Strengths
+                            {{ 'reports.topStrengths' | translate }}
                         </h3>
                         <div class="space-y-2">
                             <div *ngFor="let strength of agentPerformance.analytics.commonStrengths"
@@ -238,7 +236,7 @@
                                 <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">{{ strength.count }}</span>
                             </div>
                             <div *ngIf="agentPerformance.analytics.commonStrengths.length === 0" class="text-gray-500 text-sm text-center py-4">
-                                No data available
+                                {{ 'reports.noData' | translate }}
                             </div>
                         </div>
                     </div>
@@ -246,7 +244,7 @@
                     <div class="bg-gray-800 rounded-lg p-6">
                         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                             <i class="fas fa-arrow-up text-yellow-500"></i>
-                            Areas for Improvement
+                            {{ 'reports.areasForImprovement' | translate }}
                         </h3>
                         <div class="space-y-2">
                             <div *ngFor="let improvement of agentPerformance.analytics.commonImprovements"
@@ -255,7 +253,7 @@
                                 <span class="bg-yellow-600 text-white text-xs px-2 py-1 rounded-full">{{ improvement.count }}</span>
                             </div>
                             <div *ngIf="agentPerformance.analytics.commonImprovements.length === 0" class="text-gray-500 text-sm text-center py-4">
-                                No data available
+                                {{ 'reports.noData' | translate }}
                             </div>
                         </div>
                     </div>
@@ -265,18 +263,18 @@
                 <div class="bg-gray-800 rounded-lg p-6">
                     <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fas fa-history text-blue-500"></i>
-                        Recent Assignments
+                        {{ 'reports.recentAssignments' | translate }}
                     </h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="bg-gray-700 text-gray-300">
                                 <tr>
-                                    <th class="px-4 py-3 text-left">Date</th>
-                                    <th class="px-4 py-3 text-left">Customer</th>
-                                    <th class="px-4 py-3 text-left">Duration</th>
-                                    <th class="px-4 py-3 text-left">Score</th>
-                                    <th class="px-4 py-3 text-left">Resolution</th>
-                                    <th class="px-4 py-3 text-left">Sentiment</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.date' | translate }}</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.customer' | translate }}</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.duration' | translate }}</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.score' | translate }}</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.resolution' | translate }}</th>
+                                    <th class="px-4 py-3 text-left">{{ 'reports.sentiment' | translate }}</th>
                                 </tr>
                             </thead>
                             <tbody class="text-gray-300">
@@ -284,7 +282,10 @@
                                     class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
                                     <td class="px-4 py-3">{{ formatDate(assignment.assignedAt) }}</td>
                                     <td class="px-4 py-3">
-                                        {{ assignment.customerId?.firstName || assignment.customerId?.phoneNumber || 'Unknown' }}
+                                        <span *ngIf="assignment.customerId?.firstName || assignment.customerId?.phoneNumber"
+                                              class="text-gray-300">{{ assignment.customerId?.firstName || assignment.customerId?.phoneNumber }}</span>
+                                        <span *ngIf="!assignment.customerId?.firstName && !assignment.customerId?.phoneNumber"
+                                              class="text-gray-500">{{ 'reports.unknown' | translate }}</span>
                                     </td>
                                     <td class="px-4 py-3">{{ formatDuration(assignment.duration || 0) }}</td>
                                     <td class="px-4 py-3">
@@ -297,31 +298,31 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved" class="text-green-400">
-                                            <i class="fas fa-check-circle"></i> Resolved
+                                            <i class="fas fa-check-circle"></i> {{ 'reports.resolved' | translate }}
                                         </span>
                                         <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved === false" class="text-red-400">
-                                            <i class="fas fa-times-circle"></i> Unresolved
+                                            <i class="fas fa-times-circle"></i> {{ 'reports.unresolved' | translate }}
                                         </span>
                                         <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved === null" class="text-gray-500">-</span>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'improved'"
                                               class="text-green-400">
-                                            <i class="fas fa-arrow-up"></i> Improved
+                                            <i class="fas fa-arrow-up"></i> {{ 'reports.improved' | translate }}
                                         </span>
                                         <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'worsened'"
                                               class="text-red-400">
-                                            <i class="fas fa-arrow-down"></i> Worsened
+                                            <i class="fas fa-arrow-down"></i> {{ 'reports.worsened' | translate }}
                                         </span>
                                         <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'unchanged'"
                                               class="text-gray-400">
-                                            <i class="fas fa-minus"></i> Unchanged
+                                            <i class="fas fa-minus"></i> {{ 'reports.unchanged' | translate }}
                                         </span>
                                     </td>
                                 </tr>
                                 <tr *ngIf="agentPerformance.recentAssignments.length === 0">
                                     <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                        No assignments found
+                                        {{ 'reports.noAssignmentsFound' | translate }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -333,7 +334,7 @@
             <!-- No Data State -->
             <div *ngIf="!loadingPerformance && !agentPerformance && selectedAgentId" class="text-center py-12">
                 <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
-                <p class="text-gray-400 text-lg">No performance data available for this agent</p>
+                <p class="text-gray-400 text-lg">{{ 'reports.noPerformanceData' | translate }}</p>
             </div>
         </div>
 
@@ -343,13 +344,13 @@
             <div class="bg-gray-800 rounded-lg p-4 mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Conversation</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'reports.selectConversation' | translate }}</label>
                         <select [(ngModel)]="selectedConversationId"
                                 (change)="loadConversationHistory()"
                                 class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
-                            <option value="">Choose a conversation</option>
+                            <option value="">{{ 'reports.chooseConversation' | translate }}</option>
                             <option *ngFor="let conv of conversations" [value]="conv._id">
-                                {{ conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown' }} -
+                                {{ conv.customerId?.firstName || conv.customerId?.phoneNumber || ('reports.unknown' | translate) }} -
                                 {{ conv.lastMessage?.timestamp | date:'short' }}
                             </option>
                         </select>
@@ -359,7 +360,7 @@
                                 [disabled]="loadingHistory || !selectedConversationId"
                                 class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                             <i class="fas" [ngClass]="loadingHistory ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-                            {{ loadingHistory ? 'Loading...' : 'Load History' }}
+                            {{ loadingHistory ? ('reports.loading' | translate) : ('reports.loadHistory' | translate) }}
                         </button>
                     </div>
                 </div>
@@ -368,7 +369,7 @@
             <!-- Loading State -->
             <div *ngIf="loadingHistory" class="text-center py-12">
                 <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-gray-400">Loading conversation history...</p>
+                <p class="text-gray-400">{{ 'reports.loadingHistory' | translate }}</p>
             </div>
 
             <!-- History Data -->
@@ -377,19 +378,19 @@
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">Total Assignments</div>
+                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.totalAssignments' | translate }}</div>
                         <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.totalAssignments }}</div>
                     </div>
                     <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">Unique Agents</div>
+                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.uniqueAgents' | translate }}</div>
                         <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.uniqueAgents }}</div>
                     </div>
                     <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">Avg Performance</div>
+                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.avgPerformance' | translate }}</div>
                         <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.averagePerformanceScore || 'N/A' }}</div>
                     </div>
                     <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">Resolved</div>
+                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.resolved' | translate }}</div>
                         <div class="text-2xl font-bold text-green-400">{{ conversationHistory.stats.resolvedCount }}</div>
                     </div>
                 </div>
@@ -398,7 +399,7 @@
                 <div class="bg-gray-800 rounded-lg p-6">
                     <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fas fa-history text-blue-500"></i>
-                        Assignment Timeline
+                        {{ 'reports.assignmentTimeline' | translate }}
                     </h3>
                     <div class="space-y-4">
                         <div *ngFor="let assignment of conversationHistory.history"
@@ -419,7 +420,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-sm text-gray-400">Duration</div>
+                                    <div class="text-sm text-gray-400">{{ 'reports.duration' | translate }}</div>
                                     <div class="font-semibold text-white">{{ formatDuration(assignment.duration || 0) }}</div>
                                 </div>
                             </div>
@@ -434,39 +435,39 @@
                                 <!-- Metrics -->
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                                     <div class="bg-gray-800 p-2 rounded text-center">
-                                        <div class="text-xs text-gray-400">Performance</div>
+                                        <div class="text-xs text-gray-400">{{ 'reports.performance' | translate }}</div>
                                         <div class="text-lg font-bold"
                                              [ngClass]="getScoreColor(assignment.aiAnalysis.agentPerformance?.overallScore || 0)">
                                             {{ assignment.aiAnalysis.agentPerformance?.overallScore || 'N/A' }}
                                         </div>
                                     </div>
                                     <div class="bg-gray-800 p-2 rounded text-center">
-                                        <div class="text-xs text-gray-400">Resolution</div>
+                                        <div class="text-xs text-gray-400">{{ 'reports.resolution' | translate }}</div>
                                         <div class="text-lg font-bold"
                                              [ngClass]="assignment.aiAnalysis.issueResolution?.wasResolved ? 'text-green-400' : 'text-red-400'">
-                                            {{ assignment.aiAnalysis.issueResolution?.wasResolved ? 'Yes' : 'No' }}
+                                            {{ assignment.aiAnalysis.issueResolution?.wasResolved ? ('reports.yes' | translate) : ('reports.no' | translate) }}
                                         </div>
                                     </div>
                                     <div class="bg-gray-800 p-2 rounded text-center">
-                                        <div class="text-xs text-gray-400">Sentiment</div>
+                                        <div class="text-xs text-gray-400">{{ 'reports.sentiment' | translate }}</div>
                                         <div class="text-lg font-bold capitalize"
                                              [ngClass]="{
                                                 'text-green-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'improved',
                                                 'text-red-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'worsened',
                                                 'text-gray-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'unchanged'
                                              }">
-                                            {{ assignment.aiAnalysis.customerSentiment?.sentimentChange || 'N/A' }}
+                                            {{ assignment.aiAnalysis.customerSentiment?.sentimentChange ? ('reports.' + assignment.aiAnalysis.customerSentiment.sentimentChange | translate) : 'N/A' }}
                                         </div>
                                     </div>
                                     <div class="bg-gray-800 p-2 rounded text-center">
-                                        <div class="text-xs text-gray-400">Risk</div>
+                                        <div class="text-xs text-gray-400">{{ 'reports.risk' | translate }}</div>
                                         <div class="text-lg font-bold capitalize"
                                              [ngClass]="{
                                                 'text-red-500': assignment.aiAnalysis.riskLevel === 'high' || assignment.aiAnalysis.riskLevel === 'critical',
                                                 'text-yellow-400': assignment.aiAnalysis.riskLevel === 'medium',
                                                 'text-green-400': assignment.aiAnalysis.riskLevel === 'low' || assignment.aiAnalysis.riskLevel === 'none'
                                              }">
-                                            {{ assignment.aiAnalysis.riskLevel || 'None' }}
+                                            {{ assignment.aiAnalysis.riskLevel || ('reports.none' | translate) }}
                                         </div>
                                     </div>
                                 </div>
@@ -474,7 +475,7 @@
                         </div>
 
                         <div *ngIf="conversationHistory.history.length === 0" class="text-center py-8 text-gray-500">
-                            No assignment history for this conversation
+                            {{ 'reports.noAssignmentHistory' | translate }}
                         </div>
                     </div>
                 </div>
@@ -483,7 +484,7 @@
             <!-- No Data State -->
             <div *ngIf="!loadingHistory && !conversationHistory && selectedConversationId" class="text-center py-12">
                 <i class="fas fa-history text-6xl text-gray-600 mb-4"></i>
-                <p class="text-gray-400 text-lg">No history data available for this conversation</p>
+                <p class="text-gray-400 text-lg">{{ 'reports.noHistoryData' | translate }}</p>
             </div>
         </div>
 

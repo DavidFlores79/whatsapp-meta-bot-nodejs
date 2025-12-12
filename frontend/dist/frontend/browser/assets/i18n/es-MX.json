@@ -528,7 +528,12 @@
     "customer": "Cliente",
     "score": "Puntuación",
     "date": "Fecha",
-    "unknown": "Desconocido"
+    "unknown": "Desconocido",
+    "yes": "Sí",
+    "no": "No",
+    "none": "Ninguno",
+    "refresh": "Actualizar",
+    "loadHistory": "Cargar historial"
   },
   "settings": {
     "title": "Configuración",

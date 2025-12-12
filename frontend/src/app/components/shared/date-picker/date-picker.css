@@ -1,0 +1,48 @@
+.date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Custom scrollbar for calendar if needed */
+.date-picker-wrapper ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.date-picker-wrapper ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.date-picker-wrapper ::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 3px;
+}
+
+.date-picker-wrapper ::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+/* Hover effect for input */
+.bg-gray-650 {
+  background-color: #3f4654;
+}
+
+/* Additional gray shade */
+.bg-gray-750 {
+  background-color: #2d3340;
+}

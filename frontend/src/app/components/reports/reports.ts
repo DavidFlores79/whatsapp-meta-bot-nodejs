@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
 import { timeout, catchError, finalize } from 'rxjs/operators';
 import { throwError, of } from 'rxjs';
+import { DatePickerComponent } from '../shared/date-picker/date-picker';
 
 interface AgentPerformance {
   analytics: {
@@ -55,7 +56,7 @@ interface ConversationHistory {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, DatePickerComponent],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
@@ -99,7 +100,7 @@ export class ReportsComponent implements OnInit {
       agentPerformance: this.agentPerformance
     });
 
-    // Load agents first, then auto-select
+    // Load agents first, then auto-select and load data
     this.loadAgents().then(() => {
       // After agents load, set default agent to current user
       const currentAgent = this.authService.getCurrentAgent();
@@ -110,11 +111,13 @@ export class ReportsComponent implements OnInit {
       } else if (this.agents.length > 0) {
         // Fallback: select first agent if current agent not found
         this.selectedAgentId = this.agents[0]._id;
-        console.log('[Reports] Auto-selecting first agent:', this.selectedAgentId);
+        console.log('[Reports] Auto-loading performance for first agent:', this.selectedAgentId);
         this.loadAgentPerformance();
       } else {
         console.log('[Reports] No agents available');
       }
+    }).catch((err) => {
+      console.error('[Reports] Error loading agents:', err);
     });
 
     this.loadConversations();

@@ -7,6 +7,7 @@ import { CustomerListComponent } from './components/customers/customer-list/cust
 import { CustomerDetailComponent } from './components/customers/customer-detail/customer-detail';
 import { CustomerFormComponent } from './components/customers/customer-form/customer-form';
 import { TemplateListComponent } from './components/templates/template-list/template-list';
+import { ReportsComponent } from './components/reports/reports';
 import { SettingsComponent } from './components/settings/settings';
 import { AuthService } from './services/auth';
 
@@ -34,6 +35,7 @@ export const routes: Routes = [
             { path: 'customers/:id', component: CustomerDetailComponent },
             { path: 'customers/:id/edit', component: CustomerFormComponent },
             { path: 'templates', component: TemplateListComponent },
+            { path: 'reports', component: ReportsComponent },
             { path: 'settings', component: SettingsComponent }
         ]
     }
