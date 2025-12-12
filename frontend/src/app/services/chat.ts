@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 import { AuthService, Agent } from './auth';
+import { ToastService } from './toast';
 
 export interface Message {
   id: string;
@@ -72,7 +73,11 @@ export class ChatService {
     map(chatId => this.mockChats.find(c => c.id === chatId) || null)
   );
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private toastService: ToastService
+  ) {
     this.initSocket();
 
     // Load conversations based on agent authentication status
@@ -402,7 +407,8 @@ export class ChatService {
       },
       error: (err) => {
         console.error('Failed to send message:', err);
-        alert('Failed to send message: ' + (err.error?.error || 'Unknown error'));
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to send message: ${errorMessage}`, 6000);
       }
     });
   }

@@ -5,6 +5,7 @@ import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
 import { AuthService, Agent } from '../../../services/auth';
 import { ChatService, Chat } from '../../../services/chat';
+import { ToastService } from '../../../services/toast';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -30,7 +31,8 @@ export class MainLayoutComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit() {
@@ -100,13 +102,13 @@ export class MainLayoutComponent implements OnInit {
   navigateToReports() {
     this.currentView = 'reports';
     // TODO: Implement reports route
-    alert('Reports feature coming soon!');
+    this.toastService.info('Reports feature coming soon!');
   }
 
   navigateToSettings() {
     this.currentView = 'settings';
     // TODO: Implement settings route
-    alert('Settings feature coming soon!');
+    this.toastService.info('Settings feature coming soon!');
   }
 
   toggleMenu() {
@@ -144,7 +146,7 @@ export class MainLayoutComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to toggle auto-assign:', err);
-        alert('Failed to update auto-assign setting');
+        this.toastService.error('Failed to update auto-assign setting');
       }
     });
   }

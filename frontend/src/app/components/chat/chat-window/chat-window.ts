@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@ang
 import { CommonModule } from '@angular/common';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
+import { ToastService } from '../../../services/toast';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
@@ -33,7 +34,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
 
   constructor(
     private chatService: ChatService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastService: ToastService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
@@ -74,6 +76,14 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   /**
+   * Check if current agent can take over conversations
+   */
+  canTakeOver(): boolean {
+    const currentAgent = this.authService.getCurrentAgent();
+    return currentAgent?.autoAssign === true;
+  }
+
+  /**
    * Check if current agent is assigned to this chat
    */
   isAssignedToMe(chat: Chat): boolean {
@@ -111,13 +121,23 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Take over conversation (assign to current agent)
    */
   takeoverChat(chatId: string) {
+    const currentAgent = this.authService.getCurrentAgent();
+
+    // Check if agent has auto-assign enabled
+    if (currentAgent && !currentAgent.autoAssign) {
+      this.toastService.warning('Please enable Auto-Assign in your profile menu to take over conversations', 6000);
+      return;
+    }
+
     this.chatService.assignToMe(chatId).subscribe({
       next: () => {
         console.log('Conversation taken over successfully');
+        this.toastService.success('Conversation assigned to you successfully');
       },
       error: (err) => {
         console.error('Takeover failed:', err);
-        alert('Failed to take over conversation: ' + (err.error?.error || 'Unknown error'));
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to take over: ${errorMessage}`, 6000);
       }
     });
   }
@@ -129,10 +149,12 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     this.chatService.releaseConversation(chatId, 'Manual release by agent').subscribe({
       next: () => {
         console.log('Conversation released to AI');
+        this.toastService.success('Conversation released. AI has resumed control');
       },
       error: (err) => {
         console.error('Release failed:', err);
-        alert('Failed to release conversation: ' + (err.error?.error || 'Unknown error'));
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to release conversation: ${errorMessage}`, 6000);
       }
     });
   }
@@ -197,7 +219,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   openTemplateSender(chat: Chat) {
     if (!chat.customerId) {
-      alert('Please save customer information first before sending templates');
+      this.toastService.warning('Please save customer information first before sending templates', 5000);
       return;
     }
     this.selectedCustomerIdForTemplate = chat.customerId;

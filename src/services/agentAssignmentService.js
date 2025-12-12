@@ -87,6 +87,11 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
         throw new Error('Agent not found or inactive');
     }
 
+    // Check if agent has auto-assign enabled (required to take conversations)
+    if (!agent.autoAssign) {
+        throw new Error('Agent must enable auto-assign to take conversations');
+    }
+
     // Check if agent has capacity
     if (agent.statistics.activeAssignments >= agent.maxConcurrentChats) {
         throw new Error('Agent has reached maximum concurrent chats');

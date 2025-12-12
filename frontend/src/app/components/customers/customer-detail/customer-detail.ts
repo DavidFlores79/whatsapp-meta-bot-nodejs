@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CustomerService, Customer, CustomerDetailResponse } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
+import { ToastService } from '../../../services/toast';
 
 @Component({
   selector: 'app-customer-detail',
@@ -24,7 +25,8 @@ export class CustomerDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private customerService: CustomerService
+    private customerService: CustomerService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit() {
@@ -89,7 +91,7 @@ export class CustomerDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error deleting customer:', err);
-        alert('Failed to delete customer');
+        this.toastService.error('Failed to delete customer');
       }
     });
   }
@@ -114,7 +116,7 @@ export class CustomerDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error toggling block:', err);
-        alert('Failed to update customer status');
+        this.toastService.error('Failed to update customer status');
       }
     });
   }
@@ -131,7 +133,7 @@ export class CustomerDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error upgrading to VIP:', err);
-        alert('Failed to upgrade customer');
+        this.toastService.error('Failed to upgrade customer');
       }
     });
   }
@@ -152,7 +154,7 @@ export class CustomerDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error adding tag:', err);
-        alert('Failed to add tag');
+        this.toastService.error('Failed to add tag');
       }
     });
   }
@@ -170,7 +172,7 @@ export class CustomerDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error removing tag:', err);
-        alert('Failed to remove tag');
+        this.toastService.error('Failed to remove tag');
       }
     });
   }
