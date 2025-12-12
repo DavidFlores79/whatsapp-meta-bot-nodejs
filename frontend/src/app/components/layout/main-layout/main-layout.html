@@ -8,8 +8,8 @@
          [class.justify-center]="sidebarCollapsed"
          [class.justify-between]="!sidebarCollapsed">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-whatsapp-green flex items-center justify-center flex-shrink-0">
-          <i class="fab fa-whatsapp text-whatsapp-dark text-2xl"></i>
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+          <img src="/media/favicon.png" alt="Logo" class="w-full h-full object-contain">
         </div>
         <div *ngIf="!sidebarCollapsed" class="flex flex-col">
           <span class="text-gray-100 font-semibold text-sm">WhatsApp CRM</span>
@@ -216,7 +216,7 @@
   <!-- Main Content Area -->
   <div class="flex flex-1 flex-col bg-whatsapp-dark relative"
        [ngClass]="{'flex': hasSelectedChat || currentView !== 'chat', 'hidden md:flex': !hasSelectedChat && currentView === 'chat'}">
-    
+
     <!-- Show Chat Window when in chat view -->
     <ng-container *ngIf="currentView === 'chat'">
       <!-- Background Pattern -->

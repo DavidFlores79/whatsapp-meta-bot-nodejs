@@ -25,7 +25,7 @@ export class MessageInputComponent {
    */
   canSendMessage(): boolean {
     if (!this.chat) return false;
-    
+
     const currentAgent = this.authService.getCurrentAgent();
     if (!currentAgent || !currentAgent._id) return false;
 

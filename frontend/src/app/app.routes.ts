@@ -22,9 +22,9 @@ const authGuard = () => {
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
-    { 
-        path: '', 
-        component: MainLayoutComponent, 
+    {
+        path: '',
+        component: MainLayoutComponent,
         canActivate: [authGuard],
         children: [
             { path: 'customers', component: CustomerListComponent },

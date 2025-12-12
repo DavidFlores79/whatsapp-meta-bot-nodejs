@@ -81,15 +81,15 @@ export class ChatService {
    */
   private getCustomerName(customer: any): string {
     if (!customer) return 'Unknown';
-    
+
     if (customer.firstName && customer.lastName) {
       return `${customer.firstName} ${customer.lastName}`;
     }
-    
+
     if (customer.firstName) {
       return customer.firstName;
     }
-    
+
     return customer.phoneNumber || 'Unknown';
   }
 
@@ -478,7 +478,7 @@ export class ChatService {
       // Update the chat name with new customer info
       chat.name = this.getCustomerName(customer);
       chat.customerId = customer._id;
-      
+
       // Trigger update
       this.chatsSubject.next([...this.mockChats]);
       console.log(`Updated conversation for ${phoneNumber} with new customer name: ${chat.name}`);
