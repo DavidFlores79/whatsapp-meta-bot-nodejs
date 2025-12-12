@@ -315,7 +315,7 @@ export class ChatService {
       // Check if message already exists (deduplication)
       if (!chat.messages.some(m => m.id === message.id)) {
         chat.messages.push(message);
-        chat.lastMessage = message.text;
+        chat.lastMessage = message.text || (message.type === 'image' ? '📷 Image' : 'Message');
         chat.lastMessageTime = new Date(message.timestamp);
 
         if (this.selectedChatIdSubject.value !== chatId) {
@@ -345,7 +345,7 @@ export class ChatService {
                 id: conv._id,
                 name: this.getCustomerName(conv.customerId),
                 avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
-                lastMessage: message.text,
+                lastMessage: message.text || (message.type === 'image' ? '📷 Image' : 'Message'),
                 lastMessageTime: new Date(message.timestamp),
                 unreadCount: 1,
                 messages: [message],

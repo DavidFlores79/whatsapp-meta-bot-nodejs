@@ -87,7 +87,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
     const imageMessage = await Message.create({
       conversationId,
       customerId,
-      content: caption || '[Image]',
+      content: caption || '',
       type: 'image',
       direction: 'inbound',
       sender: 'customer',
@@ -107,7 +107,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       $inc: { messageCount: 1, unreadCount: 1 },
       lastCustomerMessage: new Date(),
       lastMessage: {
-        content: caption || '[Image]',
+        content: caption || '📷 Image',
         timestamp: new Date(),
         from: 'customer',
         type: 'image'
@@ -125,7 +125,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
         conversationId,
         customerId,
         customerPhone: phoneNumber,
-        message: caption || '[Image]',
+        message: caption || '📷 Image',
         type: 'image',
         attachments: imageMessage.attachments,
         timestamp: new Date()
@@ -139,7 +139,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       chatId: conversationId,
       message: {
         id: imageMessage._id.toString(),
-        text: caption || '[Image]',
+        text: caption || '',
         sender: 'other',
         timestamp: imageMessage.timestamp,
         type: 'image',
