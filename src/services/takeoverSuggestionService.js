@@ -8,26 +8,105 @@ const SUGGESTION_THRESHOLDS = {
     REPEATED_QUESTION_COUNT: 3,  // Same question asked multiple times
     LONG_CONVERSATION: 15,  // Message count threshold
     ESCALATION_KEYWORDS: [
-        'hablar con persona',
-        'hablar con humano',
-        'hablar con alguien',
-        'agente real',
-        'agente humano',
-        'persona real',
-        'gerente',
-        'supervisor',
-        'mal servicio',
-        'cancelar',
-        'denunciar',
-        'queja',
-        'no funciona',
-        'no sirve',
-        'ayuda humana',
-        'quiero hablar',
-        'necesito hablar',
-        'comunicar con'
+        // Spanish - explicit requests
+        'hablar con persona', 'hablar con humano', 'hablar con alguien',
+        'agente real', 'agente humano', 'persona real',
+        'gerente', 'supervisor', 'encargado', 'responsable',
+        'quiero hablar', 'necesito hablar', 'comunicar con',
+        'atención humana', 'ayuda humana', 'asistencia humana',
+        'contactar con', 'hablar directamente',
+        
+        // Spanish - dissatisfaction/urgency
+        'mal servicio', 'pésimo servicio', 'cancelar', 'denunciar',
+        'queja', 'reclamo', 'no funciona', 'no sirve',
+        'urgente', 'emergencia', 'inmediato',
+        'frustrado', 'molesto', 'enojado',
+        'ya basta', 'harto', 'cansado',
+        
+        // Spanish - AI not understanding
+        'no me entiendes', 'no entiendes', 'no comprendes',
+        'no ayudas', 'no sirves', 'no resuelves',
+        'no contestas', 'no respondes bien',
+        
+        // English equivalents
+        'speak to person', 'talk to human', 'talk to someone',
+        'real agent', 'human agent', 'real person',
+        'manager', 'supervisor',
+        'i want to speak', 'i need to speak', 'speak directly',
+        'human help', 'human assistance',
+        'bad service', 'cancel', 'complaint',
+        'not working', 'doesn\'t work', 'urgent', 'emergency',
+        'don\'t understand', 'not helpful', 'frustrated',
+        
+        // Common variations
+        'eres bot', 'eres robot', 'you\'re a bot',
+        'no eres real', 'you\'re not real',
+        'prefiero humano', 'prefer human',
+        'mejor persona', 'better person'
     ]
 };
+
+/**
+ * Use AI to intelligently detect customer request for human help
+ */
+async function detectHumanHelpRequest(messageContent, recentMessages = []) {
+    try {
+        const openaiService = require('./openaiService');
+        
+        // Build context from recent messages
+        const context = recentMessages.slice(0, 5).map(msg => 
+            `${msg.sender === 'customer' ? 'Customer' : 'AI'}: ${msg.content}`
+        ).join('\n');
+
+        const prompt = `Analyze if the customer is requesting to speak with a human agent or expressing frustration with AI assistance.
+
+Recent conversation:
+${context}
+
+Latest message: "${messageContent}"
+
+Consider these indicators:
+- Explicit requests for human/person/agent/supervisor
+- Expressing frustration with AI ("you don't understand", "not helpful")
+- Indicating AI is not solving their problem
+- Urgency or emergency language
+- Complaints about service
+- Saying they prefer human assistance
+- Any creative way of asking for human help
+
+Respond with ONLY a JSON object:
+{
+  "wants_human": true/false,
+  "confidence": 0-100,
+  "reason": "brief explanation",
+  "urgency": "low/medium/high"
+}`;
+
+        const response = await openaiService.getChatCompletion(
+            [{ role: "user", content: prompt }],
+            {
+                model: "gpt-4o-mini",
+                temperature: 0.3,
+                max_tokens: 150,
+                response_format: { type: "json_object" }
+            }
+        );
+
+        const analysis = JSON.parse(response);
+        console.log(`🤖 AI Analysis for human help request:`, analysis);
+        
+        return analysis;
+    } catch (error) {
+        console.error("❌ Error in AI detection:", error.message);
+        // Fallback to keyword detection
+        return {
+            wants_human: false,
+            confidence: 0,
+            reason: "AI detection failed, using fallback",
+            urgency: "low"
+        };
+    }
+}
 
 /**
  * Analyze message for takeover triggers
@@ -44,25 +123,87 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
     const triggers = [];
     let suggestionScore = 0;
 
-    // 1. Check for escalation keywords
+    // Get recent messages for context
+    const recentMessages = await Message.find({
+        conversationId,
+        sender: { $in: ['customer', 'ai'] }
+    })
+        .sort({ timestamp: -1 })
+        .limit(10);
+
+    // 1. AI-POWERED DETECTION (Primary method)
+    const aiDetection = await detectHumanHelpRequest(messageContent, recentMessages);
+    
+    if (aiDetection.wants_human && aiDetection.confidence >= 60) {
+        triggers.push(`ai_detected_request (${aiDetection.confidence}% confidence)`);
+        suggestionScore += Math.min(aiDetection.confidence, 70);
+        
+        console.log(`🤖 AI detected human help request: ${aiDetection.reason}`);
+        console.log(`   Urgency: ${aiDetection.urgency}, Confidence: ${aiDetection.confidence}%`);
+    }
+
+    // 2. KEYWORD FALLBACK (Secondary method)
     const hasEscalationKeyword = SUGGESTION_THRESHOLDS.ESCALATION_KEYWORDS.some(keyword =>
         messageContent.toLowerCase().includes(keyword)
     );
+    
     if (hasEscalationKeyword) {
         triggers.push('escalation_keyword');
-        suggestionScore += 50;
+        suggestionScore += 40;
+    }
 
-        // AUTO-ASSIGN: Customer explicitly requested human help
-        console.log(`🚨 Customer requested human help - Auto-assigning conversation ${conversationId}`);
+    // 3. Check AI uncertainty in response
+    if (aiResponse && (
+        aiResponse.toLowerCase().includes('no puedo') ||
+        aiResponse.toLowerCase().includes('no estoy seguro') ||
+        aiResponse.toLowerCase().includes('necesitas hablar con') ||
+        aiResponse.toLowerCase().includes('te recomiendo hablar') ||
+        aiResponse.toLowerCase().includes('i cannot') ||
+        aiResponse.toLowerCase().includes('i\'m not sure')
+    )) {
+        triggers.push('ai_uncertainty');
+        suggestionScore += 30;
+    }
+
+    // 4. Check message count (long conversations)
+    if (conversation.messageCount >= SUGGESTION_THRESHOLDS.LONG_CONVERSATION) {
+        triggers.push('long_conversation');
+        suggestionScore += 20;
+    }
+
+    // 5. Check for negative sentiment in recent messages
+    const negativeCount = recentMessages.filter(msg =>
+        msg.aiResponse?.sentiment === 'negative'
+    ).length;
+
+    if (negativeCount >= SUGGESTION_THRESHOLDS.NEGATIVE_SENTIMENT_COUNT) {
+        triggers.push('negative_sentiment');
+        suggestionScore += 25;
+    }
+
+    // 6. Check for repeated questions (customer asking same thing)
+    const repeatedPattern = checkRepeatedQuestions(recentMessages);
+    if (repeatedPattern) {
+        triggers.push('repeated_questions');
+        suggestionScore += 35;
+    }
+
+    // AUTO-ASSIGN if high confidence human help request
+    if (suggestionScore >= 60 && (aiDetection.wants_human || hasEscalationKeyword)) {
+        console.log(`🚨 High confidence human help request (score: ${suggestionScore}) - Auto-assigning conversation ${conversationId}`);
 
         // Send friendly AI response before assigning
         const whatsappService = require('./whatsappService');
         const { buildTextJSON } = require('../shared/whatsappModels');
         const phoneNumber = conversation.customerId.phoneNumber;
 
+        const urgencyMessage = aiDetection.urgency === 'high' 
+            ? '¡Entiendo que es urgente! ' 
+            : '';
+
         const assignmentMessage = buildTextJSON(
             phoneNumber,
-            '¡Por supuesto! En unos momentos un agente de nuestro equipo será asignado a esta conversación para ayudarte. Gracias por tu paciencia. 😊'
+            `${urgencyMessage}¡Por supuesto! En unos momentos un agente de nuestro equipo será asignado a esta conversación para ayudarte. Gracias por tu paciencia. 😊`
         );
 
         await whatsappService.sendWhatsappResponse(assignmentMessage);
@@ -73,7 +214,12 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
 
         if (assignment) {
             console.log(`✅ Conversation ${conversationId} auto-assigned to agent ${assignment.agent.email}`);
-            return { ...assignment, autoAssigned: true, trigger: 'customer_request' };
+            return { 
+                ...assignment, 
+                autoAssigned: true, 
+                trigger: 'customer_request',
+                aiAnalysis: aiDetection
+            };
         } else {
             console.log(`⚠️ No available agents for auto-assignment - creating suggestion`);
 
@@ -86,49 +232,9 @@ async function analyzeForTakeover(conversationId, messageContent, aiResponse = n
         }
     }
 
-    // 2. Check AI confidence (if provided in aiResponse metadata)
-    if (aiResponse && (
-        aiResponse.toLowerCase().includes('no puedo') ||
-        aiResponse.toLowerCase().includes('no estoy seguro') ||
-        aiResponse.toLowerCase().includes('necesitas hablar con')
-    )) {
-        triggers.push('ai_uncertainty');
-        suggestionScore += 30;
-    }
-
-    // 3. Check message count (long conversations)
-    if (conversation.messageCount >= SUGGESTION_THRESHOLDS.LONG_CONVERSATION) {
-        triggers.push('long_conversation');
-        suggestionScore += 20;
-    }
-
-    // 4. Check for negative sentiment in recent messages
-    const recentMessages = await Message.find({
-        conversationId,
-        sender: 'customer'
-    })
-        .sort({ timestamp: -1 })
-        .limit(5);
-
-    const negativeCount = recentMessages.filter(msg =>
-        msg.aiResponse?.sentiment === 'negative'
-    ).length;
-
-    if (negativeCount >= SUGGESTION_THRESHOLDS.NEGATIVE_SENTIMENT_COUNT) {
-        triggers.push('negative_sentiment');
-        suggestionScore += 25;
-    }
-
-    // 5. Check for repeated questions (customer asking same thing)
-    const repeatedPattern = checkRepeatedQuestions(recentMessages);
-    if (repeatedPattern) {
-        triggers.push('repeated_questions');
-        suggestionScore += 35;
-    }
-
-    // Determine if suggestion should be sent
-    if (suggestionScore >= 50 && triggers.length > 0) {
-        return await createTakeoverSuggestion(conversation, triggers, suggestionScore);
+    // Create suggestion if score is moderate (30-59)
+    if (suggestionScore >= 30 && suggestionScore < 60 && triggers.length > 0) {
+        return await createTakeoverSuggestion(conversation, triggers, suggestionScore, aiDetection);
     }
 
     return null;
@@ -171,7 +277,7 @@ function calculateSimilarity(words1, words2) {
 /**
  * Create and emit takeover suggestion
  */
-async function createTakeoverSuggestion(conversation, triggers, score) {
+async function createTakeoverSuggestion(conversation, triggers, score, aiAnalysis = null) {
     const { io } = require('../models/server');
 
     const suggestion = {
@@ -180,15 +286,25 @@ async function createTakeoverSuggestion(conversation, triggers, score) {
         triggers,
         score,
         timestamp: new Date(),
-        status: 'pending'
+        status: 'pending',
+        aiAnalysis: aiAnalysis ? {
+            reason: aiAnalysis.reason,
+            confidence: aiAnalysis.confidence,
+            urgency: aiAnalysis.urgency
+        } : null
     };
 
     // Store suggestion in conversation
     if (!conversation.internalNotes) {
         conversation.internalNotes = [];
     }
+    
+    const noteContent = aiAnalysis 
+        ? `Auto-takeover suggested: ${triggers.join(', ')} (Score: ${score}) | AI: ${aiAnalysis.reason}`
+        : `Auto-takeover suggested: ${triggers.join(', ')} (Score: ${score})`;
+    
     conversation.internalNotes.push({
-        content: `Auto-takeover suggested: ${triggers.join(', ')} (Score: ${score})`,
+        content: noteContent,
         timestamp: new Date(),
         isVisible: false
     });
@@ -202,7 +318,12 @@ async function createTakeoverSuggestion(conversation, triggers, score) {
         lastMessage: conversation.lastMessage
     });
 
-    console.log(`🔔 Takeover suggested for conversation ${conversation._id} - Triggers: ${triggers.join(', ')}`);
+    console.log(`🔔 Takeover suggested for conversation ${conversation._id}`);
+    console.log(`   Triggers: ${triggers.join(', ')}`);
+    console.log(`   Score: ${score}`);
+    if (aiAnalysis) {
+        console.log(`   AI Analysis: ${aiAnalysis.reason} (${aiAnalysis.confidence}% confidence)`);
+    }
 
     return suggestion;
 }
