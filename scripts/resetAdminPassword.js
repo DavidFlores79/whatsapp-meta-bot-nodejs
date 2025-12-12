@@ -14,7 +14,7 @@ async function resetAdminPassword() {
         console.log('✅ Connected to MongoDB\n');
 
         // Find the admin agent
-        const admin = await Agent.findOne({ email: 'admin@example.com' });
+        const admin = await Agent.findOne({ email: 'admin@luxfree.com' });
 
         if (!admin) {
             console.log('❌ Admin agent not found');
@@ -35,7 +35,7 @@ async function resetAdminPassword() {
 
         console.log('🎉 Admin password reset successfully!');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`📧 Email:    admin@example.com`);
+        console.log(`📧 Email:    admin@luxfree.com`);
         console.log(`🔑 Password: admin123`);
         console.log(`👤 Name:     ${admin.firstName} ${admin.lastName}`);
         console.log(`🔐 Role:     ${admin.role}`);

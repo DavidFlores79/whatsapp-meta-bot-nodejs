@@ -14,7 +14,7 @@ async function createAdminAgent() {
         console.log('✅ Connected to MongoDB');
 
         // Check if admin already exists
-        const existingAdmin = await Agent.findOne({ email: 'admin@example.com' });
+        const existingAdmin = await Agent.findOne({ email: 'admin@luxfree.com' });
         if (existingAdmin) {
             console.log('⚠️  Admin agent already exists');
             console.log(`   Email: ${existingAdmin.email}`);
@@ -26,7 +26,7 @@ async function createAdminAgent() {
         const hashedPassword = await authService.hashPassword('admin123');
 
         const admin = await Agent.create({
-            email: 'admin@example.com',
+            email: 'admin@luxfree.com',
             password: hashedPassword,
             firstName: 'Admin',
             lastName: 'User',
@@ -38,7 +38,7 @@ async function createAdminAgent() {
 
         console.log('\n🎉 Admin agent created successfully!');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`📧 Email:    admin@example.com`);
+        console.log(`📧 Email:    admin@luxfree.com`);
         console.log(`🔑 Password: admin123`);
         console.log(`👤 Name:     ${admin.firstName} ${admin.lastName}`);
         console.log(`🔐 Role:     ${admin.role}`);

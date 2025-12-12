@@ -10,7 +10,7 @@ async function testAssignment() {
     await mongoose.connect(process.env.MONGODB);
     console.log('Connected to MongoDB\n');
 
-    const agent = await Agent.findOne({ email: 'admin@example.com' });
+    const agent = await Agent.findOne({ email: 'admin@luxfree.com' });
     console.log('Agent:', agent.firstName, agent.lastName);
     console.log('Agent ID:', agent._id.toString(), '\n');
 
