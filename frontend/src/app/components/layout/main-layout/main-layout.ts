@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
 import { AuthService, Agent } from '../../../services/auth';
 import { ChatService, Chat } from '../../../services/chat';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-main-layout',
@@ -48,8 +49,15 @@ export class MainLayoutComponent implements OnInit {
       this.sidebarWidth = parseInt(savedWidth, 10);
     }
 
-    // Detect current route
+    // Detect current route on init
     this.updateCurrentView();
+
+    // Subscribe to router events to update view on navigation
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.updateCurrentView();
+    });
 
     // Load sidebar collapsed state
     const collapsed = localStorage.getItem('sidebarCollapsed');

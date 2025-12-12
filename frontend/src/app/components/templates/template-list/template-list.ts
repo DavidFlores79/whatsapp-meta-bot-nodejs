@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -43,10 +43,12 @@ export class TemplateListComponent implements OnInit {
 
   constructor(
     private templateService: TemplateService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    console.log('TemplateListComponent initialized');
     this.statuses = this.templateService.getStatuses();
     this.categories = this.templateService.getCategories();
     this.languages = this.templateService.getLanguages();
@@ -55,6 +57,7 @@ export class TemplateListComponent implements OnInit {
   }
 
   loadTemplates() {
+    console.log('loadTemplates() called');
     this.loading = true;
     this.error = null;
 
@@ -66,16 +69,22 @@ export class TemplateListComponent implements OnInit {
       }
     });
 
+    console.log('Fetching templates with filters:', filters);
     this.templateService.getTemplates(filters).subscribe({
       next: (response) => {
+        console.log('Templates loaded successfully:', response);
         this.templates = response.data;
         this.applySearch();
         this.loading = false;
+        console.log('Loading state after set to false:', this.loading);
+        console.log('Filtered templates:', this.filteredTemplates);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading templates:', err);
-        this.error = 'Failed to load templates';
+        this.error = `Failed to load templates: ${err.message || err.status || 'Unknown error'}`;
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }

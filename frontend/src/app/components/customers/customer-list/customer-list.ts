@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -54,7 +54,8 @@ export class CustomerListComponent implements OnInit {
 
   constructor(
     private customerService: CustomerService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -65,19 +66,23 @@ export class CustomerListComponent implements OnInit {
   }
 
   loadCustomers() {
+    console.log('loadCustomers() called');
     this.loading = true;
     this.error = null;
 
     this.customerService.listCustomers(this.filters).subscribe({
       next: (response) => {
+        console.log('Customers loaded successfully:', response);
         this.customers = response.customers;
         this.pagination = response.pagination;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading customers:', err);
         this.error = 'Failed to load customers';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }

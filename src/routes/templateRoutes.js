@@ -6,7 +6,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 // All template routes require authentication
 router.use(authenticateToken);
 
-// Template management routes
+// Template management routes (specific routes before parameterized routes)
 router.post('/sync', templateController.syncTemplates);
 router.get('/stats', templateController.getTemplateStats);
 router.get('/', templateController.getTemplates);
