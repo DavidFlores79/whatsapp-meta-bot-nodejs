@@ -100,11 +100,18 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
         throw new Error('Agent has reached maximum concurrent chats');
     }
 
-    // Generate conversation summary for agent context
-    console.log('📊 Generating conversation summary for agent...');
+    // Determine agent's preferred language for summary
+    // Use first language if available, otherwise default to 'es-MX'
+    const agentLanguage = agent.languages && agent.languages.length > 0 
+        ? (agent.languages[0] === 'en' ? 'en-US' : 'es-MX')
+        : 'es-MX';
+
+    // Generate conversation summary for agent context in their preferred language
+    console.log(`📊 Generating conversation summary for agent in ${agentLanguage}...`);
     const conversationSummary = await conversationAnalysisService.generateConversationSummary(
         conversationId,
-        10 // Last 10 messages
+        10, // Last 10 messages
+        agentLanguage
     );
 
     // Update conversation
@@ -226,11 +233,17 @@ async function releaseConversation(conversationId, agentId, reason = null) {
             timestamp: { $gte: assignmentHistory.assignedAt }
         });
 
-        // Generate AI analysis of the interaction
+        // Determine agent's preferred language (same as used for summary)
+        const agentLanguage = agent.languages && agent.languages.length > 0 
+            ? (agent.languages[0] === 'en' ? 'en-US' : 'es-MX')
+            : 'es-MX';
+
+        // Generate AI analysis of the interaction in agent's language
         const aiAnalysis = await conversationAnalysisService.analyzeAgentInteraction(
             conversation._id,
             agentId,
-            assignmentHistory.contextSummary
+            assignmentHistory.contextSummary,
+            agentLanguage
         );
 
         // Update assignment history with release info and AI analysis

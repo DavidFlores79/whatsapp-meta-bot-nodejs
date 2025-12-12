@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="h-auto bg-whatsapp-gray flex flex-col border-b border-gray-700 shrink-0 z-10">
         <div class="flex items-center justify-between px-4 py-2">
-            <div class="flex items-center cursor-pointer" (click)="openCustomerModal(chat)" title="View/Edit Customer">
+            <div class="flex items-center cursor-pointer" (click)="openCustomerModal(chat)" [title]="'chat.viewEditCustomer' | translate">
                 <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
                     <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
                 </div>
@@ -15,10 +15,10 @@
                         </span>
                         <!-- AI Status Indicator -->
                         <span *ngIf="chat.isAIEnabled" class="text-green-400">
-                            <i class="fas fa-robot"></i> AI Active
+                            <i class="fas fa-robot"></i> {{ 'chat.aiActive' | translate }}
                         </span>
                         <span *ngIf="!chat.isAIEnabled && chat.assignedAgent" class="text-yellow-400">
-                            <i class="fas fa-pause"></i> AI Paused
+                            <i class="fas fa-pause"></i> {{ 'chat.aiPaused' | translate }}
                         </span>
                     </div>
                 </div>
@@ -27,13 +27,13 @@
                 <button
                     (click)="openTemplateSender(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
-                    title="Send Template Message">
+                    [title]="'chat.sendTemplateMessage' | translate">
                     <i class="fas fa-file-alt"></i>
                 </button>
                 <button
                     (click)="openCustomerModal(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
-                    [title]="chat.customerId ? 'Edit Customer' : 'Create Customer'">
+                    [title]="(chat.customerId ? 'chat.editCustomer' : 'chat.createCustomer') | translate">
                     <i class="fas" [ngClass]="chat.customerId ? 'fa-user-edit' : 'fa-user-plus'"></i>
                 </button>
                 <button class="hover:text-gray-200"><i class="fas fa-search"></i></button>
@@ -48,11 +48,11 @@
                 *ngIf="!chat.assignedAgent"
                 (click)="takeoverChat(chat.id)"
                 [disabled]="!canTakeOver() || isTakingOver"
-                [title]="canTakeOver() ? 'Take over this conversation' : 'Enable Auto-Assign to take over conversations'"
+                [title]="(canTakeOver() ? 'chat.takeOverConversation' : 'chat.enableAutoAssignToTakeOver') | translate"
                 class="px-4 py-1.5 text-white text-sm rounded-md transition-colors flex items-center gap-2"
                 [ngClass]="canTakeOver() && !isTakingOver ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer' : 'bg-gray-600 cursor-not-allowed opacity-50'">
                 <i class="fas" [ngClass]="isTakingOver ? 'fa-spinner fa-spin' : 'fa-hand-paper'"></i>
-                {{ isTakingOver ? 'Taking Over...' : 'Take Over' }}
+                {{ (isTakingOver ? 'chat.takingOver' : 'chat.takeOver') | translate }}
             </button>
 
             <!-- Resume AI Button (show when assigned to current agent) -->
@@ -62,7 +62,7 @@
                 [disabled]="isReleasingChat"
                 class="px-4 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                 <i class="fas" [ngClass]="isReleasingChat ? 'fa-spinner fa-spin' : 'fa-robot'"></i>
-                {{ isReleasingChat ? 'Releasing...' : 'Resume AI' }}
+                {{ (isReleasingChat ? 'chat.releasing' : 'chat.resumeAI') | translate }}
             </button>
 
             <!-- Info Badge (show when assigned to another agent) -->
@@ -70,7 +70,7 @@
                 *ngIf="chat.assignedAgent && !isAssignedToMe(chat)"
                 class="px-4 py-1.5 bg-gray-700 text-gray-300 text-sm rounded-md flex items-center gap-2">
                 <i class="fas fa-info-circle"></i>
-                Assigned to {{ getAssignedAgentFirstName(chat) }}
+                {{ 'chat.assignedTo' | translate }} {{ getAssignedAgentFirstName(chat) }}
             </div>
         </div>
     </div>
@@ -124,8 +124,8 @@
                 <div class="flex items-center gap-3">
                     <i class="fas fa-info-circle text-2xl"></i>
                     <div>
-                        <h3 class="text-lg font-semibold">Conversation Context</h3>
-                        <p class="text-sm text-blue-100">Review before taking over</p>
+                        <h3 class="text-lg font-semibold">{{ 'chat.conversationContext' | translate }}</h3>
+                        <p class="text-sm text-blue-100">{{ 'chat.reviewBeforeTakeover' | translate }}</p>
                     </div>
                 </div>
                 <button (click)="closeSummaryModal()" class="hover:bg-blue-700 rounded-full p-2 transition-colors">
@@ -139,7 +139,7 @@
                 <div class="mb-6">
                     <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
                         <i class="fas fa-file-alt text-blue-500"></i>
-                        Quick Summary
+                        {{ 'chat.quickSummary' | translate }}
                     </h4>
                     <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
                         {{ conversationSummary.briefSummary }}
@@ -149,13 +149,13 @@
                 <!-- Key Information Grid -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div class="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Customer Intent</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'chat.customerIntent' | translate }}</div>
                         <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
                             {{ conversationSummary.customerIntent }}
                         </div>
                     </div>
                     <div class="bg-yellow-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sentiment</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'chat.sentiment' | translate }}</div>
                         <div class="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">
                             <i class="fas" [ngClass]="{
                                 'fa-smile text-green-500': conversationSummary.sentiment === 'satisfied',
@@ -167,13 +167,13 @@
                         </div>
                     </div>
                     <div class="bg-green-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Category</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'chat.category' | translate }}</div>
                         <div class="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">
                             {{ conversationSummary.estimatedCategory }}
                         </div>
                     </div>
                     <div class="bg-red-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Urgency</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'chat.urgency' | translate }}</div>
                         <div class="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">
                             <i class="fas" [ngClass]="{
                                 'fa-exclamation-circle text-red-500': conversationSummary.urgency === 'urgent' || conversationSummary.urgency === 'high',
@@ -189,7 +189,7 @@
                 <div class="mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
                         <i class="fas fa-clipboard-check text-green-500"></i>
-                        Current Status
+                        {{ 'chat.currentStatus' | translate }}
                     </h4>
                     <p class="text-sm text-gray-700 dark:text-gray-300">
                         {{ conversationSummary.currentStatus }}
@@ -200,7 +200,7 @@
                 <div class="mb-6">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                         <i class="fas fa-list-ul text-purple-500"></i>
-                        Key Points to Know
+                        {{ 'chat.keyPointsToKnow' | translate }}
                     </h4>
                     <ul class="space-y-2">
                         <li *ngFor="let point of conversationSummary.keyPoints"
@@ -215,7 +215,7 @@
                 <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 p-4 rounded-lg">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
                         <i class="fas fa-lightbulb text-yellow-500"></i>
-                        Suggested Approach
+                        {{ 'chat.suggestedApproach' | translate }}
                     </h4>
                     <p class="text-sm text-gray-700 dark:text-gray-300">
                         {{ conversationSummary.suggestedApproach }}
@@ -227,19 +227,19 @@
                     <div class="flex items-center gap-6 text-xs text-gray-500 dark:text-gray-400">
                         <div class="flex items-center gap-1">
                             <i class="fas fa-comments"></i>
-                            <span>{{ conversationSummary.metadata.totalMessages }} messages</span>
+                            <span>{{ conversationSummary.metadata.totalMessages }} {{ 'chat.messages' | translate }}</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <i class="fas fa-robot"></i>
-                            <span>{{ conversationSummary.metadata.aiMessagesCount }} from AI</span>
+                            <span>{{ conversationSummary.metadata.aiMessagesCount }} {{ 'chat.fromAI' | translate }}</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <i class="fas fa-user"></i>
-                            <span>{{ conversationSummary.metadata.customerMessagesCount }} from customer</span>
+                            <span>{{ conversationSummary.metadata.customerMessagesCount }} {{ 'chat.fromCustomer' | translate }}</span>
                         </div>
                         <div *ngIf="conversationSummary.metadata.conversationAge" class="flex items-center gap-1">
                             <i class="fas fa-clock"></i>
-                            <span>{{ conversationSummary.metadata.conversationAge }} min ago</span>
+                            <span>{{ conversationSummary.metadata.conversationAge }} {{ 'chat.minAgo' | translate }}</span>
                         </div>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
                 <button (click)="closeSummaryModal()"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
                     <i class="fas fa-check"></i>
-                    Got It
+                    {{ 'chat.gotIt' | translate }}
                 </button>
             </div>
         </div>
@@ -261,9 +261,8 @@
     <div
         class="flex flex-col items-center justify-center h-full text-gray-400 bg-whatsapp-dark border-b-[6px] border-whatsapp-green">
         <div class="text-center">
-            <h2 class="text-3xl font-light text-gray-200 mb-4">WhatsApp Web</h2>
-            <p class="text-sm">Send and receive messages without keeping your phone online.<br>
-                Use WhatsApp on up to 4 linked devices and 1 phone.</p>
+            <h2 class="text-3xl font-light text-gray-200 mb-4">{{ 'chat.whatsappWeb' | translate }}</h2>
+            <p class="text-sm">{{ 'chat.whatsappWebDescription' | translate }}</p>
         </div>
     </div>
 </ng-template>
