@@ -83,6 +83,19 @@
                 <p class="text-gray-400">Loading performance data...</p>
             </div>
 
+            <!-- Empty State - No data loaded yet -->
+            <div *ngIf="!loadingPerformance && !agentPerformance && !performanceInitialized" class="text-center py-12">
+                <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 text-lg">Select an agent to view performance analytics</p>
+            </div>
+
+            <!-- No Results State - After loading -->
+            <div *ngIf="!loadingPerformance && !agentPerformance && performanceInitialized" class="text-center py-12">
+                <i class="fas fa-exclamation-circle text-6xl text-yellow-600 mb-4"></i>
+                <p class="text-gray-400 text-lg">No performance data available for this agent</p>
+                <p class="text-gray-500 text-sm mt-2">Try selecting a different date range or agent</p>
+            </div>
+
             <!-- Performance Data -->
             <div *ngIf="!loadingPerformance && agentPerformance" class="space-y-6">
 

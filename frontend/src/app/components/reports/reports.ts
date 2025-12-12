@@ -67,6 +67,7 @@ export class ReportsComponent implements OnInit {
   selectedAgentId: string = '';
   agentPerformance: AgentPerformance | null = null;
   loadingPerformance = false;
+  performanceInitialized = false;
 
   // Conversation History
   selectedConversationId: string = '';
@@ -89,6 +90,7 @@ export class ReportsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    console.log('[Reports] Component initialized');
     this.loadAgents();
     this.loadConversations();
 
@@ -96,7 +98,10 @@ export class ReportsComponent implements OnInit {
     const currentAgent = this.authService.getCurrentAgent();
     if (currentAgent) {
       this.selectedAgentId = currentAgent._id;
+      console.log('[Reports] Auto-loading performance for current agent:', this.selectedAgentId);
       this.loadAgentPerformance();
+    } else {
+      console.log('[Reports] No current agent found, skipping auto-load');
     }
   }
 
@@ -133,6 +138,7 @@ export class ReportsComponent implements OnInit {
     }
 
     this.loadingPerformance = true;
+    this.performanceInitialized = true;
     this.agentPerformance = null;
 
     let url = `${this.apiUrl}/agents/${this.selectedAgentId}/performance`;
