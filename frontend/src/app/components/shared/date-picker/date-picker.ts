@@ -23,7 +23,7 @@ export class DatePickerComponent implements OnInit {
   currentMonth: Date = new Date();
   selectedDate: Date | null = null;
   weeks: Array<Array<Date | null>> = [];
-  
+
   monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -49,19 +49,19 @@ export class DatePickerComponent implements OnInit {
   generateCalendar() {
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startingDayOfWeek = firstDay.getDay();
-    
+
     this.weeks = [];
     let currentWeek: Array<Date | null> = [];
-    
+
     // Fill in empty cells before the first day
     for (let i = 0; i < startingDayOfWeek; i++) {
       currentWeek.push(null);
     }
-    
+
     // Fill in the days of the month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       if (currentWeek.length === 7) {
@@ -70,7 +70,7 @@ export class DatePickerComponent implements OnInit {
       }
       currentWeek.push(new Date(year, month, day));
     }
-    
+
     // Fill in remaining cells
     while (currentWeek.length < 7) {
       currentWeek.push(null);
@@ -127,10 +127,10 @@ export class DatePickerComponent implements OnInit {
 
   formatDateForDisplay(date: Date | null): string {
     if (!date) return '';
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     };
     return date.toLocaleDateString(undefined, options);
   }
@@ -148,19 +148,19 @@ export class DatePickerComponent implements OnInit {
 
   isDisabled(date: Date | null): boolean {
     if (!date) return true;
-    
+
     if (this.minDate) {
       const min = new Date(this.minDate);
       min.setHours(0, 0, 0, 0);
       if (date < min) return true;
     }
-    
+
     if (this.maxDate) {
       const max = new Date(this.maxDate);
       max.setHours(23, 59, 59, 999);
       if (date > max) return true;
     }
-    
+
     return false;
   }
 

@@ -11,7 +11,7 @@
                 [placeholder]="placeholder"
                 (click)="toggleCalendar()"
                 readonly
-                class="w-full px-3 py-2 pr-20 bg-gray-700 text-white rounded-lg border border-gray-600 
+                class="w-full px-3 py-2 pr-20 bg-gray-700 text-white rounded-lg border border-gray-600
                        focus:border-blue-500 focus:outline-none cursor-pointer transition-colors
                        hover:bg-gray-650"
             />
@@ -39,7 +39,7 @@
     <!-- Calendar Dropdown -->
     <div
         *ngIf="showCalendar"
-        class="absolute z-50 mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl 
+        class="absolute z-50 mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl
                animate-fadeIn overflow-hidden"
         style="min-width: 280px;"
     >
@@ -52,11 +52,11 @@
             >
                 <i class="fas fa-chevron-left"></i>
             </button>
-            
+
             <div class="font-semibold text-white">
                 {{ monthNames[currentMonth.getMonth()] }} {{ currentMonth.getFullYear() }}
             </div>
-            
+
             <button
                 type="button"
                 (click)="nextMonth()"
@@ -85,11 +85,11 @@
                     (click)="selectDate(date)"
                     [disabled]="isDisabled(date)"
                     [class]="
-                        !date 
-                            ? 'invisible' 
+                        !date
+                            ? 'invisible'
                             : 'w-8 h-8 rounded-lg text-sm font-medium transition-all ' +
-                              (isSelected(date) 
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg' 
+                              (isSelected(date)
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
                                 : isToday(date)
                                 ? 'bg-blue-900 bg-opacity-30 text-blue-400 border border-blue-600 hover:bg-blue-800 hover:bg-opacity-40'
                                 : isDisabled(date)

@@ -78,7 +78,7 @@ export class SettingsComponent implements OnInit {
   changeLanguage() {
     this.translate.use(this.selectedLanguage);
     localStorage.setItem(LANGUAGE_STORAGE_KEY, this.selectedLanguage);
-    
+
     // Update agent's language preference in backend
     if (this.currentAgent) {
       const languageCode = this.selectedLanguage === 'en-US' ? 'en' : 'es';

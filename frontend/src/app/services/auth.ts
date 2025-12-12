@@ -124,8 +124,8 @@ export class AuthService {
   }
 
   updateAgentLanguage(languageCode: string): Observable<{ agent: Agent }> {
-    return this.http.patch<{ agent: Agent }>(`${this.apiUrl}/profile`, { 
-      languages: [languageCode] 
+    return this.http.patch<{ agent: Agent }>(`${this.apiUrl}/profile`, {
+      languages: [languageCode]
     }).pipe(
       tap(response => {
         this.currentAgentSubject.next(response.agent);
