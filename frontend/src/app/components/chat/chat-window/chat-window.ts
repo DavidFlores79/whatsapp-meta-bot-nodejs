@@ -32,6 +32,12 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTemplateSenderOpen = false;
   selectedCustomerIdForTemplate?: string;
 
+  // Takeover Summary Modal
+  isSummaryModalOpen = false;
+  conversationSummary: any = null;
+  isTakingOver = false;
+  isReleasingChat = false;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
@@ -129,13 +135,24 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    this.isTakingOver = true;
+
     this.chatService.assignToMe(chatId).subscribe({
-      next: () => {
-        console.log('Conversation taken over successfully');
+      next: (response) => {
+        console.log('Conversation taken over successfully', response);
+        this.isTakingOver = false;
+
+        // Show summary modal if available
+        if (response.summary) {
+          this.conversationSummary = response.summary;
+          this.isSummaryModalOpen = true;
+        }
+
         this.toastService.success('Conversation assigned to you successfully');
       },
       error: (err) => {
         console.error('Takeover failed:', err);
+        this.isTakingOver = false;
         const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
         this.toastService.error(`Failed to take over: ${errorMessage}`, 6000);
       }
@@ -146,17 +163,29 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Release conversation back to AI
    */
   releaseChat(chatId: string) {
+    this.isReleasingChat = true;
+
     this.chatService.releaseConversation(chatId, 'Manual release by agent').subscribe({
       next: () => {
         console.log('Conversation released to AI');
-        this.toastService.success('Conversation released. AI has resumed control');
+        this.isReleasingChat = false;
+        this.toastService.success('Conversation released. AI has resumed control and analyzing your interaction...');
       },
       error: (err) => {
         console.error('Release failed:', err);
+        this.isReleasingChat = false;
         const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
         this.toastService.error(`Failed to release conversation: ${errorMessage}`, 6000);
       }
     });
+  }
+
+  /**
+   * Close summary modal
+   */
+  closeSummaryModal() {
+    this.isSummaryModalOpen = false;
+    this.conversationSummary = null;
   }
 
   /**

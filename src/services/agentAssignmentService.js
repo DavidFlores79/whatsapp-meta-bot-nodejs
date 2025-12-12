@@ -1,5 +1,8 @@
 const Agent = require('../models/Agent');
 const Conversation = require('../models/Conversation');
+const AgentAssignmentHistory = require('../models/AgentAssignmentHistory');
+const Message = require('../models/Message');
+const conversationAnalysisService = require('./conversationAnalysisService');
 
 /**
  * Get available agents for assignment
@@ -97,6 +100,13 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
         throw new Error('Agent has reached maximum concurrent chats');
     }
 
+    // Generate conversation summary for agent context
+    console.log('📊 Generating conversation summary for agent...');
+    const conversationSummary = await conversationAnalysisService.generateConversationSummary(
+        conversationId,
+        10 // Last 10 messages
+    );
+
     // Update conversation
     conversation.assignedAgent = agentId;
     conversation.assignedAt = new Date();
@@ -106,19 +116,47 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
 
     await conversation.save();
 
+    // Create assignment history record with context
+    const assignmentHistory = new AgentAssignmentHistory({
+        conversationId: conversation._id,
+        customerId: conversation.customerId._id,
+        agentId,
+        assignedBy,
+        assignedAt: new Date(),
+        contextSummary: {
+            totalMessages: conversationSummary.metadata?.totalMessages || 0,
+            aiMessagesCount: conversationSummary.metadata?.aiMessagesCount || 0,
+            customerMessagesCount: conversationSummary.metadata?.customerMessagesCount || 0,
+            lastMessages: conversationSummary.metadata?.lastMessages || [],
+            conversationStartedAt: conversation.createdAt,
+            conversationStatus: conversation.status,
+            priority: conversation.priority,
+            category: conversation.category,
+            tags: conversation.tags,
+            keyTopics: conversationSummary.keyPoints || [],
+            customerSentiment: conversationSummary.sentiment || 'neutral',
+            assignmentTime: new Date() // Track when agent took over
+        }
+    });
+
+    await assignmentHistory.save();
+    console.log(`✅ Assignment history created: ${assignmentHistory._id}`);
+
     // Update agent statistics
     agent.statistics.activeAssignments += 1;
     agent.statistics.totalAssignments += 1;
     await agent.save();
 
-    // Emit socket event to agent
+    // Emit socket event to agent WITH SUMMARY
     io.to(`agent_${agentId}`).emit('conversation_assigned', {
         conversationId: conversation._id,
         customerId: conversation.customerId._id,
         customerName: conversation.customerId.firstName || conversation.customerId.phoneNumber,
         customerPhone: conversation.customerId.phoneNumber,
         lastMessage: conversation.lastMessage,
-        assignedAt: conversation.assignedAt
+        assignedAt: conversation.assignedAt,
+        summary: conversationSummary, // Include AI-generated summary
+        assignmentHistoryId: assignmentHistory._id
     });
 
     // Emit to all agents (for dashboard updates)
@@ -132,7 +170,9 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
 
     return {
         conversation,
-        agent
+        agent,
+        summary: conversationSummary,
+        assignmentHistoryId: assignmentHistory._id
     };
 }
 
@@ -166,6 +206,66 @@ async function releaseConversation(conversationId, agentId, reason = null) {
     }
 
     const previousAgent = conversation.assignedAgent;
+    const releaseTime = new Date();
+
+    // Find active assignment history record
+    const assignmentHistory = await AgentAssignmentHistory.findOne({
+        conversationId: conversation._id,
+        agentId,
+        releasedAt: null // Still active
+    }).sort({ assignedAt: -1 });
+
+    if (assignmentHistory) {
+        console.log('📊 Generating AI analysis of agent interaction...');
+        
+        // Calculate agent metrics
+        const agentMessages = await Message.countDocuments({
+            conversationId: conversation._id,
+            sender: 'agent',
+            agentId,
+            timestamp: { $gte: assignmentHistory.assignedAt }
+        });
+
+        // Generate AI analysis of the interaction
+        const aiAnalysis = await conversationAnalysisService.analyzeAgentInteraction(
+            conversation._id,
+            agentId,
+            assignmentHistory.contextSummary
+        );
+
+        // Update assignment history with release info and AI analysis
+        assignmentHistory.releasedAt = releaseTime;
+        assignmentHistory.calculateDuration();
+        assignmentHistory.releaseReason = reason || 'manual';
+        assignmentHistory.releaseMethod = 'manual';
+        assignmentHistory.finalStatus = conversation.status;
+        
+        assignmentHistory.agentSummary = {
+            messagesSent: agentMessages,
+            issueResolved: aiAnalysis.issueResolution?.wasResolved,
+            resolutionNotes: reason,
+            followUpRequired: aiAnalysis.actionItems?.followUpRequired
+        };
+
+        assignmentHistory.aiAnalysis = {
+            ...aiAnalysis,
+            analyzedAt: new Date(),
+            analysisModel: 'gpt-4o'
+        };
+
+        await assignmentHistory.save();
+        console.log(`✅ Assignment history updated with AI analysis: ${assignmentHistory._id}`);
+
+        // Update conversation with AI insights
+        if (aiAnalysis.conversationQuality?.overallQuality) {
+            conversation.tags = [...new Set([
+                ...(conversation.tags || []),
+                ...aiAnalysis.tags
+            ])];
+        }
+    } else {
+        console.warn('⚠️ No active assignment history found for this conversation');
+    }
 
     // Update conversation
     conversation.assignedAgent = null;

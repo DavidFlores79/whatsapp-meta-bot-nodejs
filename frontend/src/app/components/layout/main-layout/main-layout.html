@@ -234,8 +234,13 @@
       <app-chat-window class="flex-1 overflow-hidden z-10"></app-chat-window>
     </ng-container>
 
-    <!-- Show Router Outlet for other views (customers, templates, etc.) -->
-    <ng-container *ngIf="currentView !== 'chat'">
+    <!-- Show Reports Component -->
+    <ng-container *ngIf="currentView === 'reports'">
+      <app-reports class="flex-1 overflow-hidden"></app-reports>
+    </ng-container>
+
+    <!-- Show Router Outlet for other views (customers, templates, settings) -->
+    <ng-container *ngIf="currentView !== 'chat' && currentView !== 'reports'">
       <router-outlet></router-outlet>
     </ng-container>
   </div>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const agentController = require('../controllers/agentController');
+const conversationController = require('../controllers/conversationController');
 const { authenticateToken, requireRole } = require('../middleware/authMiddleware');
 const { authLimiter, apiLimiter } = require('../middleware/rateLimitMiddleware');
 
@@ -31,5 +32,10 @@ router.delete('/:id', authenticateToken, requireRole('admin'), apiLimiter, agent
 // STATISTICS
 // =====================================
 router.get('/:id/statistics', authenticateToken, apiLimiter, agentController.getAgentStatistics);
+
+// =====================================
+// PERFORMANCE ANALYTICS
+// =====================================
+router.get('/:agentId/performance', authenticateToken, apiLimiter, conversationController.getAgentPerformance);
 
 module.exports = router;

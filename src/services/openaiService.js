@@ -349,4 +349,47 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
   }
 }
 
-module.exports = { getAIResponse };
+/**
+ * Get chat completion from OpenAI (non-assistant, for analysis)
+ */
+async function getChatCompletion(messages, options = {}) {
+  try {
+    const {
+      model = 'gpt-4o',
+      temperature = 0.7,
+      max_tokens = 2000,
+      response_format = null
+    } = options;
+
+    const payload = {
+      model,
+      messages,
+      temperature,
+      max_tokens
+    };
+
+    if (response_format) {
+      payload.response_format = response_format;
+    }
+
+    const response = await axios.post(
+      `${BASE_URL}/chat/completions`,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+
+    return response.data.choices[0].message.content;
+
+  } catch (error) {
+    console.error("❌ OpenAI Chat Completion Error:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+module.exports = { getAIResponse, getChatCompletion };

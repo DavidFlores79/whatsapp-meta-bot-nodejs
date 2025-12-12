@@ -1,5 +1,6 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
+const AgentAssignmentHistory = require('../models/AgentAssignmentHistory');
 const agentAssignmentService = require('../services/agentAssignmentService');
 const agentMessageRelayService = require('../services/agentMessageRelayService');
 const autoTimeoutService = require('../services/autoTimeoutService');
@@ -270,6 +271,149 @@ async function addInternalNote(req, res) {
     }
 }
 
+/**
+ * GET /api/v2/conversations/:id/assignment-history
+ * Get all assignment history for a conversation
+ */
+async function getAssignmentHistory(req, res) {
+    try {
+        const conversationId = req.params.id;
+
+        const history = await AgentAssignmentHistory.find({ conversationId })
+            .populate('agentId', 'firstName lastName email avatar')
+            .populate('assignedBy', 'firstName lastName email')
+            .populate('transferredTo', 'firstName lastName email')
+            .sort({ assignedAt: -1 });
+
+        const stats = {
+            totalAssignments: history.length,
+            totalDuration: history.reduce((sum, h) => sum + (h.duration || 0), 0),
+            averageDuration: history.length > 0 
+                ? Math.floor(history.reduce((sum, h) => sum + (h.duration || 0), 0) / history.length)
+                : 0,
+            uniqueAgents: [...new Set(history.map(h => h.agentId?._id.toString()))].length,
+            resolvedCount: history.filter(h => h.aiAnalysis?.issueResolution?.wasResolved).length,
+            averagePerformanceScore: history.length > 0
+                ? (history.reduce((sum, h) => sum + (h.aiAnalysis?.agentPerformance?.overallScore || 0), 0) / history.length).toFixed(1)
+                : 0
+        };
+
+        return res.json({ history, stats });
+    } catch (error) {
+        console.error('Get assignment history error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * GET /api/v2/agents/:agentId/performance
+ * Get agent performance analytics across all assignments
+ */
+async function getAgentPerformance(req, res) {
+    try {
+        const agentId = req.params.agentId;
+        const { startDate, endDate, limit = 50 } = req.query;
+
+        const filter = { agentId };
+        
+        if (startDate || endDate) {
+            filter.assignedAt = {};
+            if (startDate) filter.assignedAt.$gte = new Date(startDate);
+            if (endDate) filter.assignedAt.$lte = new Date(endDate);
+        }
+
+        const assignments = await AgentAssignmentHistory.find(filter)
+            .populate('conversationId')
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .sort({ assignedAt: -1 })
+            .limit(parseInt(limit));
+
+        // Calculate aggregate performance metrics
+        const withAnalysis = assignments.filter(a => a.aiAnalysis?.agentPerformance?.overallScore);
+        
+        const analytics = {
+            totalAssignments: assignments.length,
+            analyzedAssignments: withAnalysis.length,
+            totalDuration: assignments.reduce((sum, a) => sum + (a.duration || 0), 0),
+            averageDuration: assignments.length > 0 
+                ? Math.floor(assignments.reduce((sum, a) => sum + (a.duration || 0), 0) / assignments.length)
+                : 0,
+            
+            // Performance scores
+            performance: withAnalysis.length > 0 ? {
+                overallScore: (withAnalysis.reduce((sum, a) => sum + a.aiAnalysis.agentPerformance.overallScore, 0) / withAnalysis.length).toFixed(2),
+                professionalism: (withAnalysis.reduce((sum, a) => sum + (a.aiAnalysis.agentPerformance.professionalism || 0), 0) / withAnalysis.length).toFixed(2),
+                responsiveness: (withAnalysis.reduce((sum, a) => sum + (a.aiAnalysis.agentPerformance.responsiveness || 0), 0) / withAnalysis.length).toFixed(2),
+                knowledgeability: (withAnalysis.reduce((sum, a) => sum + (a.aiAnalysis.agentPerformance.knowledgeability || 0), 0) / withAnalysis.length).toFixed(2),
+                empathy: (withAnalysis.reduce((sum, a) => sum + (a.aiAnalysis.agentPerformance.empathy || 0), 0) / withAnalysis.length).toFixed(2),
+                problemSolving: (withAnalysis.reduce((sum, a) => sum + (a.aiAnalysis.agentPerformance.problemSolving || 0), 0) / withAnalysis.length).toFixed(2)
+            } : null,
+            
+            // Resolution metrics
+            resolution: {
+                totalResolved: assignments.filter(a => a.aiAnalysis?.issueResolution?.wasResolved).length,
+                resolutionRate: assignments.length > 0 
+                    ? ((assignments.filter(a => a.aiAnalysis?.issueResolution?.wasResolved).length / assignments.length) * 100).toFixed(1)
+                    : 0,
+                qualityBreakdown: {
+                    excellent: assignments.filter(a => a.aiAnalysis?.issueResolution?.resolutionQuality === 'excellent').length,
+                    good: assignments.filter(a => a.aiAnalysis?.issueResolution?.resolutionQuality === 'good').length,
+                    partial: assignments.filter(a => a.aiAnalysis?.issueResolution?.resolutionQuality === 'partial').length,
+                    poor: assignments.filter(a => a.aiAnalysis?.issueResolution?.resolutionQuality === 'poor').length,
+                    unresolved: assignments.filter(a => a.aiAnalysis?.issueResolution?.resolutionQuality === 'unresolved').length
+                }
+            },
+            
+            // Sentiment analysis
+            sentiment: {
+                improved: assignments.filter(a => a.aiAnalysis?.customerSentiment?.sentimentChange === 'improved').length,
+                worsened: assignments.filter(a => a.aiAnalysis?.customerSentiment?.sentimentChange === 'worsened').length,
+                unchanged: assignments.filter(a => a.aiAnalysis?.customerSentiment?.sentimentChange === 'unchanged').length,
+                improvementRate: assignments.length > 0
+                    ? ((assignments.filter(a => a.aiAnalysis?.customerSentiment?.sentimentChange === 'improved').length / assignments.length) * 100).toFixed(1)
+                    : 0
+            },
+            
+            // Common strengths and areas for improvement
+            commonStrengths: this._getMostCommon(
+                withAnalysis.flatMap(a => a.aiAnalysis.agentPerformance.strengths || [])
+            ),
+            commonImprovements: this._getMostCommon(
+                withAnalysis.flatMap(a => a.aiAnalysis.agentPerformance.areasForImprovement || [])
+            ),
+            
+            // Risk and escalation
+            riskLevels: {
+                none: assignments.filter(a => a.aiAnalysis?.riskLevel === 'none').length,
+                low: assignments.filter(a => a.aiAnalysis?.riskLevel === 'low').length,
+                medium: assignments.filter(a => a.aiAnalysis?.riskLevel === 'medium').length,
+                high: assignments.filter(a => a.aiAnalysis?.riskLevel === 'high').length,
+                critical: assignments.filter(a => a.aiAnalysis?.riskLevel === 'critical').length
+            }
+        };
+
+        return res.json({ 
+            analytics,
+            recentAssignments: assignments.slice(0, 10) // Last 10 for detail view
+        });
+    } catch (error) {
+        console.error('Get agent performance error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * Helper: Get most common items from array
+ */
+function _getMostCommon(arr, topN = 5) {
+    const counts = {};
+    arr.forEach(item => counts[item] = (counts[item] || 0) + 1);
+    return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN)
+        .map(([item, count]) => ({ item, count }));
+}
+
 module.exports = {
     getConversations,
     getAssignedConversations,
@@ -280,5 +424,7 @@ module.exports = {
     sendReply,
     getConversationMessages,
     resumeAI,
-    addInternalNote
+    addInternalNote,
+    getAssignmentHistory,
+    getAgentPerformance
 };

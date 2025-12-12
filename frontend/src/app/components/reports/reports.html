@@ -1,0 +1,477 @@
+<div class="h-full flex flex-col bg-gray-900">
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-chart-line text-blue-500"></i>
+                    Performance Analytics
+                </h1>
+                <p class="text-sm text-gray-400 mt-1">AI-powered agent performance insights and conversation history</p>
+            </div>
+            <button (click)="exportToCSV()" 
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                <i class="fas fa-file-export"></i>
+                Export Report
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mt-4">
+            <button (click)="switchTab('agent-performance')"
+                    [class]="activeTab === 'agent-performance' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+                    class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-user-tie"></i>
+                Agent Performance
+            </button>
+            <button (click)="switchTab('conversation-history')"
+                    [class]="activeTab === 'conversation-history' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+                    class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-history"></i>
+                Conversation History
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        
+        <!-- AGENT PERFORMANCE TAB -->
+        <div *ngIf="activeTab === 'agent-performance'" class="max-w-7xl mx-auto">
+            <!-- Filters -->
+            <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Agent</label>
+                        <select [(ngModel)]="selectedAgentId" 
+                                (change)="loadAgentPerformance()"
+                                class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                            <option value="">Choose an agent</option>
+                            <option *ngFor="let agent of agents" [value]="agent._id">
+                                {{ agent.firstName }} {{ agent.lastName }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                        <input type="date" 
+                               [(ngModel)]="dateRange.startDate"
+                               (change)="loadAgentPerformance()"
+                               class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                        <input type="date" 
+                               [(ngModel)]="dateRange.endDate"
+                               (change)="loadAgentPerformance()"
+                               class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button (click)="loadAgentPerformance()" 
+                                [disabled]="loadingPerformance"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                            <i class="fas" [ngClass]="loadingPerformance ? 'fa-spinner fa-spin' : 'fa-sync'"></i>
+                            {{ loadingPerformance ? 'Loading...' : 'Refresh' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingPerformance" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-gray-400">Loading performance data...</p>
+            </div>
+
+            <!-- Performance Data -->
+            <div *ngIf="!loadingPerformance && agentPerformance" class="space-y-6">
+                
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-tasks text-2xl opacity-80"></i>
+                            <span class="text-sm opacity-80">Total</span>
+                        </div>
+                        <div class="text-3xl font-bold">{{ agentPerformance.analytics.totalAssignments }}</div>
+                        <div class="text-sm opacity-80">Assignments</div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-check-circle text-2xl opacity-80"></i>
+                            <span class="text-sm opacity-80">Success Rate</span>
+                        </div>
+                        <div class="text-3xl font-bold">{{ agentPerformance.analytics.resolution.resolutionRate }}%</div>
+                        <div class="text-sm opacity-80">Resolved Issues</div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-star text-2xl opacity-80"></i>
+                            <span class="text-sm opacity-80">Performance</span>
+                        </div>
+                        <div class="text-3xl font-bold">
+                            {{ agentPerformance.analytics.performance?.overallScore || 'N/A' }}
+                        </div>
+                        <div class="text-sm opacity-80">Average Score (1-10)</div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-clock text-2xl opacity-80"></i>
+                            <span class="text-sm opacity-80">Avg Duration</span>
+                        </div>
+                        <div class="text-3xl font-bold">{{ formatDuration(agentPerformance.analytics.averageDuration) }}</div>
+                        <div class="text-sm opacity-80">Per Conversation</div>
+                    </div>
+                </div>
+
+                <!-- Performance Scores -->
+                <div *ngIf="agentPerformance.analytics.performance" class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-chart-bar text-blue-500"></i>
+                        Performance Breakdown
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-2">Professionalism</div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.professionalism)">
+                                    {{ agentPerformance.analytics.performance.professionalism }}
+                                </div>
+                                <div class="text-sm text-gray-500">/ 10</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-2">Responsiveness</div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.responsiveness)">
+                                    {{ agentPerformance.analytics.performance.responsiveness }}
+                                </div>
+                                <div class="text-sm text-gray-500">/ 10</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-2">Knowledgeability</div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.knowledgeability)">
+                                    {{ agentPerformance.analytics.performance.knowledgeability }}
+                                </div>
+                                <div class="text-sm text-gray-500">/ 10</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-2">Empathy</div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.empathy)">
+                                    {{ agentPerformance.analytics.performance.empathy }}
+                                </div>
+                                <div class="text-sm text-gray-500">/ 10</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-2">Problem Solving</div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl font-bold" [ngClass]="getScoreColor(agentPerformance.analytics.performance.problemSolving)">
+                                    {{ agentPerformance.analytics.performance.problemSolving }}
+                                </div>
+                                <div class="text-sm text-gray-500">/ 10</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sentiment Analysis -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-smile text-yellow-500"></i>
+                        Customer Sentiment Impact
+                    </h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-green-900 bg-opacity-30 rounded-lg">
+                            <div class="text-3xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improved }}</div>
+                            <div class="text-sm text-gray-400 mt-1">Improved</div>
+                            <i class="fas fa-arrow-up text-green-400 text-2xl mt-2"></i>
+                        </div>
+                        <div class="text-center p-4 bg-gray-700 rounded-lg">
+                            <div class="text-3xl font-bold text-gray-400">{{ agentPerformance.analytics.sentiment.unchanged }}</div>
+                            <div class="text-sm text-gray-400 mt-1">Unchanged</div>
+                            <i class="fas fa-minus text-gray-400 text-2xl mt-2"></i>
+                        </div>
+                        <div class="text-center p-4 bg-red-900 bg-opacity-30 rounded-lg">
+                            <div class="text-3xl font-bold text-red-400">{{ agentPerformance.analytics.sentiment.worsened }}</div>
+                            <div class="text-sm text-gray-400 mt-1">Worsened</div>
+                            <i class="fas fa-arrow-down text-red-400 text-2xl mt-2"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span class="text-sm text-gray-400">Improvement Rate: </span>
+                        <span class="text-xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improvementRate }}%</span>
+                    </div>
+                </div>
+
+                <!-- Strengths & Improvements -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-thumbs-up text-green-500"></i>
+                            Top Strengths
+                        </h3>
+                        <div class="space-y-2">
+                            <div *ngFor="let strength of agentPerformance.analytics.commonStrengths" 
+                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                                <span class="text-sm text-gray-300">{{ strength.item }}</span>
+                                <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">{{ strength.count }}</span>
+                            </div>
+                            <div *ngIf="agentPerformance.analytics.commonStrengths.length === 0" class="text-gray-500 text-sm text-center py-4">
+                                No data available
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-arrow-up text-yellow-500"></i>
+                            Areas for Improvement
+                        </h3>
+                        <div class="space-y-2">
+                            <div *ngFor="let improvement of agentPerformance.analytics.commonImprovements" 
+                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                                <span class="text-sm text-gray-300">{{ improvement.item }}</span>
+                                <span class="bg-yellow-600 text-white text-xs px-2 py-1 rounded-full">{{ improvement.count }}</span>
+                            </div>
+                            <div *ngIf="agentPerformance.analytics.commonImprovements.length === 0" class="text-gray-500 text-sm text-center py-4">
+                                No data available
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Assignments -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-history text-blue-500"></i>
+                        Recent Assignments
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-700 text-gray-300">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Date</th>
+                                    <th class="px-4 py-3 text-left">Customer</th>
+                                    <th class="px-4 py-3 text-left">Duration</th>
+                                    <th class="px-4 py-3 text-left">Score</th>
+                                    <th class="px-4 py-3 text-left">Resolution</th>
+                                    <th class="px-4 py-3 text-left">Sentiment</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300">
+                                <tr *ngFor="let assignment of agentPerformance.recentAssignments" 
+                                    class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                                    <td class="px-4 py-3">{{ formatDate(assignment.assignedAt) }}</td>
+                                    <td class="px-4 py-3">
+                                        {{ assignment.customerId?.firstName || assignment.customerId?.phoneNumber || 'Unknown' }}
+                                    </td>
+                                    <td class="px-4 py-3">{{ formatDuration(assignment.duration || 0) }}</td>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="assignment.aiAnalysis?.agentPerformance?.overallScore" 
+                                              class="font-bold"
+                                              [ngClass]="getScoreColor(assignment.aiAnalysis.agentPerformance.overallScore)">
+                                            {{ assignment.aiAnalysis.agentPerformance.overallScore }}/10
+                                        </span>
+                                        <span *ngIf="!assignment.aiAnalysis?.agentPerformance?.overallScore" class="text-gray-500">-</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved" class="text-green-400">
+                                            <i class="fas fa-check-circle"></i> Resolved
+                                        </span>
+                                        <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved === false" class="text-red-400">
+                                            <i class="fas fa-times-circle"></i> Unresolved
+                                        </span>
+                                        <span *ngIf="assignment.aiAnalysis?.issueResolution?.wasResolved === null" class="text-gray-500">-</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'improved'" 
+                                              class="text-green-400">
+                                            <i class="fas fa-arrow-up"></i> Improved
+                                        </span>
+                                        <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'worsened'" 
+                                              class="text-red-400">
+                                            <i class="fas fa-arrow-down"></i> Worsened
+                                        </span>
+                                        <span *ngIf="assignment.aiAnalysis?.customerSentiment?.sentimentChange === 'unchanged'" 
+                                              class="text-gray-400">
+                                            <i class="fas fa-minus"></i> Unchanged
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="agentPerformance.recentAssignments.length === 0">
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                        No assignments found
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Data State -->
+            <div *ngIf="!loadingPerformance && !agentPerformance && selectedAgentId" class="text-center py-12">
+                <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 text-lg">No performance data available for this agent</p>
+            </div>
+        </div>
+
+        <!-- CONVERSATION HISTORY TAB -->
+        <div *ngIf="activeTab === 'conversation-history'" class="max-w-7xl mx-auto">
+            <!-- Filters -->
+            <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Conversation</label>
+                        <select [(ngModel)]="selectedConversationId" 
+                                class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                            <option value="">Choose a conversation</option>
+                            <option *ngFor="let conv of conversations" [value]="conv._id">
+                                {{ conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown' }} - 
+                                {{ conv.lastMessage?.timestamp | date:'short' }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button (click)="loadConversationHistory()" 
+                                [disabled]="loadingHistory || !selectedConversationId"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                            <i class="fas" [ngClass]="loadingHistory ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                            {{ loadingHistory ? 'Loading...' : 'Load History' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingHistory" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-gray-400">Loading conversation history...</p>
+            </div>
+
+            <!-- History Data -->
+            <div *ngIf="!loadingHistory && conversationHistory" class="space-y-6">
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="text-sm text-gray-400 mb-2">Total Assignments</div>
+                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.totalAssignments }}</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="text-sm text-gray-400 mb-2">Unique Agents</div>
+                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.uniqueAgents }}</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="text-sm text-gray-400 mb-2">Avg Performance</div>
+                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.averagePerformanceScore || 'N/A' }}</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="text-sm text-gray-400 mb-2">Resolved</div>
+                        <div class="text-2xl font-bold text-green-400">{{ conversationHistory.stats.resolvedCount }}</div>
+                    </div>
+                </div>
+
+                <!-- Assignment Timeline -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-history text-blue-500"></i>
+                        Assignment Timeline
+                    </h3>
+                    <div class="space-y-4">
+                        <div *ngFor="let assignment of conversationHistory.history" 
+                             class="bg-gray-700 rounded-lg p-4 border-l-4"
+                             [ngClass]="assignment.aiAnalysis?.issueResolution?.wasResolved ? 'border-green-500' : 'border-gray-500'">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user-tie text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-white">
+                                            {{ assignment.agentId?.firstName }} {{ assignment.agentId?.lastName }}
+                                        </div>
+                                        <div class="text-xs text-gray-400">
+                                            {{ formatDate(assignment.assignedAt) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-400">Duration</div>
+                                    <div class="font-semibold text-white">{{ formatDuration(assignment.duration || 0) }}</div>
+                                </div>
+                            </div>
+
+                            <!-- AI Analysis Summary -->
+                            <div *ngIf="assignment.aiAnalysis" class="mt-4 space-y-3">
+                                <!-- Brief Summary -->
+                                <div *ngIf="assignment.aiAnalysis.summary?.brief" class="text-sm text-gray-300 bg-gray-800 p-3 rounded">
+                                    {{ assignment.aiAnalysis.summary.brief }}
+                                </div>
+
+                                <!-- Metrics -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <div class="bg-gray-800 p-2 rounded text-center">
+                                        <div class="text-xs text-gray-400">Performance</div>
+                                        <div class="text-lg font-bold" 
+                                             [ngClass]="getScoreColor(assignment.aiAnalysis.agentPerformance?.overallScore || 0)">
+                                            {{ assignment.aiAnalysis.agentPerformance?.overallScore || 'N/A' }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-800 p-2 rounded text-center">
+                                        <div class="text-xs text-gray-400">Resolution</div>
+                                        <div class="text-lg font-bold" 
+                                             [ngClass]="assignment.aiAnalysis.issueResolution?.wasResolved ? 'text-green-400' : 'text-red-400'">
+                                            {{ assignment.aiAnalysis.issueResolution?.wasResolved ? 'Yes' : 'No' }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-800 p-2 rounded text-center">
+                                        <div class="text-xs text-gray-400">Sentiment</div>
+                                        <div class="text-lg font-bold capitalize" 
+                                             [ngClass]="{
+                                                'text-green-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'improved',
+                                                'text-red-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'worsened',
+                                                'text-gray-400': assignment.aiAnalysis.customerSentiment?.sentimentChange === 'unchanged'
+                                             }">
+                                            {{ assignment.aiAnalysis.customerSentiment?.sentimentChange || 'N/A' }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-800 p-2 rounded text-center">
+                                        <div class="text-xs text-gray-400">Risk</div>
+                                        <div class="text-lg font-bold capitalize" 
+                                             [ngClass]="{
+                                                'text-red-500': assignment.aiAnalysis.riskLevel === 'high' || assignment.aiAnalysis.riskLevel === 'critical',
+                                                'text-yellow-400': assignment.aiAnalysis.riskLevel === 'medium',
+                                                'text-green-400': assignment.aiAnalysis.riskLevel === 'low' || assignment.aiAnalysis.riskLevel === 'none'
+                                             }">
+                                            {{ assignment.aiAnalysis.riskLevel || 'None' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div *ngIf="conversationHistory.history.length === 0" class="text-center py-8 text-gray-500">
+                            No assignment history for this conversation
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Data State -->
+            <div *ngIf="!loadingHistory && !conversationHistory && selectedConversationId" class="text-center py-12">
+                <i class="fas fa-history text-6xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 text-lg">No history data available for this conversation</p>
+            </div>
+        </div>
+
+    </div>
+</div>

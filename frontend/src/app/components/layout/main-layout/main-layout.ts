@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
+import { ReportsComponent } from '../../reports/reports';
 import { AuthService, Agent } from '../../../services/auth';
 import { ChatService, Chat } from '../../../services/chat';
 import { ToastService } from '../../../services/toast';
@@ -11,7 +13,7 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChatListComponent, ChatWindowComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ChatListComponent, ChatWindowComponent, ReportsComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
@@ -101,8 +103,6 @@ export class MainLayoutComponent implements OnInit {
 
   navigateToReports() {
     this.currentView = 'reports';
-    // TODO: Implement reports route
-    this.toastService.info('Reports feature coming soon!');
   }
 
   navigateToSettings() {

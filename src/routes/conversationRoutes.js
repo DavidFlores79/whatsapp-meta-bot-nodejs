@@ -34,4 +34,9 @@ router.post('/:id/resume-ai', authenticateToken, apiLimiter, conversationControl
 // =====================================
 router.post('/:id/notes', authenticateToken, apiLimiter, conversationController.addInternalNote);
 
+// =====================================
+// ANALYTICS & HISTORY
+// =====================================
+router.get('/:id/assignment-history', authenticateToken, apiLimiter, conversationController.getAssignmentHistory);
+
 module.exports = router;
