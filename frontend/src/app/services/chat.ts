@@ -76,6 +76,23 @@ export class ChatService {
     });
   }
 
+  /**
+   * Helper method to get customer display name
+   */
+  private getCustomerName(customer: any): string {
+    if (!customer) return 'Unknown';
+    
+    if (customer.firstName && customer.lastName) {
+      return `${customer.firstName} ${customer.lastName}`;
+    }
+    
+    if (customer.firstName) {
+      return customer.firstName;
+    }
+    
+    return customer.phoneNumber || 'Unknown';
+  }
+
   private loadConversations(agent?: Agent | null) {
     // Always load all conversations, let the tabs filter them
     const endpoint = `${this.apiUrl}/conversations`;
@@ -86,7 +103,7 @@ export class ChatService {
         const conversations = response.conversations || [];
         const newChats = conversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
-          name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
+          name: this.getCustomerName(conv.customerId),
           avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
           lastMessage: conv.lastMessage?.content || '',
           lastMessageTime: new Date(conv.lastMessage?.timestamp || conv.lastCustomerMessage || conv.updatedAt),
@@ -314,7 +331,7 @@ export class ChatService {
               // Create new chat entry with proper data
               const newChat: Chat = {
                 id: conv._id,
-                name: conv.customerId?.firstName || conv.customerId?.phoneNumber || 'Unknown',
+                name: this.getCustomerName(conv.customerId),
                 avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
                 lastMessage: message.text,
                 lastMessageTime: new Date(message.timestamp),
@@ -450,5 +467,21 @@ export class ChatService {
    */
   refreshConversations(): void {
     this.loadConversations(this.currentAgent);
+  }
+
+  /**
+   * Update customer information for a specific conversation
+   */
+  updateConversationCustomer(phoneNumber: string, customer: any): void {
+    const chat = this.mockChats.find(c => c.phoneNumber === phoneNumber);
+    if (chat) {
+      // Update the chat name with new customer info
+      chat.name = this.getCustomerName(customer);
+      chat.customerId = customer._id;
+      
+      // Trigger update
+      this.chatsSubject.next([...this.mockChats]);
+      console.log(`Updated conversation for ${phoneNumber} with new customer name: ${chat.name}`);
+    }
   }
 }

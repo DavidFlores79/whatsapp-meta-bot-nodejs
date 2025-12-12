@@ -1,21 +1,37 @@
 <div class="flex items-center gap-2">
-    <button class="text-gray-400 hover:text-gray-200 p-2">
+    <button class="text-gray-400 hover:text-gray-200 p-2" [disabled]="!canSendMessage()" [class.opacity-50]="!canSendMessage()">
         <i class="far fa-smile text-xl"></i>
     </button>
-    <button class="text-gray-400 hover:text-gray-200 p-2">
+    <button class="text-gray-400 hover:text-gray-200 p-2" [disabled]="!canSendMessage()" [class.opacity-50]="!canSendMessage()">
         <i class="fas fa-paperclip text-xl"></i>
     </button>
 
     <div class="flex-1 bg-whatsapp-dark rounded-lg flex items-center px-4 py-2">
-        <input type="text" [(ngModel)]="messageText" (keyup.enter)="sendMessage()" placeholder="Type a message"
+        <input 
+            type="text" 
+            [(ngModel)]="messageText" 
+            (keyup.enter)="sendMessage()" 
+            [placeholder]="canSendMessage() ? 'Type a message' : 'Take over conversation to send messages'"
+            [disabled]="!canSendMessage()"
+            [class.cursor-not-allowed]="!canSendMessage()"
+            [class.opacity-60]="!canSendMessage()"
             class="bg-transparent border-none text-gray-200 text-sm w-full focus:outline-none placeholder-gray-400">
     </div>
 
-    <button *ngIf="messageText.trim()" (click)="sendMessage()"
+    <button 
+        *ngIf="messageText.trim()" 
+        (click)="sendMessage()"
+        [disabled]="!canSendMessage()"
+        [class.opacity-50]="!canSendMessage()"
+        [class.cursor-not-allowed]="!canSendMessage()"
         class="text-whatsapp-green hover:text-whatsapp-green/80 p-2">
         <i class="fas fa-paper-plane text-xl"></i>
     </button>
-    <button *ngIf="!messageText.trim()" class="text-gray-400 hover:text-gray-200 p-2">
+    <button 
+        *ngIf="!messageText.trim()" 
+        class="text-gray-400 hover:text-gray-200 p-2"
+        [disabled]="!canSendMessage()" 
+        [class.opacity-50]="!canSendMessage()">
         <i class="fas fa-microphone text-xl"></i>
     </button>
 </div>

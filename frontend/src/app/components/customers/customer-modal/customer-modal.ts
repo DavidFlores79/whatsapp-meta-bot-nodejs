@@ -71,7 +71,7 @@ export class CustomerModalComponent implements OnInit, OnChanges {
     this.errorMessage = '';
     this.successMessage = '';
     this.isLoading = false;
-    
+
     if (this.customerId) {
       this.isEditMode = true;
       this.loadCustomer();

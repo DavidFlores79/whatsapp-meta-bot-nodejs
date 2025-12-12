@@ -181,7 +181,9 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    */
   onCustomerSaved(customer: Customer) {
     console.log('Customer saved:', customer);
-    // Optionally refresh the conversation to show updated customer info
-    this.chatService.refreshConversations();
+    // Update the specific conversation with new customer info
+    if (customer.phoneNumber) {
+      this.chatService.updateConversationCustomer(customer.phoneNumber, customer);
+    }
   }
 }
