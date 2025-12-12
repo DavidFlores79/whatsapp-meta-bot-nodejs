@@ -533,7 +533,10 @@
     "no": "No",
     "none": "Ninguno",
     "refresh": "Actualizar",
-    "loadHistory": "Cargar historial"
+    "loadHistory": "Cargar historial",
+    "aiLanguageNote": "Los insights generados por IA (fortalezas, mejoras) se muestran en el idioma que estaba activo cuando se analizó cada conversación. Cambia tu preferencia de idioma en Configuración para afectar futuros análisis.",
+    "noAIAnalysis": "Sin análisis de IA disponible aún",
+    "releaseConversationsHint": "Los insights impulsados por IA aparecerán aquí después de liberar conversaciones. Libera una conversación para generar análisis de rendimiento."
   },
   "settings": {
     "title": "Configuración",
