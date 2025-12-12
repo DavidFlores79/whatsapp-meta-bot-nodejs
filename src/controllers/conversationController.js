@@ -16,12 +16,16 @@ async function getConversations(req, res) {
         if (status) filter.status = status;
         if (assignedAgent) filter.assignedAgent = assignedAgent;
 
+        // OPTIMIZED: Use lean() and limit populate fields
         const conversations = await Conversation.find(filter)
             .populate('customerId', 'firstName lastName phoneNumber avatar')
             .populate('assignedAgent', 'firstName lastName email avatar status')
+            .select('-internalNotes -contextSummary') // Exclude heavy fields
             .sort({ lastCustomerMessage: -1 })
             .limit(parseInt(limit))
-            .skip(parseInt(skip));
+            .skip(parseInt(skip))
+            .lean()
+            .maxTimeMS(10000); // 10 second timeout
 
         const total = await Conversation.countDocuments(filter);
 
@@ -331,12 +335,35 @@ async function getAgentPerformance(req, res) {
 
         console.log('[getAgentPerformance] Filter:', filter);
 
-        // Optimize query - remove heavy populates, limit results early
+        // OPTIMIZED: Only select fields needed for analytics, exclude heavy nested objects
         const assignments = await AgentAssignmentHistory.find(filter)
-            .select('-contextSummary') // Exclude large text fields
+            .select({
+                'agentId': 1,
+                'conversationId': 1,
+                'customerId': 1,
+                'assignedAt': 1,
+                'releasedAt': 1,
+                'duration': 1,
+                'releaseReason': 1,
+                'finalStatus': 1,
+                // Only select specific aiAnalysis fields needed
+                'aiAnalysis.agentPerformance.overallScore': 1,
+                'aiAnalysis.agentPerformance.professionalism': 1,
+                'aiAnalysis.agentPerformance.responsiveness': 1,
+                'aiAnalysis.agentPerformance.knowledgeability': 1,
+                'aiAnalysis.agentPerformance.empathy': 1,
+                'aiAnalysis.agentPerformance.problemSolving': 1,
+                'aiAnalysis.agentPerformance.strengths': 1,
+                'aiAnalysis.agentPerformance.areasForImprovement': 1,
+                'aiAnalysis.issueResolution.wasResolved': 1,
+                'aiAnalysis.issueResolution.resolutionQuality': 1,
+                'aiAnalysis.customerSentiment.sentimentChange': 1,
+                'aiAnalysis.riskLevel': 1
+            })
             .sort({ assignedAt: -1 })
             .limit(parseInt(limit))
-            .lean(); // Use lean for better performance
+            .lean() // Use lean for better performance
+            .maxTimeMS(15000); // 15 second timeout
 
         console.log('[getAgentPerformance] Found', assignments.length, 'assignments');
 

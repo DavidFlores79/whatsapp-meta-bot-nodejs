@@ -116,5 +116,8 @@ conversationSchema.index({ priority: 1 });
 conversationSchema.index({ category: 1 });
 conversationSchema.index({ tags: 1 });
 conversationSchema.index({ status: 1, assignedAgent: 1 });
+// Performance index for Reports sort query
+conversationSchema.index({ lastCustomerMessage: -1 });
+conversationSchema.index({ status: 1, lastCustomerMessage: -1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);
