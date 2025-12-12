@@ -42,6 +42,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   // Thread Metadata
   threadMetadata: any = null;
   isLoadingMetadata = false;
+  isMetadataVisible = false;
 
   constructor(
     private chatService: ChatService,
