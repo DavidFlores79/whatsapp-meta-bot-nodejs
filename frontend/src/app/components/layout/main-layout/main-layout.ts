@@ -118,17 +118,17 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     // Count assigned conversations that are not currently being viewed
     const selectedChatId = this.chatService.getSelectedChatId();
-    
+
     this.unattendedCount = chats.filter(chat => {
       // Check if conversation is assigned to current agent
       const assignedAgentId = typeof chat.assignedAgent === 'string'
         ? chat.assignedAgent
         : chat.assignedAgent?._id;
-      
+
       const isAssignedToMe = assignedAgentId === currentAgentId;
       const isNotCurrentlyViewed = chat.id !== selectedChatId;
       const hasStatus = chat.status === 'assigned';
-      
+
       return isAssignedToMe && isNotCurrentlyViewed && hasStatus;
     }).length;
   }

@@ -392,4 +392,50 @@ async function getChatCompletion(messages, options = {}) {
   }
 }
 
-module.exports = { getAIResponse, getChatCompletion };
+/**
+ * Get thread metadata from OpenAI Assistant
+ * This includes customer information collected by the AI
+ */
+async function getThreadMetadata(userId) {
+  try {
+    if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) {
+      throw new Error("OpenAI config missing");
+    }
+
+    const headers = {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+      "OpenAI-Beta": "assistants=v2",
+    };
+
+    // Get thread ID from cache or database
+    let threadId = userThreads.get(userId);
+    
+    if (!threadId) {
+      const userThread = await UserThread.findOne({ userId });
+      if (userThread) {
+        threadId = userThread.threadId;
+      } else {
+        return null; // No thread exists yet
+      }
+    }
+
+    // Retrieve thread details from OpenAI
+    const threadResponse = await axios.get(
+      `${BASE_URL}/threads/${threadId}`,
+      { headers }
+    );
+
+    return {
+      threadId,
+      metadata: threadResponse.data.metadata || {},
+      createdAt: threadResponse.data.created_at
+    };
+
+  } catch (error) {
+    console.error("❌ Error fetching thread metadata:", error.response?.data || error.message);
+    return null;
+  }
+}
+
+module.exports = { getAIResponse, getChatCompletion, getThreadMetadata };

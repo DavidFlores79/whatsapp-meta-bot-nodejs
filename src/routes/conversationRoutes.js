@@ -23,6 +23,7 @@ router.post('/:id/transfer', authenticateToken, apiLimiter, conversationControll
 // =====================================
 router.post('/:id/reply', authenticateToken, apiLimiter, conversationController.sendReply);
 router.get('/:id/messages', authenticateToken, apiLimiter, conversationController.getConversationMessages);
+router.get('/:id/thread-metadata', authenticateToken, apiLimiter, conversationController.getThreadMetadata);
 
 // =====================================
 // AI CONTROL

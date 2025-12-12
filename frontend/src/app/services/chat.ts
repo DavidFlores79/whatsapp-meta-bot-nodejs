@@ -516,6 +516,13 @@ export class ChatService {
   }
 
   /**
+   * Get OpenAI thread metadata for a conversation
+   */
+  getThreadMetadata(conversationId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/conversations/${conversationId}/thread-metadata`);
+  }
+
+  /**
    * Send agent message (from Web UI)
    */
   sendAgentMessage(conversationId: string, text: string): Observable<any> {

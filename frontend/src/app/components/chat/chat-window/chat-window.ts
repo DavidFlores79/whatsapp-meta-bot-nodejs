@@ -39,6 +39,10 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTakingOver = false;
   isReleasingChat = false;
 
+  // Thread Metadata
+  threadMetadata: any = null;
+  isLoadingMetadata = false;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
@@ -69,6 +73,15 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
           }
         }
       });
+    });
+
+    // Subscribe to selected chat changes to load metadata
+    this.selectedChat$.subscribe(chat => {
+      if (chat) {
+        this.loadThreadMetadata(chat.id);
+      } else {
+        this.threadMetadata = null;
+      }
     });
   }
 
@@ -179,6 +192,33 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         this.toastService.error(`Failed to release conversation: ${errorMessage}`, 6000);
       }
     });
+  }
+
+  /**
+   * Load thread metadata from OpenAI Assistant
+   */
+  loadThreadMetadata(conversationId: string) {
+    this.isLoadingMetadata = true;
+    this.chatService.getThreadMetadata(conversationId).subscribe({
+      next: (response) => {
+        this.threadMetadata = response.metadata;
+        this.isLoadingMetadata = false;
+        console.log('Thread metadata loaded:', this.threadMetadata);
+      },
+      error: (err) => {
+        console.error('Failed to load thread metadata:', err);
+        this.threadMetadata = null;
+        this.isLoadingMetadata = false;
+      }
+    });
+  }
+
+  /**
+   * Check if metadata has any values to display
+   */
+  hasMetadata(): boolean {
+    return this.threadMetadata?.metadata && 
+           Object.keys(this.threadMetadata.metadata).length > 0;
   }
 
   /**

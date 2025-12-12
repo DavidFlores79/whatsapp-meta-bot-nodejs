@@ -198,6 +198,37 @@ async function sendReply(req, res) {
 }
 
 /**
+ * GET /api/v2/conversations/:id/thread-metadata
+ * Get OpenAI thread metadata for a conversation
+ */
+async function getThreadMetadata(req, res) {
+    try {
+        const conversationId = req.params.id;
+        const openaiService = require('../services/openaiService');
+
+        // Get conversation with customer info
+        const conversation = await Conversation.findById(conversationId)
+            .populate('customerId');
+
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        if (!conversation.customerId) {
+            return res.status(404).json({ error: 'No customer associated with this conversation' });
+        }
+
+        // Get thread metadata from OpenAI
+        const metadata = await openaiService.getThreadMetadata(conversation.customerId.phoneNumber);
+
+        return res.json({ metadata });
+    } catch (error) {
+        console.error('Get thread metadata error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
  * GET /api/v2/conversations/:id/messages
  */
 async function getConversationMessages(req, res) {
@@ -556,6 +587,7 @@ module.exports = {
     releaseConversation,
     transferConversation,
     sendReply,
+    getThreadMetadata,
     getConversationMessages,
     resumeAI,
     addInternalNote,
