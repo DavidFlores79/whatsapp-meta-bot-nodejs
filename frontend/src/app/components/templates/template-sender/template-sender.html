@@ -1,0 +1,193 @@
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+     (click)="onClose()">
+  <div class="bg-whatsapp-gray rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden border border-gray-700 flex flex-col"
+       (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
+      <h2 class="text-xl font-semibold text-gray-100">
+        {{ selectedTemplate ? 'Send Template' : 'Select Template' }}
+      </h2>
+      <button (click)="onClose()" class="text-gray-400 hover:text-gray-200 transition-colors">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div *ngIf="successMessage" class="bg-green-600 text-white px-6 py-3 shrink-0">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+    </div>
+    <div *ngIf="error" class="bg-red-600 text-white px-6 py-3 shrink-0">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ error }}</span>
+        <button (click)="error = null" class="ml-auto">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <!-- Template Selection -->
+      <div *ngIf="!selectedTemplate">
+        <!-- Search -->
+        <div class="mb-4 relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text"
+                 [(ngModel)]="searchTerm"
+                 (input)="onSearchChange()"
+                 placeholder="Search templates..."
+                 class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-3xl text-whatsapp-green mb-3"></i>
+            <p class="text-gray-400">Loading templates...</p>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loading && filteredTemplates.length === 0" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <i class="fas fa-inbox text-5xl text-gray-600 mb-3"></i>
+            <h3 class="text-lg font-semibold text-gray-300 mb-2">No templates found</h3>
+            <p class="text-gray-400">
+              {{ searchTerm ? 'Try adjusting your search term' : 'No approved templates available' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Templates List -->
+        <div *ngIf="!loading && filteredTemplates.length > 0" class="space-y-3">
+          <div *ngFor="let template of filteredTemplates"
+               (click)="selectTemplate(template)"
+               class="bg-whatsapp-dark border border-gray-600 rounded-lg p-4 hover:border-whatsapp-green cursor-pointer transition-colors">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-semibold text-gray-100">{{ template.name }}</h3>
+              <span [class]="'px-2 py-1 rounded text-xs font-medium ' + getCategoryClass(template.category)">
+                {{ template.category }}
+              </span>
+            </div>
+
+            <p class="text-sm text-gray-300 mb-2 line-clamp-2">
+              {{ getTemplateText(template) }}
+            </p>
+
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span>
+                <i class="fas fa-language mr-1"></i>
+                {{ template.language }}
+              </span>
+              <span *ngIf="getParameterCount(template) > 0">
+                <i class="fas fa-brackets-curly mr-1"></i>
+                {{ getParameterCount(template) }} parameters
+              </span>
+              <span>
+                <i class="fas fa-chart-line mr-1"></i>
+                {{ template.usageCount }} uses
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template Configuration -->
+      <div *ngIf="selectedTemplate">
+        <!-- Back Button -->
+        <button (click)="backToList()"
+                class="mb-4 text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-2">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to templates</span>
+        </button>
+
+        <!-- Template Info -->
+        <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-4 mb-4">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-100 text-lg">{{ selectedTemplate.name }}</h3>
+              <p class="text-sm text-gray-400">{{ selectedTemplate.language }}</p>
+            </div>
+            <span [class]="'px-2 py-1 rounded text-xs font-medium ' + getCategoryClass(selectedTemplate.category)">
+              {{ selectedTemplate.category }}
+            </span>
+          </div>
+
+          <div *ngIf="selectedTemplate.description" class="text-sm text-gray-300 mb-3">
+            {{ selectedTemplate.description }}
+          </div>
+
+          <!-- Template Components -->
+          <div class="space-y-3">
+            <div *ngFor="let component of selectedTemplate.components"
+                 class="bg-whatsapp-gray border border-gray-700 rounded p-3">
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+                {{ component.type }}
+              </div>
+              <div class="text-gray-100 text-sm whitespace-pre-wrap">{{ component.text }}</div>
+
+              <!-- Buttons -->
+              <div *ngIf="component.buttons && component.buttons.length > 0" class="mt-3 space-y-2">
+                <div *ngFor="let button of component.buttons"
+                     class="bg-whatsapp-dark border border-gray-600 rounded px-3 py-2 text-sm text-center text-gray-200">
+                  <i class="fas mr-2"
+                     [class.fa-phone]="button.type === 'PHONE_NUMBER'"
+                     [class.fa-link]="button.type === 'URL'"
+                     [class.fa-reply]="button.type === 'QUICK_REPLY'"></i>
+                  {{ button.text }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters -->
+        <div *ngIf="selectedTemplate.parameters.length > 0" class="mb-4">
+          <h4 class="font-semibold text-gray-100 mb-3">Fill Template Parameters</h4>
+          <div class="space-y-3">
+            <div *ngFor="let param of selectedTemplate.parameters; let i = index">
+              <label class="block text-sm text-gray-300 mb-1">
+                {{ param.name }} ({{ param.component }})
+                <span class="text-red-400">*</span>
+              </label>
+              <input type="text"
+                     [(ngModel)]="parameters[i]"
+                     placeholder="Enter value for {{ param.name }}"
+                     class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-4 mb-4">
+          <h4 class="font-semibold text-green-400 mb-2 flex items-center gap-2">
+            <i class="fas fa-eye"></i>
+            Preview
+          </h4>
+          <div class="text-gray-100 text-sm whitespace-pre-wrap">
+            {{ getTemplatePreview() }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div *ngIf="selectedTemplate" class="bg-whatsapp-gray border-t border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
+      <button (click)="backToList()"
+              class="text-gray-400 hover:text-gray-200 transition-colors">
+        Cancel
+      </button>
+      <button (click)="sendTemplate()"
+              [disabled]="!canSend() || sending"
+              class="bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas" [class.fa-paper-plane]="!sending" [class.fa-spinner]="sending" [class.fa-spin]="sending"></i>
+        <span>{{ sending ? 'Sending...' : 'Send Template' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -67,6 +67,8 @@ export class MainLayoutComponent implements OnInit {
     const url = this.router.url;
     if (url.includes('/customers')) {
       this.currentView = 'customers';
+    } else if (url.includes('/templates')) {
+      this.currentView = 'templates';
     } else {
       this.currentView = 'chat';
     }
@@ -84,8 +86,7 @@ export class MainLayoutComponent implements OnInit {
 
   navigateToTemplates() {
     this.currentView = 'templates';
-    // TODO: Implement templates route
-    alert('Templates feature coming soon!');
+    this.router.navigate(['/templates']);
   }
 
   navigateToReports() {

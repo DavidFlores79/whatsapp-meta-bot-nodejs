@@ -25,6 +25,12 @@
             </div>
             <div class="flex gap-4 text-gray-400">
                 <button
+                    (click)="openTemplateSender(chat); $event.stopPropagation()"
+                    class="hover:text-gray-200"
+                    title="Send Template Message">
+                    <i class="fas fa-file-alt"></i>
+                </button>
+                <button
                     (click)="openCustomerModal(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
                     [title]="chat.customerId ? 'Edit Customer' : 'Create Customer'">
@@ -94,6 +100,14 @@
         (closeModal)="closeCustomerModal()"
         (customerSaved)="onCustomerSaved($event)">
     </app-customer-modal>
+
+    <!-- Template Sender Modal -->
+    <app-template-sender
+        *ngIf="isTemplateSenderOpen && selectedCustomerIdForTemplate"
+        [customerId]="selectedCustomerIdForTemplate"
+        (close)="closeTemplateSender()"
+        (templateSent)="onTemplateSent()">
+    </app-template-sender>
 </div>
 
 <ng-template #noChat>

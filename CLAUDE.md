@@ -47,7 +47,7 @@ npm run build        # Builds both backend dependencies and frontend Angular app
 - Attaches `req.io` to all requests for Socket.io emission
 - Serves Angular static files from `frontend/dist/frontend/browser/`
 - Starts `autoTimeoutService` background process
-- **Route structure**: `/api/v2/*` (WhatsApp, agents, conversations) + `/health` + `/info`
+- **Route structure**: `/api/v2/*` (WhatsApp, agents, conversations, customers, templates) + `/health` + `/info`
 
 **OpenAI Thread Management** (`src/services/openaiService.js`):
 - **Dual persistence**: In-memory Map + MongoDB (UserThread model)
@@ -77,12 +77,14 @@ npm run build        # Builds both backend dependencies and frontend Angular app
 - `Conversation`: Chat sessions (customerId, assignedAgent, status, priority, isAIEnabled)
 - `Message`: Individual messages (conversationId, customerId, agentId, content, messageType)
 - `Agent`: CRM agents (email unique, role, status, permissions, assignedConversations)
+- `Template`: WhatsApp approved templates (name unique, status, category, language, components, parameters)
 
 **Key relationships**:
 - Customer ↔ Conversation (1:many)
 - Conversation ↔ Message (1:many)
 - Agent ↔ Conversation (many:many via assignedAgent/assignedConversations)
 - UserThread references conversationId and customerId
+- Template usage tracked in Message.template field
 
 ## Project-Specific Conventions
 
@@ -150,6 +152,7 @@ MONGODB=mongodb://connection_string
 WHATSAPP_URI=graph.facebook.com
 WHATSAPP_VERSION=v20.0
 WHATSAPP_PHONE_NUMBER_ID=your_phone_id
+WHATSAPP_BUSINESS_ACCOUNT_ID=your_waba_id
 WHATSAPP_API_TOKEN=your_verify_token
 WHATSAPP_ACCESS_TOKEN=your_access_token
 WHATSAPP_ADMIN=admin_phone_number
@@ -158,6 +161,8 @@ WHATSAPP_ADMIN=admin_phone_number
 OPENAI_API_KEY=your_key
 OPENAI_ASSISTANT_ID=your_assistant_id
 ```
+
+**Note**: `WHATSAPP_BUSINESS_ACCOUNT_ID` is required for template management - fetch from Meta Business Manager.
 
 ## Testing & Debugging
 
@@ -183,10 +188,42 @@ Current implementation in `messageHandlers.js`:
 - **takeoverSuggestionService**: Monitors messages, suggests agent takeover
 - **autoTimeoutService**: Background job to resolve stale conversations
 - **agentMessageRelayService**: Sends agent messages to WhatsApp
+- **templateService**: Sync templates from Meta API, manage template library
 - **cloudinaryService**: Image upload and management
 - **geocodingService**: Location data processing
 - **authService**: JWT authentication, token refresh, session management
 - **whatsappService**: HTTP client for WhatsApp Cloud API
+
+## Template Management
+
+### Overview
+The system integrates with WhatsApp Business API to manage and send pre-approved message templates for marketing, utility, and authentication purposes.
+
+### Backend Architecture
+- **Model**: `Template.js` - Stores synced templates with metadata (name, status, category, language, components, parameters)
+- **Service**: `templateService.js` - Fetches templates from Meta API, syncs to local DB, manages template library
+- **Controller**: `templateController.js` - Handles template CRUD, sending (single/bulk)
+- **Routes**: `POST /api/v2/templates/sync`, `GET /api/v2/templates`, `POST /api/v2/templates/send`, `POST /api/v2/templates/send-bulk`
+
+### Frontend Components
+- **TemplateListComponent**: Browse, filter, search templates; sync from Meta
+- **TemplateSenderComponent**: Select template, fill parameters, preview, send to customer
+- **Integration**: Template sender button in chat window header (requires saved customer)
+
+### Template Workflow
+1. **Sync**: Click "Sync from Meta" → Fetches approved templates from WhatsApp Business API → Stores in MongoDB
+2. **Browse**: View templates by status (APPROVED/PENDING/REJECTED), category (MARKETING/UTILITY/AUTHENTICATION), language
+3. **Send Single**: Chat window → Template button → Select template → Fill parameters → Preview → Send
+4. **Send Bulk**: Templates page → Select template → Choose customers (by ID or filters) → Send to multiple recipients
+5. **Tracking**: Template usage count and last used timestamp updated automatically
+
+### Important Notes
+- Only APPROVED templates can be sent via API
+- Templates must be created and approved in Meta Business Manager first
+- Template parameters support text, currency, date_time types
+- Parameters are validated before sending (all required fields must be filled)
+- Bulk sending includes 1-second delay between messages to prevent rate limiting
+- Messages saved to DB with `type: 'template'` and full template metadata
 
 ## Frontend Integration
 
@@ -196,3 +233,4 @@ Current implementation in `messageHandlers.js`:
 - **Auth**: JWT stored in localStorage, attached via HTTP interceptor
 - **Build output**: `frontend/dist/frontend/browser/` served by Express as static files
 - **Routing**: Angular Router handles client-side routes; Express catch-all serves index.html
+- **Pages**: Login, Conversations (chat), Customers, Templates

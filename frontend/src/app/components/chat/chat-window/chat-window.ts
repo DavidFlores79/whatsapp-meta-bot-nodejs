@@ -6,12 +6,13 @@ import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
 import { CustomerModalComponent } from '../../customers/customer-modal/customer-modal';
+import { TemplateSenderComponent } from '../../templates/template-sender/template-sender';
 import { Customer } from '../../../services/customer';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent],
+  imports: [CommonModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })
@@ -25,6 +26,10 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isCustomerModalOpen = false;
   selectedPhoneNumber?: string;
   selectedCustomerId?: string;
+
+  // Template Sender Modal
+  isTemplateSenderOpen = false;
+  selectedCustomerIdForTemplate?: string;
 
   constructor(
     private chatService: ChatService,
@@ -185,5 +190,33 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     if (customer.phoneNumber) {
       this.chatService.updateConversationCustomer(customer.phoneNumber, customer);
     }
+  }
+
+  /**
+   * Open template sender modal
+   */
+  openTemplateSender(chat: Chat) {
+    if (!chat.customerId) {
+      alert('Please save customer information first before sending templates');
+      return;
+    }
+    this.selectedCustomerIdForTemplate = chat.customerId;
+    this.isTemplateSenderOpen = true;
+  }
+
+  /**
+   * Close template sender modal
+   */
+  closeTemplateSender() {
+    this.isTemplateSenderOpen = false;
+    this.selectedCustomerIdForTemplate = undefined;
+  }
+
+  /**
+   * Handle template sent event
+   */
+  onTemplateSent() {
+    console.log('Template sent successfully');
+    // Messages will be updated via Socket.io
   }
 }

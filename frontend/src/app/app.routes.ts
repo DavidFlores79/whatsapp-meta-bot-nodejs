@@ -6,6 +6,7 @@ import { LoginComponent } from './components/auth/login/login';
 import { CustomerListComponent } from './components/customers/customer-list/customer-list';
 import { CustomerDetailComponent } from './components/customers/customer-detail/customer-detail';
 import { CustomerFormComponent } from './components/customers/customer-form/customer-form';
+import { TemplateListComponent } from './components/templates/template-list/template-list';
 import { AuthService } from './services/auth';
 
 // Auth guard function
@@ -30,7 +31,8 @@ export const routes: Routes = [
             { path: 'customers', component: CustomerListComponent },
             { path: 'customers/new', component: CustomerFormComponent },
             { path: 'customers/:id', component: CustomerDetailComponent },
-            { path: 'customers/:id/edit', component: CustomerFormComponent }
+            { path: 'customers/:id/edit', component: CustomerFormComponent },
+            { path: 'templates', component: TemplateListComponent }
         ]
     }
 ];

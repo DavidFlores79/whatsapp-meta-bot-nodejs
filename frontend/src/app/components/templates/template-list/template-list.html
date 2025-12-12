@@ -1,0 +1,310 @@
+<div class="flex flex-col h-screen bg-whatsapp-dark text-gray-100">
+  <!-- Header with Stats -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-100">Message Templates</h1>
+        <p class="text-sm text-gray-400 mt-1">Manage WhatsApp approved templates</p>
+      </div>
+      <button (click)="syncTemplates()"
+              [disabled]="syncing"
+              class="bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas" [class.fa-sync]="!syncing" [class.fa-spinner]="syncing" [class.fa-spin]="syncing"></i>
+        <span>{{ syncing ? 'Syncing...' : 'Sync from Meta' }}</span>
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" *ngIf="stats">
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total</div>
+        <div class="text-2xl font-bold text-gray-100">{{ stats.total }}</div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Approved</div>
+        <div class="text-2xl font-bold text-green-400">
+          {{ getStatusCount('APPROVED') }}
+        </div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Pending</div>
+        <div class="text-2xl font-bold text-yellow-400">
+          {{ getStatusCount('PENDING') }}
+        </div>
+      </div>
+      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Rejected</div>
+        <div class="text-2xl font-bold text-red-400">
+          {{ getStatusCount('REJECTED') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="bg-green-600 text-white px-6 py-3 shrink-0">
+    <div class="flex items-center gap-2">
+      <i class="fas fa-check-circle"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+  </div>
+  <div *ngIf="error" class="bg-red-600 text-white px-6 py-3 shrink-0">
+    <div class="flex items-center gap-2">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ error }}</span>
+      <button (click)="error = null" class="ml-auto">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-3 shrink-0">
+    <div class="flex flex-col md:flex-row gap-3">
+      <!-- Search -->
+      <div class="flex-1 relative">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text"
+               [(ngModel)]="searchTerm"
+               (input)="onSearchChange()"
+               placeholder="Search templates by name, description, or tags..."
+               class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+      </div>
+
+      <!-- Filter Toggle -->
+      <button (click)="toggleFilters()"
+              class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
+        <i class="fas fa-filter"></i>
+        <span>Filters</span>
+        <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showFilters"></i>
+      </button>
+    </div>
+
+    <!-- Advanced Filters (Collapsible) -->
+    <div *ngIf="showFilters" class="mt-3 pt-3 border-t border-gray-700 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Status</label>
+        <select [(ngModel)]="filters.status"
+                class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Category</label>
+        <select [(ngModel)]="filters.category"
+                class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Language</label>
+        <select [(ngModel)]="filters.language"
+                class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          <option value="">All Languages</option>
+          <option *ngFor="let lang of languages" [value]="lang.code">{{ lang.name }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button (click)="applyFilters()"
+                class="flex-1 bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+          Apply Filters
+        </button>
+        <button (click)="clearFilters()"
+                class="px-4 py-2 bg-whatsapp-dark border border-gray-600 hover:border-red-500 text-gray-100 rounded-lg transition-colors">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates List -->
+  <div class="flex-1 overflow-y-auto px-6 py-4">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center h-64">
+      <div class="text-center">
+        <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green mb-4"></i>
+        <p class="text-gray-400">Loading templates...</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredTemplates.length === 0" class="flex items-center justify-center h-64">
+      <div class="text-center">
+        <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-300 mb-2">No templates found</h3>
+        <p class="text-gray-400 mb-4">
+          {{ searchTerm || filters.status || filters.category ? 'Try adjusting your filters or search term' : 'Sync templates from Meta to get started' }}
+        </p>
+        <button *ngIf="!searchTerm && !filters.status && !filters.category"
+                (click)="syncTemplates()"
+                class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors">
+          <i class="fas fa-sync"></i>
+          <span>Sync Templates</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Templates Grid -->
+    <div *ngIf="!loading && filteredTemplates.length > 0" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div *ngFor="let template of filteredTemplates"
+           class="bg-whatsapp-gray border border-gray-700 rounded-lg p-4 hover:border-whatsapp-green transition-colors">
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-100 mb-1">{{ template.name }}</h3>
+            <p class="text-xs text-gray-400">{{ getLanguageName(template.language) }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span [class]="'px-2 py-1 rounded text-xs font-medium ' + getStatusClass(template.status)">
+              {{ template.status }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Category & Usage -->
+        <div class="flex items-center gap-2 mb-3">
+          <span [class]="'px-2 py-1 rounded text-xs font-medium ' + getCategoryClass(template.category)">
+            {{ template.category }}
+          </span>
+          <span class="text-xs text-gray-400">
+            <i class="fas fa-chart-line mr-1"></i>
+            {{ template.usageCount }} uses
+          </span>
+          <span *ngIf="getParameterCount(template) > 0" class="text-xs text-gray-400">
+            <i class="fas fa-brackets-curly mr-1"></i>
+            {{ getParameterCount(template) }} params
+          </span>
+        </div>
+
+        <!-- Preview -->
+        <div class="bg-whatsapp-dark border border-gray-600 rounded p-3 mb-3 text-sm text-gray-300 min-h-[60px] max-h-[120px] overflow-hidden">
+          {{ getTemplatePreview(template) }}
+        </div>
+
+        <!-- Tags -->
+        <div *ngIf="template.tags && template.tags.length > 0" class="flex flex-wrap gap-1 mb-3">
+          <span *ngFor="let tag of template.tags"
+                class="px-2 py-0.5 bg-whatsapp-dark border border-gray-600 rounded text-xs text-gray-300">
+            {{ tag }}
+          </span>
+        </div>
+
+        <!-- Description -->
+        <p *ngIf="template.description" class="text-xs text-gray-400 mb-3 line-clamp-2">
+          {{ template.description }}
+        </p>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-gray-700">
+          <span class="text-xs text-gray-500">
+            Last used: {{ formatDate(template.lastUsedAt) }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button (click)="previewTemplate(template)"
+                    class="text-blue-400 hover:text-blue-300 transition-colors"
+                    title="Preview">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button *ngIf="template.status === 'APPROVED'"
+                    (click)="openSendModal(template)"
+                    class="text-green-400 hover:text-green-300 transition-colors"
+                    title="Send Template">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div *ngIf="showPreviewModal && selectedTemplate"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+       (click)="closePreviewModal()">
+    <div class="bg-whatsapp-gray rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700"
+         (click)="$event.stopPropagation()">
+      <div class="sticky top-0 bg-whatsapp-gray border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-xl font-semibold">{{ selectedTemplate.name }}</h2>
+        <button (click)="closePreviewModal()" class="text-gray-400 hover:text-gray-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <!-- Status & Category -->
+        <div class="flex items-center gap-2 mb-4">
+          <span [class]="'px-3 py-1 rounded text-sm font-medium ' + getStatusClass(selectedTemplate.status)">
+            {{ selectedTemplate.status }}
+          </span>
+          <span [class]="'px-3 py-1 rounded text-sm font-medium ' + getCategoryClass(selectedTemplate.category)">
+            {{ selectedTemplate.category }}
+          </span>
+          <span class="px-3 py-1 rounded text-sm bg-gray-700 text-gray-300">
+            {{ getLanguageName(selectedTemplate.language) }}
+          </span>
+        </div>
+
+        <!-- Components -->
+        <div class="space-y-4">
+          <div *ngFor="let component of selectedTemplate.components"
+               class="bg-whatsapp-dark border border-gray-600 rounded-lg p-4">
+            <div class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+              {{ component.type }}
+              <span *ngIf="component.format" class="ml-2">({{ component.format }})</span>
+            </div>
+            <div class="text-gray-100 whitespace-pre-wrap">{{ component.text }}</div>
+
+            <!-- Buttons -->
+            <div *ngIf="component.buttons && component.buttons.length > 0" class="mt-3 space-y-2">
+              <div *ngFor="let button of component.buttons"
+                   class="bg-whatsapp-gray border border-gray-600 rounded px-3 py-2 text-sm text-center">
+                <i class="fas mr-2"
+                   [class.fa-phone]="button.type === 'PHONE_NUMBER'"
+                   [class.fa-link]="button.type === 'URL'"
+                   [class.fa-reply]="button.type === 'QUICK_REPLY'"></i>
+                {{ button.text }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters -->
+        <div *ngIf="selectedTemplate.parameters.length > 0" class="mt-4">
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">Parameters</h3>
+          <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-3">
+            <div *ngFor="let param of selectedTemplate.parameters" class="text-sm text-gray-300 mb-1">
+              <span class="text-gray-400">{{param.position}}.</span>
+              <span class="font-mono bg-gray-700 px-2 py-0.5 rounded">{{ param.name }}</span>
+              <span class="text-gray-500 ml-2">({{ param.component }})</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span class="text-gray-400">Usage Count:</span>
+            <span class="text-gray-100 ml-2">{{ selectedTemplate.usageCount }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400">Last Used:</span>
+            <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.lastUsedAt) }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400">Created:</span>
+            <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.createdAt) }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400">Last Synced:</span>
+            <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.lastSyncedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
