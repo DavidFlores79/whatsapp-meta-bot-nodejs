@@ -73,6 +73,13 @@ export class ChatService {
     map(chatId => this.mockChats.find(c => c.id === chatId) || null)
   );
 
+  /**
+   * Get currently selected chat ID
+   */
+  getSelectedChatId(): string | null {
+    return this.selectedChatIdSubject.value;
+  }
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,

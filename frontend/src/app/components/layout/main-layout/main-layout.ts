@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { AuthService, Agent } from '../../../services/auth';
 import { ChatService, Chat } from '../../../services/chat';
 import { ToastService } from '../../../services/toast';
 import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-main-layout',
@@ -18,7 +19,7 @@ import { filter } from 'rxjs/operators';
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
-export class MainLayoutComponent implements OnInit {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   currentAgent: Agent | null = null;
   hasSelectedChat = false;
   showMenu = false;
@@ -30,6 +31,12 @@ export class MainLayoutComponent implements OnInit {
   minSidebarWidth = 280;
   maxSidebarWidth = 600;
   isResizing = false;
+
+  // Unattended conversations tracking
+  unattendedCount = 0;
+  private reminderInterval: any;
+  private chatSubscription?: Subscription;
+  private selectedChatSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
@@ -68,6 +75,108 @@ export class MainLayoutComponent implements OnInit {
     const collapsed = localStorage.getItem('sidebarCollapsed');
     if (collapsed === 'true') {
       this.sidebarCollapsed = true;
+    }
+
+    // Track unattended conversations
+    this.chatSubscription = this.chatService.chats$.subscribe(chats => {
+      this.updateUnattendedCount(chats);
+    });
+
+    // Track selected chat to update unattended count
+    this.selectedChatSubscription = this.chatService.selectedChat$.subscribe(() => {
+      this.chatService.chats$.subscribe(chats => {
+        this.updateUnattendedCount(chats);
+      }).unsubscribe();
+    });
+
+    // Start reminder sound check (every 5 seconds)
+    this.startReminderSound();
+  }
+
+  ngOnDestroy() {
+    // Clear reminder interval
+    if (this.reminderInterval) {
+      clearInterval(this.reminderInterval);
+    }
+
+    // Unsubscribe from observables
+    if (this.chatSubscription) {
+      this.chatSubscription.unsubscribe();
+    }
+    if (this.selectedChatSubscription) {
+      this.selectedChatSubscription.unsubscribe();
+    }
+  }
+
+  private updateUnattendedCount(chats: Chat[]) {
+    // Get current agent ID
+    const currentAgentId = this.currentAgent?._id;
+    if (!currentAgentId) {
+      this.unattendedCount = 0;
+      return;
+    }
+
+    // Count assigned conversations that are not currently being viewed
+    const selectedChatId = this.chatService.getSelectedChatId();
+    
+    this.unattendedCount = chats.filter(chat => {
+      // Check if conversation is assigned to current agent
+      const assignedAgentId = typeof chat.assignedAgent === 'string'
+        ? chat.assignedAgent
+        : chat.assignedAgent?._id;
+      
+      const isAssignedToMe = assignedAgentId === currentAgentId;
+      const isNotCurrentlyViewed = chat.id !== selectedChatId;
+      const hasStatus = chat.status === 'assigned';
+      
+      return isAssignedToMe && isNotCurrentlyViewed && hasStatus;
+    }).length;
+  }
+
+  private startReminderSound() {
+    // Check every 5 seconds for unattended conversations
+    this.reminderInterval = setInterval(() => {
+      if (this.unattendedCount > 0) {
+        this.playReminderSound();
+      }
+    }, 5000); // 5 seconds
+  }
+
+  private playReminderSound() {
+    try {
+      // Create a gentle reminder sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Two-tone reminder (less intrusive than notification)
+      oscillator.frequency.value = 600;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+
+      // Second tone
+      setTimeout(() => {
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.frequency.value = 700;
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        osc2.start(audioContext.currentTime);
+        osc2.stop(audioContext.currentTime + 0.3);
+      }, 150);
+    } catch (error) {
+      console.warn('Could not play reminder sound:', error);
     }
   }
 
