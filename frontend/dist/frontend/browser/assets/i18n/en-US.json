@@ -495,7 +495,10 @@
     "customer": "Customer",
     "score": "Score",
     "date": "Date",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "aiLanguageNote": "AI-generated insights (strengths, improvements) are shown in the language that was active when each conversation was analyzed. Change your language preference in Settings to affect future analyses.",
+    "noAIAnalysis": "No AI analysis available yet",
+    "releaseConversationsHint": "AI-powered insights will appear here after you release conversations. Release a conversation to generate performance analysis."
   },
   "settings": {
     "title": "Settings",
