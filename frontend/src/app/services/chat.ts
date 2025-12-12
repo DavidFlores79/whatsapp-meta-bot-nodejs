@@ -144,17 +144,6 @@ export class ChatService {
         if (chat) {
           // Map backend message format to frontend Message format
           const backendMessages = response.messages || [];
-          
-          // Log template messages for debugging
-          backendMessages.forEach((msg: any) => {
-            if (msg.type === 'template') {
-              console.log('\n📋 Frontend received template message:');
-              console.log('   Message ID:', msg._id);
-              console.log('   Content:', msg.content);
-              console.log('   Template:', msg.template);
-            }
-          });
-
           chat.messages = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
