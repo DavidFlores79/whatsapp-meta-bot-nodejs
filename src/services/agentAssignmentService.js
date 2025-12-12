@@ -212,6 +212,12 @@ async function releaseConversation(conversationId, agentId, reason = null) {
         throw new Error('Conversation not assigned to this agent');
     }
 
+    // Fetch agent details first (needed for language preferences)
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+        throw new Error('Agent not found');
+    }
+
     const previousAgent = conversation.assignedAgent;
     const releaseTime = new Date();
 
@@ -300,11 +306,8 @@ async function releaseConversation(conversationId, agentId, reason = null) {
     await conversation.save();
 
     // Update agent statistics
-    const agent = await Agent.findById(agentId);
-    if (agent) {
-        agent.statistics.activeAssignments = Math.max(0, agent.statistics.activeAssignments - 1);
-        await agent.save();
-    }
+    agent.statistics.activeAssignments = Math.max(0, agent.statistics.activeAssignments - 1);
+    await agent.save();
 
     // Emit socket events
     io.to(`agent_${agentId}`).emit('conversation_released', {
