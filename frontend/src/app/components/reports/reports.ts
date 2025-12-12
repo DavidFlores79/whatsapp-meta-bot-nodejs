@@ -58,25 +58,25 @@ interface ConversationHistory {
 })
 export class ReportsComponent implements OnInit {
   private apiUrl = '/api/v2';
-  
+
   activeTab: 'agent-performance' | 'conversation-history' = 'agent-performance';
-  
+
   // Agent Performance
   selectedAgentId: string = '';
   agentPerformance: AgentPerformance | null = null;
   loadingPerformance = false;
-  
+
   // Conversation History
   selectedConversationId: string = '';
   conversationHistory: ConversationHistory | null = null;
   loadingHistory = false;
-  
+
   // Filters
   dateRange = {
     startDate: '',
     endDate: ''
   };
-  
+
   agents: any[] = [];
   conversations: any[] = [];
 
@@ -89,7 +89,7 @@ export class ReportsComponent implements OnInit {
   ngOnInit() {
     this.loadAgents();
     this.loadConversations();
-    
+
     // Set default agent to current user
     const currentAgent = this.authService.getCurrentAgent();
     if (currentAgent) {
@@ -127,13 +127,13 @@ export class ReportsComponent implements OnInit {
     }
 
     this.loadingPerformance = true;
-    
+
     let url = `${this.apiUrl}/agents/${this.selectedAgentId}/performance`;
     const params = new URLSearchParams();
-    
+
     if (this.dateRange.startDate) params.append('startDate', this.dateRange.startDate);
     if (this.dateRange.endDate) params.append('endDate', this.dateRange.endDate);
-    
+
     if (params.toString()) {
       url += '?' + params.toString();
     }
@@ -193,7 +193,7 @@ export class ReportsComponent implements OnInit {
   formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }

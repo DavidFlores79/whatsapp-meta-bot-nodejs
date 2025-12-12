@@ -375,10 +375,10 @@ async function getAgentPerformance(req, res) {
             },
             
             // Common strengths and areas for improvement
-            commonStrengths: this._getMostCommon(
+            commonStrengths: _getMostCommon(
                 withAnalysis.flatMap(a => a.aiAnalysis.agentPerformance.strengths || [])
             ),
-            commonImprovements: this._getMostCommon(
+            commonImprovements: _getMostCommon(
                 withAnalysis.flatMap(a => a.aiAnalysis.agentPerformance.areasForImprovement || [])
             ),
             
