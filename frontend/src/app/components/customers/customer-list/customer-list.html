@@ -300,3 +300,11 @@
     </div>
   </div>
 </div>
+
+<!-- Customer Detail Modal -->
+<app-customer-modal
+  [isOpen]="isCustomerModalOpen"
+  [customerId]="selectedCustomerId"
+  (closeModal)="closeCustomerModal()"
+  (customerSaved)="onCustomerSaved($event)">
+</app-customer-modal>

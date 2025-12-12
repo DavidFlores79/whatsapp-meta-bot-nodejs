@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomerService, Customer, CustomerFilters } from '../../../services/customer';
+import { CustomerModalComponent } from '../customer-modal/customer-modal';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CustomerModalComponent],
   templateUrl: './customer-list.html',
   styleUrls: ['./customer-list.css']
 })
@@ -42,6 +43,10 @@ export class CustomerListComponent implements OnInit {
   showFilters = false;
   showBulkActions = false;
   selectedCustomers: Set<string> = new Set();
+
+  // Customer detail modal
+  isCustomerModalOpen = false;
+  selectedCustomerId?: string;
 
   // Statistics
   stats = {
@@ -138,7 +143,19 @@ export class CustomerListComponent implements OnInit {
   }
 
   viewCustomer(customer: Customer) {
-    this.router.navigate(['/customers', customer._id]);
+    this.selectedCustomerId = customer._id;
+    this.isCustomerModalOpen = true;
+  }
+
+  closeCustomerModal() {
+    this.isCustomerModalOpen = false;
+    this.selectedCustomerId = undefined;
+  }
+
+  onCustomerSaved(customer: Customer) {
+    // Reload customers list to reflect any changes
+    this.loadCustomers();
+    this.loadStats();
   }
 
   createCustomer() {
