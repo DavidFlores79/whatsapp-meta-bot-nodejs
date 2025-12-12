@@ -8,15 +8,53 @@
         </div>
     </div>
 
+    <!-- Tabs -->
+    <div class="flex bg-whatsapp-dark border-b border-gray-700 shrink-0">
+        <button
+            (click)="setActiveTab('queue')"
+            [class.border-whatsapp-green]="activeTab === 'queue'"
+            [class.text-whatsapp-green]="activeTab === 'queue'"
+            class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors relative">
+            Queue
+            <span *ngIf="(queueChats$ | async)?.length as count"
+                  class="ml-2 bg-whatsapp-green text-whatsapp-dark text-xs font-bold rounded-full px-2 py-0.5">
+                {{ count }}
+            </span>
+        </button>
+        <button
+            (click)="setActiveTab('mine')"
+            [class.border-whatsapp-green]="activeTab === 'mine'"
+            [class.text-whatsapp-green]="activeTab === 'mine'"
+            class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors relative">
+            My Chats
+            <span *ngIf="(myChats$ | async)?.length as count"
+                  class="ml-2 bg-blue-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                {{ count }}
+            </span>
+        </button>
+        <button
+            (click)="setActiveTab('all')"
+            [class.border-whatsapp-green]="activeTab === 'all'"
+            [class.text-whatsapp-green]="activeTab === 'all'"
+            class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-200 border-b-2 border-transparent transition-colors">
+            All
+        </button>
+    </div>
+
     <!-- Chat List -->
     <div class="flex-1 overflow-y-auto custom-scrollbar">
-        <div *ngFor="let chat of chats$ | async" (click)="selectChat(chat.id)"
+        <div *ngFor="let chat of getDisplayChats() | async" (click)="selectChat(chat.id)"
             [class.bg-whatsapp-gray]="(selectedChatId$ | async) === chat.id"
             class="flex items-center p-3 cursor-pointer hover:bg-whatsapp-gray transition-colors border-b border-gray-800">
 
             <!-- Avatar -->
-            <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 mr-3">
+            <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 mr-3 relative">
                 <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+                <!-- Assignment indicator -->
+                <div *ngIf="chat.assignedAgent"
+                     class="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-whatsapp-dark"
+                     title="Assigned">
+                </div>
             </div>
 
             <!-- Content -->
@@ -33,6 +71,17 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="(getDisplayChats() | async)?.length === 0"
+             class="flex flex-col items-center justify-center h-full text-gray-500 p-8 text-center">
+            <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
+            <p class="text-sm">
+                <ng-container *ngIf="activeTab === 'queue'">No conversations in queue</ng-container>
+                <ng-container *ngIf="activeTab === 'mine'">No conversations assigned to you</ng-container>
+                <ng-container *ngIf="activeTab === 'all'">No conversations yet</ng-container>
+            </p>
         </div>
     </div>
 </div>

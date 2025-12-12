@@ -195,8 +195,19 @@ export class ChatService {
 
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
-      // Reload conversations with agent context
-      this.loadConversations(this.currentAgent);
+      // Update existing conversation or add it if not present
+      const existingChat = this.mockChats.find(c => c.id === data.conversationId);
+      if (existingChat) {
+        // Update assignment info
+        existingChat.assignedAgent = data.agent;
+        existingChat.isAIEnabled = false;
+        existingChat.status = 'assigned';
+        this.chatsSubject.next([...this.mockChats]);
+        console.log(`Updated conversation ${data.conversationId} with assignment`);
+      } else {
+        // Conversation not in list, reload all
+        this.loadConversations(this.currentAgent);
+      }
     });
 
     this.socket.on('agent_typing', (data: any) => {

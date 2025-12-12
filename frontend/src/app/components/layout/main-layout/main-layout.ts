@@ -18,6 +18,12 @@ export class MainLayoutComponent implements OnInit {
   hasSelectedChat = false;
   showMenu = false;
 
+  // Resizable sidebar
+  sidebarWidth = 400;
+  minSidebarWidth = 280;
+  maxSidebarWidth = 600;
+  isResizing = false;
+
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -33,6 +39,12 @@ export class MainLayoutComponent implements OnInit {
     this.chatService.selectedChat$.subscribe((chat: Chat | null) => {
       this.hasSelectedChat = chat !== null;
     });
+
+    // Load saved sidebar width from localStorage
+    const savedWidth = localStorage.getItem('sidebarWidth');
+    if (savedWidth) {
+      this.sidebarWidth = parseInt(savedWidth, 10);
+    }
   }
 
   toggleMenu() {
@@ -87,5 +99,33 @@ export class MainLayoutComponent implements OnInit {
   backToList() {
     // Deselect chat to go back to list on mobile
     this.chatService.selectChat('');
+  }
+
+  startResize(event: MouseEvent) {
+    event.preventDefault();
+    this.isResizing = true;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (this.isResizing) {
+        const newWidth = e.clientX;
+        if (newWidth >= this.minSidebarWidth && newWidth <= this.maxSidebarWidth) {
+          this.sidebarWidth = newWidth;
+        }
+      }
+    };
+
+    const onMouseUp = () => {
+      this.isResizing = false;
+      localStorage.setItem('sidebarWidth', this.sidebarWidth.toString());
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
   }
 }
