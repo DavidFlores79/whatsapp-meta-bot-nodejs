@@ -2,13 +2,14 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { TemplateService, Template, TemplateFilters, TemplateStats } from '../../../services/template';
 import { CustomerService, Customer } from '../../../services/customer';
 import { ToastService } from '../../../services/toast';
 @Component({
   selector: 'app-template-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './template-list.html',
   styleUrls: ['./template-list.css']
 })

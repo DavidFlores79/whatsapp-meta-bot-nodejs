@@ -6,7 +6,7 @@
     <!-- Header -->
     <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
       <h2 class="text-xl font-semibold text-gray-100">
-        {{ selectedTemplate ? 'Send Template' : 'Select Template' }}
+        {{ (selectedTemplate ? 'templates.sendTemplate' : 'templates.selectTemplate') | translate }}
       </h2>
       <button (click)="onClose()" class="text-gray-400 hover:text-gray-200 transition-colors">
         <i class="fas fa-times"></i>
@@ -40,7 +40,7 @@
           <input type="text"
                  [(ngModel)]="searchTerm"
                  (input)="onSearchChange()"
-                 placeholder="Search templates..."
+                 [placeholder]="'templates.searchPlaceholder' | translate"
                  class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
         </div>
 
@@ -48,7 +48,7 @@
         <div *ngIf="loading" class="flex items-center justify-center py-12">
           <div class="text-center">
             <i class="fas fa-spinner fa-spin text-3xl text-whatsapp-green mb-3"></i>
-            <p class="text-gray-400">Loading templates...</p>
+            <p class="text-gray-400">{{ 'templates.loadingTemplates' | translate }}</p>
           </div>
         </div>
 
@@ -56,9 +56,9 @@
         <div *ngIf="!loading && filteredTemplates.length === 0" class="flex items-center justify-center py-12">
           <div class="text-center">
             <i class="fas fa-inbox text-5xl text-gray-600 mb-3"></i>
-            <h3 class="text-lg font-semibold text-gray-300 mb-2">No templates found</h3>
+            <h3 class="text-lg font-semibold text-gray-300 mb-2">{{ 'templates.noTemplates' | translate }}</h3>
             <p class="text-gray-400">
-              {{ searchTerm ? 'Try adjusting your search term' : 'No approved templates available' }}
+              {{ (searchTerm ? 'templates.tryAdjustSearch' : 'templates.noApprovedTemplates') | translate }}
             </p>
           </div>
         </div>
@@ -86,11 +86,11 @@
               </span>
               <span *ngIf="getParameterCount(template) > 0">
                 <i class="fas fa-brackets-curly mr-1"></i>
-                {{ getParameterCount(template) }} parameters
+                {{ getParameterCount(template) }} {{ 'templates.parameters' | translate }}
               </span>
               <span>
                 <i class="fas fa-chart-line mr-1"></i>
-                {{ template.usageCount }} uses
+                {{ template.usageCount }} {{ 'templates.uses' | translate }}
               </span>
             </div>
           </div>
@@ -103,7 +103,7 @@
         <button (click)="backToList()"
                 class="mb-4 text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-2">
           <i class="fas fa-arrow-left"></i>
-          <span>Back to templates</span>
+          <span>{{ 'templates.backToTemplates' | translate }}</span>
         </button>
 
         <!-- Template Info -->
@@ -148,7 +148,7 @@
 
         <!-- Parameters -->
         <div *ngIf="selectedTemplate.parameters.length > 0" class="mb-4">
-          <h4 class="font-semibold text-gray-100 mb-3">Fill Template Parameters</h4>
+          <h4 class="font-semibold text-gray-100 mb-3">{{ 'templates.fillTemplateParameters' | translate }}</h4>
           <div class="space-y-3">
             <div *ngFor="let param of selectedTemplate.parameters; let i = index">
               <label class="block text-sm text-gray-300 mb-1">
@@ -157,7 +157,7 @@
               </label>
               <input type="text"
                      [(ngModel)]="parameters[i]"
-                     placeholder="Enter value for {{ param.name }}"
+                     [placeholder]="('templates.enterValue' | translate) + ' ' + param.name"
                      class="w-full bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
             </div>
           </div>
@@ -167,7 +167,7 @@
         <div class="bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-4 mb-4">
           <h4 class="font-semibold text-green-400 mb-2 flex items-center gap-2">
             <i class="fas fa-eye"></i>
-            Preview
+            {{ 'templates.preview' | translate }}
           </h4>
           <div class="text-gray-100 text-sm whitespace-pre-wrap">
             {{ getTemplatePreview() }}
@@ -180,13 +180,13 @@
     <div *ngIf="selectedTemplate" class="bg-whatsapp-gray border-t border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
       <button (click)="backToList()"
               class="text-gray-400 hover:text-gray-200 transition-colors">
-        Cancel
+        {{ 'common.cancel' | translate }}
       </button>
       <button (click)="sendTemplate()"
               [disabled]="!canSend() || sending"
               class="bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
         <i class="fas" [class.fa-paper-plane]="!sending" [class.fa-spinner]="sending" [class.fa-spin]="sending"></i>
-        <span>{{ sending ? 'Sending...' : 'Send Template' }}</span>
+        <span>{{ (sending ? 'common.sending' : 'templates.sendTemplate') | translate }}</span>
       </button>
     </div>
   </div>

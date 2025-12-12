@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { TemplateService, Template, SendTemplateRequest } from '../../../services/template';
 
 @Component({
   selector: 'app-template-sender',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './template-sender.html',
   styleUrls: ['./template-sender.css']
 })

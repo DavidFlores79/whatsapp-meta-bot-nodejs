@@ -3,37 +3,37 @@
   <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-100">Message Templates</h1>
-        <p class="text-sm text-gray-400 mt-1">Manage WhatsApp approved templates</p>
+        <h1 class="text-2xl font-semibold text-gray-100">{{ 'templates.title' | translate }}</h1>
+        <p class="text-sm text-gray-400 mt-1">{{ 'templates.subtitle' | translate }}</p>
       </div>
       <button (click)="syncTemplates()"
               [disabled]="syncing"
               class="bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
         <i class="fas" [class.fa-sync]="!syncing" [class.fa-spinner]="syncing" [class.fa-spin]="syncing"></i>
-        <span>{{ syncing ? 'Syncing...' : 'Sync from Meta' }}</span>
+        <span>{{ (syncing ? 'templates.syncing' : 'templates.syncFromMeta') | translate }}</span>
       </button>
     </div>
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3" *ngIf="stats">
       <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total</div>
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'templates.total' | translate }}</div>
         <div class="text-2xl font-bold text-gray-100">{{ stats.total }}</div>
       </div>
       <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Approved</div>
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'templates.approved' | translate }}</div>
         <div class="text-2xl font-bold text-green-400">
           {{ getStatusCount('APPROVED') }}
         </div>
       </div>
       <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Pending</div>
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'templates.pending' | translate }}</div>
         <div class="text-2xl font-bold text-yellow-400">
           {{ getStatusCount('PENDING') }}
         </div>
       </div>
       <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Rejected</div>
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'templates.rejected' | translate }}</div>
         <div class="text-2xl font-bold text-red-400">
           {{ getStatusCount('REJECTED') }}
         </div>
@@ -50,7 +50,7 @@
         <input type="text"
                [(ngModel)]="searchTerm"
                (input)="onSearchChange()"
-               placeholder="Search templates by name, description, or tags..."
+               [placeholder]="'templates.searchPlaceholder' | translate"
                class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
       </div>
 
@@ -58,7 +58,7 @@
       <button (click)="toggleFilters()"
               class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
         <i class="fas fa-filter"></i>
-        <span>Filters</span>
+        <span>{{ 'templates.filters' | translate }}</span>
         <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showFilters"></i>
       </button>
     </div>
@@ -66,28 +66,28 @@
     <!-- Advanced Filters (Collapsible) -->
     <div *ngIf="showFilters" class="mt-3 pt-3 border-t border-gray-700 grid grid-cols-1 md:grid-cols-4 gap-3">
       <div>
-        <label class="block text-xs text-gray-400 mb-1">Status</label>
+        <label class="block text-xs text-gray-400 mb-1">{{ 'templates.status' | translate }}</label>
         <select [(ngModel)]="filters.status"
                 class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
-          <option value="">All Statuses</option>
+          <option value="">{{ 'templates.allStatuses' | translate }}</option>
           <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-xs text-gray-400 mb-1">Category</label>
+        <label class="block text-xs text-gray-400 mb-1">{{ 'templates.category' | translate }}</label>
         <select [(ngModel)]="filters.category"
                 class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
-          <option value="">All Categories</option>
+          <option value="">{{ 'templates.allCategories' | translate }}</option>
           <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-xs text-gray-400 mb-1">Language</label>
+        <label class="block text-xs text-gray-400 mb-1">{{ 'templates.language' | translate }}</label>
         <select [(ngModel)]="filters.language"
                 class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
-          <option value="">All Languages</option>
+          <option value="">{{ 'templates.allLanguages' | translate }}</option>
           <option *ngFor="let lang of languages" [value]="lang.code">{{ lang.name }}</option>
         </select>
       </div>
@@ -95,11 +95,11 @@
       <div class="flex items-end gap-2">
         <button (click)="applyFilters()"
                 class="flex-1 bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-          Apply Filters
+          {{ 'templates.applyFilters' | translate }}
         </button>
         <button (click)="clearFilters()"
                 class="px-4 py-2 bg-whatsapp-dark border border-gray-600 hover:border-red-500 text-gray-100 rounded-lg transition-colors">
-          Clear
+          {{ 'templates.clear' | translate }}
         </button>
       </div>
     </div>
@@ -111,7 +111,7 @@
     <div *ngIf="loading" class="flex items-center justify-center h-64">
       <div class="text-center">
         <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green mb-4"></i>
-        <p class="text-gray-400">Loading templates...</p>
+        <p class="text-gray-400">{{ 'templates.loadingTemplates' | translate }}</p>
       </div>
     </div>
 
@@ -119,15 +119,15 @@
     <div *ngIf="!loading && filteredTemplates.length === 0" class="flex items-center justify-center h-64">
       <div class="text-center">
         <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-300 mb-2">No templates found</h3>
+        <h3 class="text-xl font-semibold text-gray-300 mb-2">{{ 'templates.noTemplates' | translate }}</h3>
         <p class="text-gray-400 mb-4">
-          {{ searchTerm || filters.status || filters.category ? 'Try adjusting your filters or search term' : 'Sync templates from Meta to get started' }}
+          {{ (searchTerm || filters.status || filters.category ? 'templates.tryAdjustFilters' : 'templates.noTemplatesEmpty') | translate }}
         </p>
         <button *ngIf="!searchTerm && !filters.status && !filters.category"
                 (click)="syncTemplates()"
                 class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors">
           <i class="fas fa-sync"></i>
-          <span>Sync Templates</span>
+          <span>{{ 'templates.syncTemplates' | translate }}</span>
         </button>
       </div>
     </div>
@@ -156,11 +156,11 @@
           </span>
           <span class="text-xs text-gray-400">
             <i class="fas fa-chart-line mr-1"></i>
-            {{ template.usageCount }} uses
+            {{ template.usageCount }} {{ 'templates.uses' | translate }}
           </span>
           <span *ngIf="getParameterCount(template) > 0" class="text-xs text-gray-400">
             <i class="fas fa-brackets-curly mr-1"></i>
-            {{ getParameterCount(template) }} params
+            {{ getParameterCount(template) }} {{ 'templates.params' | translate }}
           </span>
         </div>
 
@@ -188,17 +188,17 @@
             <button (click)="previewTemplate(template)"
                     class="flex-1 bg-whatsapp-dark hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
               <i class="fas fa-eye"></i>
-              <span>Preview</span>
+              <span>{{ 'templates.preview' | translate }}</span>
             </button>
             <button *ngIf="template.status === 'APPROVED'"
                     (click)="openSendModal(template)"
                     class="flex-1 bg-whatsapp-green hover:bg-green-600 text-white px-3 py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
               <i class="fas fa-paper-plane"></i>
-              <span>Send</span>
+              <span>{{ 'templates.send' | translate }}</span>
             </button>
           </div>
           <span class="text-xs text-gray-500 text-center">
-            Last used: {{ formatDate(template.lastUsedAt) }}
+            {{ 'templates.lastUsed' | translate }}: {{ formatDate(template.lastUsedAt) }}
           </span>
         </div>
       </div>
@@ -258,7 +258,7 @@
 
         <!-- Parameters -->
         <div *ngIf="selectedTemplate.parameters.length > 0" class="mt-4">
-          <h3 class="text-sm font-semibold text-gray-300 mb-2">Parameters</h3>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">{{ 'templates.parameters' | translate }}</h3>
           <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-3">
             <div *ngFor="let param of selectedTemplate.parameters" class="text-sm text-gray-300 mb-1">
               <span class="text-gray-400">{{param.position}}.</span>
@@ -271,19 +271,19 @@
         <!-- Metadata -->
         <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span class="text-gray-400">Usage Count:</span>
+            <span class="text-gray-400">{{ 'templates.usageCountLabel' | translate }}</span>
             <span class="text-gray-100 ml-2">{{ selectedTemplate.usageCount }}</span>
           </div>
           <div>
-            <span class="text-gray-400">Last Used:</span>
+            <span class="text-gray-400">{{ 'templates.lastUsedLabel' | translate }}</span>
             <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.lastUsedAt) }}</span>
           </div>
           <div>
-            <span class="text-gray-400">Created:</span>
+            <span class="text-gray-400">{{ 'templates.createdLabel' | translate }}</span>
             <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.createdAt) }}</span>
           </div>
           <div>
-            <span class="text-gray-400">Last Synced:</span>
+            <span class="text-gray-400">{{ 'templates.lastSyncedLabel' | translate }}</span>
             <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.lastSyncedAt) }}</span>
           </div>
         </div>
@@ -300,7 +300,7 @@
       <!-- Modal Header -->
       <div class="sticky top-0 bg-whatsapp-gray border-b border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
         <div>
-          <h2 class="text-xl font-semibold text-gray-100">Send Bulk Template</h2>
+          <h2 class="text-xl font-semibold text-gray-100">{{ 'templates.sendBulk' | translate }}</h2>
           <p class="text-sm text-gray-400">{{ selectedTemplate.name }}</p>
         </div>
         <button (click)="closeSendModal()" class="text-gray-400 hover:text-gray-200">
@@ -314,23 +314,23 @@
         <div *ngIf="getParameterCount(selectedTemplate) > 0" class="mb-6">
           <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
             <i class="fas fa-brackets-curly"></i>
-            Template Parameters
+            {{ 'templates.templateParameters' | translate }}
           </h3>
           <div class="space-y-3">
             <div *ngFor="let param of selectedTemplate.parameters; let i = index">
               <label class="block text-xs text-gray-400 mb-1">
-                Parameter {{ param.position }}: {{ param.name }}
+                {{ 'templates.parameter' | translate }} {{ param.position }}: {{ param.name }}
               </label>
               <input type="text"
                      [(ngModel)]="bulkParameters[i]"
-                     placeholder="Enter value for {{ param.name }}"
+                     [placeholder]="('templates.enterValue' | translate) + ' ' + param.name"
                      class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
             </div>
           </div>
 
           <!-- Live Preview -->
           <div class="mt-4">
-            <label class="block text-xs text-gray-400 mb-2">Preview with parameters:</label>
+            <label class="block text-xs text-gray-400 mb-2">{{ 'templates.previewWithParameters' | translate }}</label>
             <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-3 text-sm text-gray-300 whitespace-pre-wrap">
               {{ getBulkTemplatePreview() }}
             </div>
@@ -341,7 +341,7 @@
         <div>
           <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
             <i class="fas fa-users"></i>
-            Select Recipients ({{ selectedCustomers.size }} selected)
+            {{ 'templates.selectRecipients' | translate }} ({{ selectedCustomers.size }} {{ 'templates.selected' | translate }})
           </h3>
 
           <!-- Customer Search -->
@@ -350,7 +350,7 @@
             <input type="text"
                    [(ngModel)]="customerSearchTerm"
                    (input)="onCustomerSearchChange()"
-                   placeholder="Search customers by name, phone, or email..."
+                   [placeholder]="'templates.searchCustomers' | translate"
                    class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
           </div>
 
@@ -361,14 +361,14 @@
                      [checked]="selectedCustomers.size === filteredCustomers.length && filteredCustomers.length > 0"
                      (change)="toggleAllCustomers()"
                      class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
-              <span>Select All ({{ filteredCustomers.length }})</span>
+              <span>{{ 'templates.selectAll' | translate }} ({{ filteredCustomers.length }})</span>
             </label>
           </div>
 
           <!-- Customer List -->
           <div class="bg-whatsapp-dark border border-gray-600 rounded-lg max-h-64 overflow-y-auto">
             <div *ngIf="filteredCustomers.length === 0" class="p-4 text-center text-gray-400">
-              No customers found
+              {{ 'templates.noCustomersFound' | translate }}
             </div>
             <div *ngFor="let customer of filteredCustomers"
                  class="border-b border-gray-700 last:border-b-0 hover:bg-gray-800 transition-colors">
@@ -396,7 +396,7 @@
         <div *ngIf="showBulkProgress" class="mt-4">
           <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-4">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-300">Sending messages...</span>
+              <span class="text-sm text-gray-300">{{ 'templates.sendingMessages' | translate }}</span>
               <span class="text-sm text-gray-400">{{ bulkSendProgress.sent }} / {{ bulkSendProgress.total }}</span>
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
@@ -411,19 +411,19 @@
       <div class="border-t border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
         <div class="text-sm text-gray-400">
           <i class="fas fa-info-circle mr-1"></i>
-          Messages will be sent with 1 second delay between each
+          {{ 'templates.messagesSentWithDelay' | translate }}
         </div>
         <div class="flex items-center gap-3">
           <button (click)="closeSendModal()"
                   [disabled]="isSendingBulk"
                   class="px-4 py-2 bg-whatsapp-dark border border-gray-600 hover:border-gray-500 text-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Cancel
+            {{ 'common.cancel' | translate }}
           </button>
           <button (click)="sendBulkTemplate()"
                   [disabled]="isSendingBulk || selectedCustomers.size === 0"
                   class="px-6 py-2 bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2 transition-colors">
             <i class="fas" [class.fa-paper-plane]="!isSendingBulk" [class.fa-spinner]="isSendingBulk" [class.fa-spin]="isSendingBulk"></i>
-            <span>{{ isSendingBulk ? 'Sending...' : 'Send to ' + selectedCustomers.size + ' customer(s)' }}</span>
+            <span>{{ (isSendingBulk ? 'templates.sendingBulk' : ('templates.sendToCustomers' | translate) + ' ' + selectedCustomers.size + ' ' + ('templates.customers' | translate)) }}</span>
           </button>
         </div>
       </div>
