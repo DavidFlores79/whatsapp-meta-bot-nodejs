@@ -7,6 +7,7 @@
     "start": "node src/app",
     "build": "cd frontend && npm run build",
     "build:install": "npm install && cd frontend && npm install && npm run build",
+    "deploy:prepare": "npm run build && powershell -ExecutionPolicy Bypass -File ./deploy.ps1",
     "dev": "nodemon src/app",
     "test:threads": "node test-thread-optimization.js",
     "create-admin": "node scripts/createAdminAgent.js",
