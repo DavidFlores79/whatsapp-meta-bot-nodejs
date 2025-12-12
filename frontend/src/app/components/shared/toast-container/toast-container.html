@@ -1,0 +1,20 @@
+<div class="fixed top-4 right-4 flex flex-col gap-2 pointer-events-none" style="z-index: 9999;">
+  <div *ngFor="let toast of toasts"
+       [@toastAnimation]
+       class="pointer-events-auto min-w-[320px] max-w-md rounded-lg shadow-2xl border-l-4 overflow-hidden"
+       [ngClass]="getBackgroundClass(toast.type)">
+    <div class="flex items-start gap-3 p-4">
+      <div class="flex-shrink-0">
+        <i class="fas text-white text-xl"
+           [ngClass]="getIcon(toast.type)"></i>
+      </div>
+      <div class="flex-1 text-white">
+        <p class="text-sm font-medium leading-relaxed">{{ toast.message }}</p>
+      </div>
+      <button (click)="removeToast(toast.id)"
+              class="flex-shrink-0 text-white/80 hover:text-white transition-colors ml-2">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+</div>

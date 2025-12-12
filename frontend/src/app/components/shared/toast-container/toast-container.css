@@ -1,0 +1,9 @@
+/* Toast container styles */
+:host {
+  display: block;
+}
+
+/* Backdrop blur effect for toasts */
+.toast-backdrop {
+  backdrop-filter: blur(8px);
+}

@@ -41,23 +41,6 @@
     </div>
   </div>
 
-  <!-- Success/Error Messages -->
-  <div *ngIf="successMessage" class="bg-green-600 text-white px-6 py-3 shrink-0">
-    <div class="flex items-center gap-2">
-      <i class="fas fa-check-circle"></i>
-      <span>{{ successMessage }}</span>
-    </div>
-  </div>
-  <div *ngIf="error" class="bg-red-600 text-white px-6 py-3 shrink-0">
-    <div class="flex items-center gap-2">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>{{ error }}</span>
-      <button (click)="error = null" class="ml-auto">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
-
   <!-- Filters and Search -->
   <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-3 shrink-0">
     <div class="flex flex-col md:flex-row gap-3">
@@ -182,7 +165,7 @@
         </div>
 
         <!-- Preview -->
-        <div class="bg-whatsapp-dark border border-gray-600 rounded p-3 mb-3 text-sm text-gray-300 min-h-[60px] max-h-[120px] overflow-hidden">
+        <div class="bg-whatsapp-dark border border-gray-600 rounded p-3 mb-3 text-sm text-gray-300 line-clamp-3">
           {{ getTemplatePreview(template) }}
         </div>
 
@@ -200,23 +183,23 @@
         </p>
 
         <!-- Footer -->
-        <div class="flex items-center justify-between pt-3 border-t border-gray-700">
-          <span class="text-xs text-gray-500">
-            Last used: {{ formatDate(template.lastUsedAt) }}
-          </span>
+        <div class="flex flex-col gap-2 pt-3 border-t border-gray-700">
           <div class="flex items-center gap-2">
             <button (click)="previewTemplate(template)"
-                    class="text-blue-400 hover:text-blue-300 transition-colors"
-                    title="Preview">
+                    class="flex-1 bg-whatsapp-dark hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
               <i class="fas fa-eye"></i>
+              <span>Preview</span>
             </button>
             <button *ngIf="template.status === 'APPROVED'"
                     (click)="openSendModal(template)"
-                    class="text-green-400 hover:text-green-300 transition-colors"
-                    title="Send Template">
+                    class="flex-1 bg-whatsapp-green hover:bg-green-600 text-white px-3 py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
               <i class="fas fa-paper-plane"></i>
+              <span>Send</span>
             </button>
           </div>
+          <span class="text-xs text-gray-500 text-center">
+            Last used: {{ formatDate(template.lastUsedAt) }}
+          </span>
         </div>
       </div>
     </div>
@@ -303,6 +286,145 @@
             <span class="text-gray-400">Last Synced:</span>
             <span class="text-gray-100 ml-2">{{ formatDate(selectedTemplate.lastSyncedAt) }}</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Send Modal -->
+  <div *ngIf="showSendModal && selectedTemplate"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+       (click)="closeSendModal()">
+    <div class="bg-whatsapp-gray rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col border border-gray-700"
+         (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="sticky top-0 bg-whatsapp-gray border-b border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-100">Send Bulk Template</h2>
+          <p class="text-sm text-gray-400">{{ selectedTemplate.name }}</p>
+        </div>
+        <button (click)="closeSendModal()" class="text-gray-400 hover:text-gray-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- Parameters Section -->
+        <div *ngIf="getParameterCount(selectedTemplate) > 0" class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+            <i class="fas fa-brackets-curly"></i>
+            Template Parameters
+          </h3>
+          <div class="space-y-3">
+            <div *ngFor="let param of selectedTemplate.parameters; let i = index">
+              <label class="block text-xs text-gray-400 mb-1">
+                Parameter {{ param.position }}: {{ param.name }}
+              </label>
+              <input type="text"
+                     [(ngModel)]="bulkParameters[i]"
+                     placeholder="Enter value for {{ param.name }}"
+                     class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Live Preview -->
+          <div class="mt-4">
+            <label class="block text-xs text-gray-400 mb-2">Preview with parameters:</label>
+            <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-3 text-sm text-gray-300 whitespace-pre-wrap">
+              {{ getBulkTemplatePreview() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Selection Section -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+            <i class="fas fa-users"></i>
+            Select Recipients ({{ selectedCustomers.size }} selected)
+          </h3>
+
+          <!-- Customer Search -->
+          <div class="mb-3 relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text"
+                   [(ngModel)]="customerSearchTerm"
+                   (input)="onCustomerSearchChange()"
+                   placeholder="Search customers by name, phone, or email..."
+                   class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
+          </div>
+
+          <!-- Select All -->
+          <div class="mb-3 flex items-center justify-between">
+            <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-300">
+              <input type="checkbox"
+                     [checked]="selectedCustomers.size === filteredCustomers.length && filteredCustomers.length > 0"
+                     (change)="toggleAllCustomers()"
+                     class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
+              <span>Select All ({{ filteredCustomers.length }})</span>
+            </label>
+          </div>
+
+          <!-- Customer List -->
+          <div class="bg-whatsapp-dark border border-gray-600 rounded-lg max-h-64 overflow-y-auto">
+            <div *ngIf="filteredCustomers.length === 0" class="p-4 text-center text-gray-400">
+              No customers found
+            </div>
+            <div *ngFor="let customer of filteredCustomers"
+                 class="border-b border-gray-700 last:border-b-0 hover:bg-gray-800 transition-colors">
+              <label class="flex items-center gap-3 p-3 cursor-pointer">
+                <input type="checkbox"
+                       [checked]="isCustomerSelected(customer._id)"
+                       (change)="toggleCustomerSelection(customer._id)"
+                       class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
+                <div class="flex-1">
+                  <div class="font-medium text-gray-100">{{ getCustomerDisplayName(customer) }}</div>
+                  <div class="text-xs text-gray-400">{{ customer.phoneNumber }}</div>
+                </div>
+                <div *ngIf="customer.tags && customer.tags.length > 0" class="flex gap-1">
+                  <span *ngFor="let tag of customer.tags.slice(0, 2)"
+                        class="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
+                    {{ tag }}
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div *ngIf="showBulkProgress" class="mt-4">
+          <div class="bg-whatsapp-dark border border-gray-600 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-300">Sending messages...</span>
+              <span class="text-sm text-gray-400">{{ bulkSendProgress.sent }} / {{ bulkSendProgress.total }}</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div class="bg-whatsapp-green h-2 rounded-full transition-all duration-300"
+                   [style.width.%]="(bulkSendProgress.sent / bulkSendProgress.total) * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t border-gray-700 px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="text-sm text-gray-400">
+          <i class="fas fa-info-circle mr-1"></i>
+          Messages will be sent with 1 second delay between each
+        </div>
+        <div class="flex items-center gap-3">
+          <button (click)="closeSendModal()"
+                  [disabled]="isSendingBulk"
+                  class="px-4 py-2 bg-whatsapp-dark border border-gray-600 hover:border-gray-500 text-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            Cancel
+          </button>
+          <button (click)="sendBulkTemplate()"
+                  [disabled]="isSendingBulk || selectedCustomers.size === 0"
+                  class="px-6 py-2 bg-whatsapp-green hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas" [class.fa-paper-plane]="!isSendingBulk" [class.fa-spinner]="isSendingBulk" [class.fa-spin]="isSendingBulk"></i>
+            <span>{{ isSendingBulk ? 'Sending...' : 'Send to ' + selectedCustomers.size + ' customer(s)' }}</span>
+          </button>
         </div>
       </div>
     </div>
