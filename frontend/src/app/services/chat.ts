@@ -12,6 +12,7 @@ export interface Message {
   timestamp: Date;
   type?: string;
   status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
+  isAI?: boolean; // Flag to indicate AI-generated message
   attachments?: Array<{
     type: string;
     url: string;
@@ -121,9 +122,10 @@ export class ChatService {
           chat.messages = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
-            // AI and agent messages should show on the right (sender: 'me')
-            // Customer messages show on the left (sender: 'other')
-            sender: (msg.sender === 'ai' || msg.sender === 'agent') ? 'me' : 'other',
+            // Agent messages show on the right (sender: 'me')
+            // Customer and AI messages show on the left (sender: 'other')
+            sender: msg.sender === 'agent' ? 'me' : 'other',
+            isAI: msg.sender === 'ai', // Mark AI messages
             timestamp: new Date(msg.timestamp),
             type: msg.type,
             status: msg.status,
