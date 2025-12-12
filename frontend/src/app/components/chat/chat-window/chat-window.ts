@@ -217,7 +217,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Check if metadata has any values to display
    */
   hasMetadata(): boolean {
-    return this.threadMetadata?.metadata && 
+    return this.threadMetadata?.metadata &&
            Object.keys(this.threadMetadata.metadata).length > 0;
   }
 

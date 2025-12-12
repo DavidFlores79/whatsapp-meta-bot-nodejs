@@ -75,14 +75,14 @@
         </div>
 
         <!-- AI Collected Metadata Display -->
-        <div *ngIf="hasMetadata()" 
+        <div *ngIf="hasMetadata()"
              class="mx-4 mb-2 bg-blue-900 bg-opacity-30 border border-blue-500 rounded-lg p-3">
             <div class="flex items-center gap-2 mb-2">
                 <i class="fas fa-database text-blue-400"></i>
                 <h4 class="text-sm font-semibold text-blue-300">AI Collected Information</h4>
             </div>
             <div class="grid grid-cols-2 gap-2 text-xs">
-                <div *ngFor="let item of threadMetadata.metadata | keyvalue" 
+                <div *ngFor="let item of threadMetadata.metadata | keyvalue"
                      class="bg-gray-800 bg-opacity-50 rounded p-2">
                     <div class="text-gray-400 mb-1">{{ item.key }}</div>
                     <div class="text-gray-200 font-medium">{{ item.value }}</div>
