@@ -120,9 +120,9 @@ export class ChatService {
           chat.messages = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
-            // Agent messages show on the right (sender: 'me')
-            // Customer and AI messages show on the left (sender: 'other')
-            sender: msg.sender === 'agent' ? 'me' : 'other',
+            // Agent and AI messages show on the right (sender: 'me')
+            // Customer messages show on the left (sender: 'other')
+            sender: (msg.sender === 'agent' || msg.sender === 'ai') ? 'me' : 'other',
             isAI: msg.sender === 'ai', // Mark AI messages
             timestamp: new Date(msg.timestamp),
             type: msg.type,
