@@ -91,6 +91,12 @@ export class ReportsComponent implements OnInit {
 
   ngOnInit() {
     console.log('[Reports] Component initialized');
+    console.log('[Reports] Initial state:', {
+      loadingPerformance: this.loadingPerformance,
+      performanceInitialized: this.performanceInitialized,
+      agentPerformance: this.agentPerformance
+    });
+    
     this.loadAgents();
     this.loadConversations();
 
@@ -99,7 +105,10 @@ export class ReportsComponent implements OnInit {
     if (currentAgent) {
       this.selectedAgentId = currentAgent._id;
       console.log('[Reports] Auto-loading performance for current agent:', this.selectedAgentId);
-      this.loadAgentPerformance();
+      // Add small delay to ensure view is initialized
+      setTimeout(() => {
+        this.loadAgentPerformance();
+      }, 50);
     } else {
       console.log('[Reports] No current agent found, skipping auto-load');
     }
