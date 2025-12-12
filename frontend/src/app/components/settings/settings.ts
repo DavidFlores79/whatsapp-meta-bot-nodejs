@@ -78,7 +78,23 @@ export class SettingsComponent implements OnInit {
   changeLanguage() {
     this.translate.use(this.selectedLanguage);
     localStorage.setItem(LANGUAGE_STORAGE_KEY, this.selectedLanguage);
-    this.toastService.success(this.translate.instant('settings.languageChanged'));
+    
+    // Update agent's language preference in backend
+    if (this.currentAgent) {
+      const languageCode = this.selectedLanguage === 'en-US' ? 'en' : 'es';
+      this.authService.updateAgentLanguage(languageCode).subscribe({
+        next: () => {
+          console.log('[Settings] Agent language updated to:', languageCode);
+          this.toastService.success(this.translate.instant('settings.languageChanged'));
+        },
+        error: (err) => {
+          console.error('[Settings] Error updating agent language:', err);
+          this.toastService.success(this.translate.instant('settings.languageChanged'));
+        }
+      });
+    } else {
+      this.toastService.success(this.translate.instant('settings.languageChanged'));
+    }
   }
 
   changeTheme() {
