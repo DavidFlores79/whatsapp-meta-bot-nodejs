@@ -151,7 +151,7 @@
       <div class="flex items-end">
         <button (click)="clearFilters()"
                 class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-          {{ 'customers.clearFilters' | translate }}
+          {{ 'common.clearFilters' | translate }}
         </button>
       </div>
     </div>
@@ -301,7 +301,7 @@
     <!-- Pagination -->
     <div *ngIf="!loading && customers.length > 0" class="mt-4 flex items-center justify-between">
       <div class="text-sm text-gray-400">
-        {{ 'customers.showing' | translate }} {{ (pagination.page - 1) * pagination.limit + 1 }} {{ 'customers.to' | translate }} {{ Math.min(pagination.page * pagination.limit, pagination.total) }} {{ 'customers.of' | translate }} {{ pagination.total }} {{ 'customers.customers' | translate }}
+        {{ 'common.showing' | translate }} {{ (pagination.page - 1) * pagination.limit + 1 }} {{ 'common.to' | translate }} {{ Math.min(pagination.page * pagination.limit, pagination.total) }} {{ 'common.of' | translate }} {{ pagination.total }} {{ 'customers.customers' | translate }}
       </div>
 
       <div class="flex gap-2">
