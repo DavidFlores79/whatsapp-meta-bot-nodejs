@@ -11,9 +11,9 @@
       <div>
         <h2 class="text-xl font-semibold text-gray-100">
           <i class="fas fa-file-import mr-2"></i>
-          Import Customers
+          {{ 'customers.uploadCustomersTitle' | translate }}
         </h2>
-        <p class="text-sm text-gray-400 mt-1">Upload XLSX, XLS, or CSV file to import customers</p>
+        <p class="text-sm text-gray-400 mt-1">{{ 'customers.uploadSubtitle' | translate }}</p>
       </div>
       <button (click)="closeModal()"
               class="text-gray-400 hover:text-gray-100 transition-colors">
@@ -32,14 +32,14 @@
           <div class="flex items-start gap-3">
             <i class="fas fa-info-circle text-blue-400 mt-1"></i>
             <div class="flex-1">
-              <h3 class="text-sm font-semibold text-blue-300 mb-1">Need a template?</h3>
+              <h3 class="text-sm font-semibold text-blue-300 mb-1">{{ 'customers.needTemplate' | translate }}</h3>
               <p class="text-xs text-gray-300 mb-3">
-                Download our Excel template with instructions and sample data to get started.
+                {{ 'customers.downloadTemplateDesc' | translate }}
               </p>
               <button (click)="downloadTemplate()"
                       class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                 <i class="fas fa-download"></i>
-                <span>Download Template</span>
+                <span>{{ 'customers.downloadTemplate' | translate }}</span>
               </button>
             </div>
           </div>
@@ -47,7 +47,7 @@
 
         <!-- File Upload Section -->
         <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Select File</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.selectFileLabel' | translate }}</label>
 
           <!-- Drag & Drop Area -->
           <div *ngIf="!selectedFile"
@@ -62,16 +62,16 @@
             <i class="fas fa-cloud-upload-alt text-4xl mb-3"
                [class.text-whatsapp-green]="isDragging"
                [class.text-gray-400]="!isDragging"></i>
-            <p class="text-gray-300 mb-2">Drag and drop your file here, or</p>
+            <p class="text-gray-300 mb-2">{{ 'customers.dragDropFile' | translate }}</p>
             <label class="inline-block bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors">
               <i class="fas fa-folder-open mr-2"></i>
-              Browse Files
+              {{ 'customers.browseFiles' | translate }}
               <input type="file"
                      accept=".xlsx,.xls,.csv"
                      (change)="onFileSelected($event)"
                      class="hidden">
             </label>
-            <p class="text-xs text-gray-500 mt-3">Supported formats: XLSX, XLS, CSV (Max 5MB)</p>
+            <p class="text-xs text-gray-500 mt-3">{{ 'customers.supportedFormats' | translate }}</p>
           </div>
 
           <!-- Selected File Display -->
@@ -98,8 +98,8 @@
                    [(ngModel)]="updateExisting"
                    class="w-5 h-5 text-whatsapp-green bg-gray-700 border-gray-600 rounded focus:ring-whatsapp-green">
             <div>
-              <div class="text-gray-100 font-medium">Update Existing Customers</div>
-              <div class="text-xs text-gray-400">If a customer with the same phone number exists, update their information</div>
+              <div class="text-gray-100 font-medium">{{ 'customers.updateExisting' | translate }}</div>
+              <div class="text-xs text-gray-400">{{ 'customers.updateExistingDesc' | translate }}</div>
             </div>
           </label>
         </div>
@@ -117,8 +117,8 @@
           <div class="flex items-center justify-center gap-3 p-8">
             <i class="fas fa-spinner fa-spin text-3xl text-whatsapp-green"></i>
             <div>
-              <p class="text-gray-100 font-medium">Importing customers...</p>
-              <p class="text-sm text-gray-400">Please wait while we process your file</p>
+              <p class="text-gray-100 font-medium">{{ 'customers.importingCustomers' | translate }}</p>
+              <p class="text-sm text-gray-400">{{ 'customers.pleaseWaitProcessing' | translate }}</p>
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@
           <div class="flex items-center gap-3 mb-4">
             <i class="fas fa-check-circle text-3xl text-green-400"></i>
             <div>
-              <h3 class="text-lg font-semibold text-green-300">Import Complete!</h3>
+              <h3 class="text-lg font-semibold text-green-300">{{ 'customers.importComplete' | translate }}</h3>
               <p class="text-sm text-gray-300">{{ importResult.message }}</p>
             </div>
           </div>
@@ -147,23 +147,23 @@
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div class="bg-whatsapp-dark p-3 rounded-lg text-center">
               <div class="text-2xl font-bold text-gray-100">{{ importResult.results.total }}</div>
-              <div class="text-xs text-gray-400 mt-1">Total Rows</div>
+              <div class="text-xs text-gray-400 mt-1">{{ 'customers.totalRows' | translate }}</div>
             </div>
             <div class="bg-whatsapp-dark p-3 rounded-lg text-center">
               <div class="text-2xl font-bold text-green-400">{{ importResult.results.imported }}</div>
-              <div class="text-xs text-gray-400 mt-1">Imported</div>
+              <div class="text-xs text-gray-400 mt-1">{{ 'customers.imported' | translate }}</div>
             </div>
             <div class="bg-whatsapp-dark p-3 rounded-lg text-center">
               <div class="text-2xl font-bold text-blue-400">{{ importResult.results.updated }}</div>
-              <div class="text-xs text-gray-400 mt-1">Updated</div>
+              <div class="text-xs text-gray-400 mt-1">{{ 'customers.updated' | translate }}</div>
             </div>
             <div class="bg-whatsapp-dark p-3 rounded-lg text-center">
               <div class="text-2xl font-bold text-yellow-400">{{ importResult.results.duplicates }}</div>
-              <div class="text-xs text-gray-400 mt-1">Duplicates</div>
+              <div class="text-xs text-gray-400 mt-1">{{ 'customers.duplicates' | translate }}</div>
             </div>
             <div class="bg-whatsapp-dark p-3 rounded-lg text-center">
               <div class="text-2xl font-bold text-red-400">{{ importResult.results.failed }}</div>
-              <div class="text-xs text-gray-400 mt-1">Failed</div>
+              <div class="text-xs text-gray-400 mt-1">{{ 'customers.failed' | translate }}</div>
             </div>
           </div>
         </div>
@@ -173,7 +173,7 @@
                 class="w-full mb-4 p-3 bg-whatsapp-dark border border-gray-600 rounded-lg hover:border-whatsapp-green transition-colors flex items-center justify-between">
           <span class="text-gray-100 font-medium">
             <i class="fas fa-list mr-2"></i>
-            View Detailed Results
+            {{ 'customers.viewDetailedResults' | translate }}
           </span>
           <i class="fas fa-chevron-down transition-transform" [class.rotate-180]="showDetails"></i>
         </button>
@@ -190,7 +190,7 @@
                     [class.border-transparent]="activeTab !== 'success'"
                     [class.text-gray-400]="activeTab !== 'success'">
               <i class="fas fa-check-circle mr-1"></i>
-              Success ({{ importResult.results.imported }})
+              {{ 'customers.successTab' | translate }} ({{ importResult.results.imported }})
             </button>
             <button (click)="activeTab = 'updated'"
                     class="flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2"
@@ -199,7 +199,7 @@
                     [class.border-transparent]="activeTab !== 'updated'"
                     [class.text-gray-400]="activeTab !== 'updated'">
               <i class="fas fa-sync mr-1"></i>
-              Updated ({{ importResult.results.updated }})
+              {{ 'customers.updatedTab' | translate }} ({{ importResult.results.updated }})
             </button>
             <button (click)="activeTab = 'duplicates'"
                     class="flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2"
@@ -208,7 +208,7 @@
                     [class.border-transparent]="activeTab !== 'duplicates'"
                     [class.text-gray-400]="activeTab !== 'duplicates'">
               <i class="fas fa-copy mr-1"></i>
-              Duplicates ({{ importResult.results.duplicates }})
+              {{ 'customers.duplicatesTab' | translate }} ({{ importResult.results.duplicates }})
             </button>
             <button (click)="activeTab = 'failed'"
                     class="flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2"
@@ -217,7 +217,7 @@
                     [class.border-transparent]="activeTab !== 'failed'"
                     [class.text-gray-400]="activeTab !== 'failed'">
               <i class="fas fa-exclamation-circle mr-1"></i>
-              Failed ({{ importResult.results.failed }})
+              {{ 'customers.failedTab' | translate }} ({{ importResult.results.failed }})
             </button>
           </div>
 
@@ -226,15 +226,15 @@
             <!-- Success Tab -->
             <div *ngIf="activeTab === 'success'">
               <div *ngIf="importResult.details.success.length === 0" class="text-center text-gray-400 py-8">
-                No successfully imported customers
+                {{ 'customers.noSuccessfulImports' | translate }}
               </div>
               <div *ngFor="let item of importResult.details.success" class="mb-2 p-3 bg-green-900 bg-opacity-10 border border-green-700 rounded text-sm">
                 <div class="flex items-center justify-between">
                   <span class="text-gray-300">
-                    <span class="text-gray-500">Row {{ item.row }}:</span>
+                    <span class="text-gray-500">{{ 'customers.rowLabel' | translate }} {{ item.row }}:</span>
                     <span class="text-green-400 font-mono ml-2">{{ item.phoneNumber }}</span>
                   </span>
-                  <span class="text-xs text-gray-500">ID: {{ item.id }}</span>
+                  <span class="text-xs text-gray-500">{{ 'customers.idLabel' | translate }}: {{ item.id }}</span>
                 </div>
               </div>
             </div>
@@ -242,15 +242,15 @@
             <!-- Updated Tab -->
             <div *ngIf="activeTab === 'updated'">
               <div *ngIf="importResult.details.updated.length === 0" class="text-center text-gray-400 py-8">
-                No customers were updated
+                {{ 'customers.noUpdatedCustomers' | translate }}
               </div>
               <div *ngFor="let item of importResult.details.updated" class="mb-2 p-3 bg-blue-900 bg-opacity-10 border border-blue-700 rounded text-sm">
                 <div class="flex items-center justify-between">
                   <span class="text-gray-300">
-                    <span class="text-gray-500">Row {{ item.row }}:</span>
+                    <span class="text-gray-500">{{ 'customers.rowLabel' | translate }} {{ item.row }}:</span>
                     <span class="text-blue-400 font-mono ml-2">{{ item.phoneNumber }}</span>
                   </span>
-                  <span class="text-xs text-gray-500">ID: {{ item.id }}</span>
+                  <span class="text-xs text-gray-500">{{ 'customers.idLabel' | translate }}: {{ item.id }}</span>
                 </div>
               </div>
             </div>
@@ -258,11 +258,11 @@
             <!-- Duplicates Tab -->
             <div *ngIf="activeTab === 'duplicates'">
               <div *ngIf="importResult.details.duplicates.length === 0" class="text-center text-gray-400 py-8">
-                No duplicates found
+                {{ 'customers.noDuplicatesFound' | translate }}
               </div>
               <div *ngFor="let item of importResult.details.duplicates" class="mb-2 p-3 bg-yellow-900 bg-opacity-10 border border-yellow-700 rounded text-sm">
                 <div class="text-gray-300">
-                  <span class="text-gray-500">Row {{ item.row }}:</span>
+                  <span class="text-gray-500">{{ 'customers.rowLabel' | translate }} {{ item.row }}:</span>
                   <span class="text-yellow-400 font-mono ml-2">{{ item.phoneNumber }}</span>
                 </div>
                 <div class="text-xs text-gray-400 mt-1">{{ item.reason }}</div>
@@ -272,11 +272,11 @@
             <!-- Failed Tab -->
             <div *ngIf="activeTab === 'failed'">
               <div *ngIf="importResult.details.failed.length === 0" class="text-center text-gray-400 py-8">
-                No failed imports
+                {{ 'customers.noFailedImports' | translate }}
               </div>
               <div *ngFor="let item of importResult.details.failed" class="mb-2 p-3 bg-red-900 bg-opacity-10 border border-red-700 rounded text-sm">
                 <div class="text-gray-300">
-                  <span class="text-gray-500">Row {{ item.row }}:</span>
+                  <span class="text-gray-500">{{ 'customers.rowLabel' | translate }} {{ item.row }}:</span>
                   <span class="text-red-400 ml-2">{{ item.reason }}</span>
                 </div>
                 <div class="text-xs text-gray-500 mt-1 font-mono">{{ item.data | json }}</div>
@@ -292,20 +292,20 @@
       <button *ngIf="!importComplete"
               (click)="closeModal()"
               class="px-4 py-2 text-gray-300 hover:text-gray-100 transition-colors">
-        Cancel
+        {{ 'common.cancel' | translate }}
       </button>
       <button *ngIf="!importComplete"
               (click)="startImport()"
               [disabled]="!selectedFile || isImporting"
               class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
         <i class="fas" [ngClass]="isImporting ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
-        <span>{{ isImporting ? 'Importing...' : 'Import Customers' }}</span>
+        <span>{{ isImporting ? ('customers.importing' | translate) : ('customers.importCustomersButton' | translate) }}</span>
       </button>
       <button *ngIf="importComplete"
               (click)="finishImport()"
               class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2">
         <i class="fas fa-check"></i>
-        <span>Done</span>
+        <span>{{ 'common.done' | translate }}</span>
       </button>
     </div>
   </div>

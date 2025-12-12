@@ -3,7 +3,7 @@
   <div *ngIf="loading" class="flex items-center justify-center h-full">
     <div class="text-center">
       <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green mb-4"></i>
-      <p class="text-gray-400">Loading customer details...</p>
+      <p class="text-gray-400">{{ 'customers.loadingCustomerDetails' | translate }}</p>
     </div>
   </div>
 
@@ -11,11 +11,11 @@
   <div *ngIf="error" class="flex items-center justify-center h-full">
     <div class="text-center">
       <i class="fas fa-exclamation-circle text-6xl text-red-500 mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-300 mb-2">Error Loading Customer</h3>
+      <h3 class="text-xl font-semibold text-gray-300 mb-2">{{ 'customers.errorLoadingCustomer' | translate }}</h3>
       <p class="text-gray-400 mb-4">{{ error }}</p>
       <button (click)="goBack()"
               class="bg-whatsapp-green hover:bg-green-600 text-white px-6 py-2 rounded-lg">
-        Go Back
+        {{ 'customers.goBack' | translate }}
       </button>
     </div>
   </div>
@@ -28,26 +28,26 @@
         <button (click)="goBack()"
                 class="text-gray-400 hover:text-gray-200 flex items-center gap-2">
           <i class="fas fa-arrow-left"></i>
-          <span>Back to Customers</span>
+          <span>{{ 'navigation.backToCustomers' | translate }}</span>
         </button>
 
         <div class="flex gap-2">
           <button (click)="editCustomer()"
                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <i class="fas fa-edit"></i>
-            <span>Edit</span>
+            <span>{{ 'common.edit' | translate }}</span>
           </button>
           <button (click)="toggleBlock()"
                   [class.bg-red-600]="!customer.isBlocked"
                   [class.bg-green-600]="customer.isBlocked"
                   class="hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <i [class.fa-ban]="!customer.isBlocked" [class.fa-check]="customer.isBlocked" class="fas"></i>
-            <span>{{ customer.isBlocked ? 'Unblock' : 'Block' }}</span>
+            <span>{{ customer.isBlocked ? ('customers.unblock' | translate) : ('customers.block' | translate) }}</span>
           </button>
           <button (click)="deleteCustomer()"
                   class="bg-gray-700 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <i class="fas fa-trash"></i>
-            <span>Delete</span>
+            <span>{{ 'common.delete' | translate }}</span>
           </button>
         </div>
       </div>
@@ -79,29 +79,29 @@
                 </span>
                 <button *ngIf="customer.segment !== 'vip'" (click)="upgradeToVIP()"
                         class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full text-sm font-medium">
-                  <i class="fas fa-crown mr-1"></i> Upgrade to VIP
+                  <i class="fas fa-crown mr-1"></i> {{ 'customers.upgradeToVIP' | translate }}
                 </button>
               </div>
             </div>
 
             <div class="grid grid-cols-3 gap-4 mb-4">
               <div>
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Email</div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.email' | translate }}</div>
                 <div class="text-gray-100">{{ customer.email || '-' }}</div>
               </div>
               <div>
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">First Contact</div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.firstContact' | translate }}</div>
                 <div class="text-gray-100">{{ formatRelativeDate(customer.firstContact) }}</div>
               </div>
               <div>
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Last Interaction</div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.lastInteraction' | translate }}</div>
                 <div class="text-gray-100">{{ formatRelativeDate(customer.lastInteraction) }}</div>
               </div>
             </div>
 
             <!-- Tags -->
             <div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide mb-2">Tags</div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-2">{{ 'customers.tags' | translate }}</div>
               <div class="flex flex-wrap gap-2">
                 <span *ngFor="let tag of customer.tags"
                       class="px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full text-sm flex items-center gap-2">
@@ -112,7 +112,7 @@
                 </span>
                 <button (click)="addTag()"
                         class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-full text-sm">
-                  <i class="fas fa-plus mr-1"></i> Add Tag
+                  <i class="fas fa-plus mr-1"></i> {{ 'customers.addTag' | translate }}
                 </button>
               </div>
             </div>
@@ -124,8 +124,8 @@
           <div class="flex items-center gap-2">
             <i class="fas fa-exclamation-triangle"></i>
             <div>
-              <strong>Customer is Blocked</strong>
-              <p class="text-sm mt-1">Reason: {{ customer.blockReason || 'No reason provided' }}</p>
+              <strong>{{ 'customers.customerIsBlocked' | translate }}</strong>
+              <p class="text-sm mt-1">{{ 'customers.blockReason' | translate }}: {{ customer.blockReason || ('customers.noReasonProvided' | translate) }}</p>
             </div>
           </div>
         </div>
@@ -136,23 +136,23 @@
     <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
       <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
-          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Conversations</div>
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.totalConversations' | translate }}</div>
           <div class="text-2xl font-bold text-gray-100">{{ statistics?.totalConversations || 0 }}</div>
         </div>
         <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
-          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Open</div>
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.open' | translate }}</div>
           <div class="text-2xl font-bold text-yellow-400">{{ statistics?.openConversations || 0 }}</div>
         </div>
         <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
-          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Resolved</div>
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.resolved' | translate }}</div>
           <div class="text-2xl font-bold text-green-400">{{ statistics?.resolvedConversations || 0 }}</div>
         </div>
         <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
-          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Messages</div>
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.totalMessages' | translate }}</div>
           <div class="text-2xl font-bold text-blue-400">{{ customer.statistics?.totalMessages || 0 }}</div>
         </div>
         <div class="bg-whatsapp-dark p-4 rounded-lg border border-gray-700">
-          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Satisfaction</div>
+          <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.satisfaction' | translate }}</div>
           <div class="text-2xl font-bold text-purple-400">
             <span *ngIf="customer.statistics?.satisfactionScore">{{ customer.statistics?.satisfactionScore }}/5</span>
             <span *ngIf="!customer.statistics?.satisfactionScore">-</span>
@@ -168,19 +168,19 @@
                 [class.text-whatsapp-green]="activeTab === 'overview'"
                 [class.border-whatsapp-green]="activeTab === 'overview'"
                 class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
-          <i class="fas fa-info-circle mr-2"></i> Overview
+          <i class="fas fa-info-circle mr-2"></i> {{ 'customers.overview' | translate }}
         </button>
         <button (click)="activeTab = 'conversations'"
                 [class.text-whatsapp-green]="activeTab === 'conversations'"
                 [class.border-whatsapp-green]="activeTab === 'conversations'"
                 class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
-          <i class="fas fa-comments mr-2"></i> Conversations ({{ recentConversations.length }})
+          <i class="fas fa-comments mr-2"></i> {{ 'customers.conversationsTab' | translate }} ({{ recentConversations.length }})
         </button>
         <button (click)="activeTab = 'activity'"
                 [class.text-whatsapp-green]="activeTab === 'activity'"
                 [class.border-whatsapp-green]="activeTab === 'activity'"
                 class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
-          <i class="fas fa-clock mr-2"></i> Activity
+          <i class="fas fa-clock mr-2"></i> {{ 'customers.activity' | translate }}
         </button>
       </div>
     </div>
@@ -192,24 +192,24 @@
         <!-- Contact Information -->
         <div class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
           <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <i class="fas fa-address-card text-whatsapp-green"></i> Contact Information
+            <i class="fas fa-address-card text-whatsapp-green"></i> {{ 'customers.contactInformation' | translate }}
           </h3>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Phone Number</div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.phoneNumber' | translate }}</div>
               <div class="text-gray-100">{{ customer.phoneNumber }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Email</div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.email' | translate }}</div>
               <div class="text-gray-100">{{ customer.email || '-' }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Source</div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.source' | translate }}</div>
               <div class="text-gray-100">{{ customer.source | titlecase }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Language</div>
-              <div class="text-gray-100">{{ customer.preferences?.language || 'Not set' }}</div>
+              <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">{{ 'customers.language' | translate }}</div>
+              <div class="text-gray-100">{{ customer.preferences?.language || ('common.notSet' | translate) }}</div>
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@
         <!-- Address -->
         <div *ngIf="customer.address" class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
           <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <i class="fas fa-map-marker-alt text-whatsapp-green"></i> Address
+            <i class="fas fa-map-marker-alt text-whatsapp-green"></i> {{ 'customers.address' | translate }}
           </h3>
           <div class="text-gray-100">
             <div *ngIf="customer.address.street">{{ customer.address.street }}</div>
@@ -229,7 +229,7 @@
         <!-- Notes -->
         <div *ngIf="customer.notes" class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
           <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <i class="fas fa-sticky-note text-whatsapp-green"></i> Notes
+            <i class="fas fa-sticky-note text-whatsapp-green"></i> {{ 'customers.notes' | translate }}
           </h3>
           <div class="text-gray-100 whitespace-pre-wrap">{{ customer.notes }}</div>
         </div>
@@ -238,7 +238,7 @@
         <div *ngIf="customer.customFields && Object.keys(customer.customFields || {}).length > 0"
              class="bg-whatsapp-gray rounded-lg p-6 border border-gray-700">
           <h3 class="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <i class="fas fa-list text-whatsapp-green"></i> Custom Fields
+            <i class="fas fa-list text-whatsapp-green"></i> {{ 'customers.customFields' | translate }}
           </h3>
           <div class="grid grid-cols-2 gap-4">
             <div *ngFor="let field of Object.keys(customer.customFields || {})">
@@ -253,7 +253,7 @@
       <div *ngIf="activeTab === 'conversations'">
         <div *ngIf="recentConversations.length === 0" class="text-center py-12">
           <i class="fas fa-comments text-6xl text-gray-600 mb-4"></i>
-          <p class="text-gray-400">No conversations yet</p>
+          <p class="text-gray-400">{{ 'customers.noConversationsYet' | translate }}</p>
         </div>
 
         <div *ngIf="recentConversations.length > 0" class="space-y-3">
@@ -271,7 +271,7 @@
                 </span>
                 <span *ngIf="conversation.assignedAgent"
                       class="text-xs text-gray-400">
-                  Agent: {{ conversation.assignedAgent.firstName }} {{ conversation.assignedAgent.lastName }}
+                  {{ 'customers.assignedAgentLabel' | translate }} {{ conversation.assignedAgent.firstName }} {{ conversation.assignedAgent.lastName }}
                 </span>
               </div>
               <div class="text-xs text-gray-400">
@@ -279,7 +279,7 @@
               </div>
             </div>
             <div class="text-gray-300 text-sm">
-              {{ conversation.lastMessage?.content || 'No messages yet' }}
+              {{ conversation.lastMessage?.content || ('customers.noMessagesYet' | translate) }}
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@
               <i class="fas fa-user-plus text-green-400"></i>
             </div>
             <div class="flex-1">
-              <div class="text-gray-100 font-medium">Customer Created</div>
+              <div class="text-gray-100 font-medium">{{ 'customers.customerCreated' | translate }}</div>
               <div class="text-xs text-gray-400">{{ formatDate(customer.createdAt) }}</div>
             </div>
           </div>
@@ -303,7 +303,7 @@
               <i class="fas fa-comment text-blue-400"></i>
             </div>
             <div class="flex-1">
-              <div class="text-gray-100 font-medium">Last Interaction</div>
+              <div class="text-gray-100 font-medium">{{ 'customers.lastInteractionActivity' | translate }}</div>
               <div class="text-xs text-gray-400">{{ formatDate(customer.lastInteraction) }}</div>
             </div>
           </div>
@@ -313,7 +313,7 @@
               <i class="fas fa-edit text-yellow-400"></i>
             </div>
             <div class="flex-1">
-              <div class="text-gray-100 font-medium">Profile Updated</div>
+              <div class="text-gray-100 font-medium">{{ 'customers.profileUpdated' | translate }}</div>
               <div class="text-xs text-gray-400">{{ formatDate(customer.updatedAt) }}</div>
             </div>
           </div>
@@ -328,18 +328,18 @@
        (click)="showDeleteConfirm = false">
     <div class="bg-whatsapp-dark rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700"
          (click)="$event.stopPropagation()">
-      <h3 class="text-xl font-semibold text-gray-100 mb-4">Confirm Delete</h3>
+      <h3 class="text-xl font-semibold text-gray-100 mb-4">{{ 'customers.confirmDeleteTitle' | translate }}</h3>
       <p class="text-gray-400 mb-6">
-        Are you sure you want to deactivate this customer? This action can be reversed later.
+        {{ 'customers.confirmDeleteBody' | translate }}
       </p>
       <div class="flex gap-3 justify-end">
         <button (click)="showDeleteConfirm = false"
                 class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">
-          Cancel
+          {{ 'customers.cancelDeleteButton' | translate }}
         </button>
         <button (click)="confirmDelete()"
                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-          Delete Customer
+          {{ 'customers.deleteButton' | translate }}
         </button>
       </div>
     </div>

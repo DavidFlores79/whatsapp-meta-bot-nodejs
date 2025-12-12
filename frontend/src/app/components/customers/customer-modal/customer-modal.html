@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between p-6 border-b border-gray-700">
       <h2 class="text-2xl font-semibold text-white">
         <i class="fas fa-user-plus mr-2 text-whatsapp-green"></i>
-        {{ isEditMode ? 'Edit Customer' : 'New Customer' }}
+        {{ isEditMode ? ('customers.editCustomer' | translate) : ('customers.newCustomer' | translate) }}
       </h2>
       <button (click)="close()" class="text-gray-400 hover:text-white transition-colors">
         <i class="fas fa-times text-xl"></i>
@@ -16,7 +16,7 @@
       <!-- Loading State -->
       <div *ngIf="isLoading" class="text-center py-8">
         <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-green"></i>
-        <p class="text-gray-400 mt-4">Loading...</p>
+        <p class="text-gray-400 mt-4">{{ 'customers.loading' | translate }}</p>
       </div>
 
       <!-- Form -->
@@ -35,19 +35,19 @@
 
         <!-- Basic Information -->
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-white mb-4">Basic Information</h3>
+          <h3 class="text-lg font-medium text-white mb-4">{{ 'customers.basicInformation' | translate }}</h3>
 
           <!-- Phone Number -->
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">
-              Phone Number <span class="text-red-500">*</span>
+              {{ 'customers.phoneNumber' | translate }} <span class="text-red-500">{{ 'customers.required' | translate }}</span>
             </label>
             <input
               type="tel"
               [(ngModel)]="customer.phoneNumber"
               name="phoneNumber"
               [disabled]="isEditMode"
-              placeholder="529991234567"
+              [placeholder]="'customers.phonePlaceholder' | translate"
               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed"
               required
             />
@@ -55,36 +55,36 @@
 
           <!-- First Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.firstName' | translate }}</label>
             <input
               type="text"
               [(ngModel)]="customer.firstName"
               name="firstName"
-              placeholder="John"
+              [placeholder]="'customers.firstNamePlaceholder' | translate"
               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green"
             />
           </div>
 
           <!-- Last Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.lastName' | translate }}</label>
             <input
               type="text"
               [(ngModel)]="customer.lastName"
               name="lastName"
-              placeholder="Doe"
+              [placeholder]="'customers.lastNamePlaceholder' | translate"
               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green"
             />
           </div>
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.email' | translate }}</label>
             <input
               type="email"
               [(ngModel)]="customer.email"
               name="email"
-              placeholder="john@example.com"
+              [placeholder]="'customers.emailPlaceholder' | translate"
               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green"
             />
           </div>
@@ -92,7 +92,7 @@
           <!-- Source & Segment -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Source</label>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.source' | translate }}</label>
               <select
                 [(ngModel)]="customer.source"
                 name="source"
@@ -103,7 +103,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Segment</label>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.segment' | translate }}</label>
               <select
                 [(ngModel)]="customer.segment"
                 name="segment"
@@ -117,7 +117,7 @@
 
         <!-- Tags -->
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-white mb-4">Tags</h3>
+          <h3 class="text-lg font-medium text-white mb-4">{{ 'customers.tags' | translate }}</h3>
 
           <div class="flex gap-2">
             <input
@@ -125,7 +125,7 @@
               [(ngModel)]="newTag"
               name="newTag"
               (keyup.enter)="addTag()"
-              placeholder="Add tag and press Enter"
+              [placeholder]="'customers.addTagPlaceholder' | translate"
               class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green"
             />
             <button
@@ -152,12 +152,12 @@
 
         <!-- Notes -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.notes' | translate }}</label>
           <textarea
             [(ngModel)]="customer.notes"
             name="notes"
             rows="3"
-            placeholder="Add notes about this customer..."
+            [placeholder]="'customers.addNotesPlaceholder' | translate"
             class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-whatsapp-green resize-none"
           ></textarea>
         </div>
@@ -172,7 +172,7 @@
         [disabled]="isLoading"
         class="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Cancel
+        {{ 'common.cancel' | translate }}
       </button>
       <button
         type="button"
@@ -181,7 +181,7 @@
         class="px-6 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       >
         <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-        {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Create') }}
+        {{ isLoading ? ('customers.saving' | translate) : (isEditMode ? ('customers.update' | translate) : ('customers.create' | translate)) }}
       </button>
     </div>
   </div>
