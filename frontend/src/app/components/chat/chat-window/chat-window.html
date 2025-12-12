@@ -24,16 +24,6 @@
                 </div>
             </div>
             <div class="flex gap-4 text-gray-400">
-                <!-- AI Metadata Toggle Button -->
-                <button
-                    *ngIf="hasMetadata()"
-                    (click)="toggleMetadata(chat); $event.stopPropagation()"
-                    class="hover:text-gray-200 relative"
-                    [class.text-blue-400]="isMetadataVisible"
-                    [title]="'AI Collected Information'">
-                    <i class="fas" [ngClass]="isLoadingMetadata ? 'fa-spinner fa-spin' : 'fa-database'"></i>
-                    <span *ngIf="!isMetadataVisible" class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                </button>
                 <button
                     (click)="openTemplateSender(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
@@ -81,29 +71,6 @@
                 class="px-4 py-1.5 bg-gray-700 text-gray-300 text-sm rounded-md flex items-center gap-2">
                 <i class="fas fa-info-circle"></i>
                 {{ 'chat.assignedTo' | translate }} {{ getAssignedAgentFirstName(chat) }}
-            </div>
-        </div>
-
-        <!-- AI Collected Metadata Display (Collapsible) -->
-        <div *ngIf="hasMetadata() && isMetadataVisible"
-             class="mx-4 mb-2 bg-blue-900 bg-opacity-30 border border-blue-500 rounded-lg p-3 animate-slideDown">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-database text-blue-400"></i>
-                    <h4 class="text-sm font-semibold text-blue-300">AI Collected Information</h4>
-                </div>
-                <button
-                    (click)="isMetadataVisible = false"
-                    class="text-gray-400 hover:text-gray-200 text-xs">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-                <div *ngFor="let item of threadMetadata.metadata | keyvalue"
-                     class="bg-gray-800 bg-opacity-50 rounded p-2">
-                    <div class="text-gray-400 mb-1">{{ item.key }}</div>
-                    <div class="text-gray-200 font-medium">{{ item.value }}</div>
-                </div>
             </div>
         </div>
     </div>

@@ -39,11 +39,6 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTakingOver = false;
   isReleasingChat = false;
 
-  // Thread Metadata
-  threadMetadata: any = null;
-  isLoadingMetadata = false;
-  isMetadataVisible = false;
-
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
@@ -71,39 +66,6 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
             this.typingTimeout = setTimeout(() => {
               this.isTyping = false;
             }, 10000);
-          }
-        }
-      });
-    });
-
-    // Subscribe to selected chat changes to load metadata
-    this.selectedChat$.subscribe(chat => {
-      if (chat) {
-        this.loadThreadMetadata(chat.id);
-      } else {
-        this.threadMetadata = null;
-      }
-    });
-
-    // Subscribe to metadata updates via socket
-    this.chatService.onMetadataUpdate().subscribe((data: any) => {
-      this.selectedChat$.subscribe(chat => {
-        if (chat && chat.id === data.conversationId) {
-          console.log('Metadata updated via socket, refreshing...', data);
-          this.threadMetadata = { metadata: data.metadata };
-        }
-      });
-    });
-
-    // Subscribe to new messages to refresh metadata
-    this.chatService.onNewMessage().subscribe((data: any) => {
-      this.selectedChat$.subscribe(chat => {
-        if (chat && chat.id === data.conversationId) {
-          // Refresh metadata when new AI messages arrive
-          if (data.message?.sender === 'me' || data.message?.isAI) {
-            setTimeout(() => {
-              this.loadThreadMetadata(chat.id);
-            }, 2000); // Wait 2 seconds for AI to process and update metadata
           }
         }
       });
@@ -217,44 +179,6 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         this.toastService.error(`Failed to release conversation: ${errorMessage}`, 6000);
       }
     });
-  }
-
-  /**
-   * Load thread metadata from OpenAI Assistant
-   */
-  loadThreadMetadata(conversationId: string) {
-    this.isLoadingMetadata = true;
-    this.chatService.getThreadMetadata(conversationId).subscribe({
-      next: (response) => {
-        this.threadMetadata = response.metadata;
-        this.isLoadingMetadata = false;
-        console.log('Thread metadata loaded:', this.threadMetadata);
-      },
-      error: (err) => {
-        console.error('Failed to load thread metadata:', err);
-        this.threadMetadata = null;
-        this.isLoadingMetadata = false;
-      }
-    });
-  }
-
-  /**
-   * Check if metadata has any values to display
-   */
-  hasMetadata(): boolean {
-    return this.threadMetadata?.metadata &&
-           Object.keys(this.threadMetadata.metadata).length > 0;
-  }
-
-  /**
-   * Toggle metadata visibility and refresh data when opening
-   */
-  toggleMetadata(chat: Chat) {
-    // If opening, refresh metadata first
-    if (!this.isMetadataVisible) {
-      this.loadThreadMetadata(chat.id);
-    }
-    this.isMetadataVisible = !this.isMetadataVisible;
   }
 
   /**

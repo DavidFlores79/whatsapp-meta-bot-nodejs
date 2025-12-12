@@ -346,13 +346,6 @@ export class ChatService {
   }
 
   /**
-   * Observable for metadata updates
-   */
-  onMetadataUpdate(): Observable<any> {
-    return this.metadataUpdateSubject.asObservable();
-  }
-
-  /**
    * Observable for new messages
    */
   onNewMessage(): Observable<any> {
@@ -553,13 +546,6 @@ export class ChatService {
         }
       })
     );
-  }
-
-  /**
-   * Get OpenAI thread metadata for a conversation
-   */
-  getThreadMetadata(conversationId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/conversations/${conversationId}/thread-metadata`);
   }
 
   /**
