@@ -45,6 +45,21 @@ npm run dev
 npm start
 ```
 
+## Deployment
+
+For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
+**Quick Deploy:**
+```powershell
+# Windows (after frontend changes)
+npm run deploy:prepare
+git commit -m "Your message"
+git push
+
+# AWS Ubuntu Server
+./deploy.sh
+```
+
 ## Project Structure
 
 ```

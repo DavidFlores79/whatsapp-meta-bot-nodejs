@@ -55,6 +55,19 @@ docs: update API documentation
 - Test with WhatsApp Business API sandbox
 - Verify Socket.io events in browser console
 
+### Deployment
+
+When making frontend changes:
+
+1. **Build and prepare**: `npm run deploy:prepare`
+2. **Commit**: `git commit -m "Your message"`
+3. **Push**: `git push origin feature/crm-implementation`
+4. **Deploy on AWS**: `./deploy.sh`
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+**Important**: Always commit built frontend files (`frontend/dist/` and `public/`) as they're required for production deployment.
+
 ### Pull Request Process
 
 1. Create a feature branch from `main`
