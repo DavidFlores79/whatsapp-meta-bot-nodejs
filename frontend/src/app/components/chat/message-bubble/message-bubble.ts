@@ -12,6 +12,25 @@ import { Message } from '../../../services/chat';
 export class MessageBubbleComponent {
   @Input() message!: Message;
 
+  /**
+   * Get message text with template parameters replaced
+   */
+  get displayText(): string {
+    if (!this.message.text) return '';
+    
+    // If it's a template message with parameters, replace placeholders
+    if (this.message.type === 'template' && this.message.template?.parameters) {
+      let text = this.message.text;
+      this.message.template.parameters.forEach((param, index) => {
+        const placeholder = `{{${index + 1}}}`;
+        text = text.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), param);
+      });
+      return text;
+    }
+    
+    return this.message.text;
+  }
+
   openImage(url: string) {
     window.open(url, '_blank');
   }

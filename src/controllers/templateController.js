@@ -5,6 +5,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const whatsappService = require('../services/whatsappService');
 const { buildTemplateJSON } = require('../shared/whatsappModels');
+const { getTemplateDisplayContent } = require('../shared/processMessage');
 
 /**
  * Sync templates from Meta WhatsApp API
@@ -259,7 +260,7 @@ const sendTemplateToCustomer = async (req, res) => {
         const message = await Message.create({
             conversationId: conversation._id,
             customerId: customer._id,
-            content: `Template: ${template.name}`,
+            content: getTemplateDisplayContent(template, parameters),
             type: 'template',
             direction: 'outbound',
             sender: 'agent',
@@ -415,7 +416,7 @@ const sendTemplateBulk = async (req, res) => {
                 const message = await Message.create({
                     conversationId: conversation._id,
                     customerId: customer._id,
-                    content: `Template: ${template.name}`,
+                    content: getTemplateDisplayContent(template, parameters),
                     type: 'template',
                     direction: 'outbound',
                     sender: 'system',

@@ -63,10 +63,51 @@ const getLast10Digits = (phoneNumber) => {
   return phoneNumber.slice(-10);
 };
 
+/**
+ * Extract readable content from template components for display in chat
+ * @param {Object} template - Template object with components array
+ * @param {Array} parameters - Array of parameter values to replace placeholders
+ * @returns {String} - Human-readable template content with parameters replaced
+ */
+const getTemplateDisplayContent = (template, parameters = []) => {
+  if (!template || !template.components || template.components.length === 0) {
+    return `📄 Template: ${template?.name || 'Unknown'}`;
+  }
+
+  let content = [];
+
+  template.components.forEach(component => {
+    if (component.text) {
+      let text = component.text;
+      
+      // Replace placeholders {{1}}, {{2}}, etc. with actual parameter values
+      if (parameters && parameters.length > 0) {
+        parameters.forEach((param, index) => {
+          const placeholder = `{{${index + 1}}}`;
+          text = text.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), param);
+        });
+      }
+      
+      // Add component type prefix for clarity
+      const prefix = component.type === 'HEADER' ? '📌 ' : 
+                     component.type === 'FOOTER' ? '📎 ' : '';
+      content.push(prefix + text);
+    }
+  });
+
+  // If no text content found, fall back to template name
+  if (content.length === 0) {
+    return `📄 Template: ${template.name}`;
+  }
+
+  return content.join('\n');
+};
+
 module.exports = {
   getTextData,
   analizeText,
   getTemplateData,
   formatNumber,
   getLast10Digits,
+  getTemplateDisplayContent,
 };

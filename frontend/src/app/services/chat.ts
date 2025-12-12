@@ -26,6 +26,12 @@ export interface Message {
     name?: string;
     mapImageUrl?: string;
   };
+  template?: {
+    name: string;
+    language: string;
+    parameters?: string[];
+    category?: string;
+  };
 }
 
 export interface Chat {
@@ -138,6 +144,17 @@ export class ChatService {
         if (chat) {
           // Map backend message format to frontend Message format
           const backendMessages = response.messages || [];
+          
+          // Log template messages for debugging
+          backendMessages.forEach((msg: any) => {
+            if (msg.type === 'template') {
+              console.log('\n📋 Frontend received template message:');
+              console.log('   Message ID:', msg._id);
+              console.log('   Content:', msg.content);
+              console.log('   Template:', msg.template);
+            }
+          });
+
           chat.messages = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
@@ -149,7 +166,8 @@ export class ChatService {
             type: msg.type,
             status: msg.status,
             attachments: msg.attachments,
-            location: msg.location
+            location: msg.location,
+            template: msg.template
           }));
           this.chatsSubject.next([...this.mockChats]);
         }

@@ -207,6 +207,18 @@ async function getConversationMessages(req, res) {
             .limit(parseInt(limit))
             .skip(parseInt(skip));
 
+        // Log template messages for debugging
+        messages.forEach(msg => {
+            if (msg.type === 'template') {
+                console.log('\n📋 Template Message Found:');
+                console.log('   Message ID:', msg._id);
+                console.log('   Content:', msg.content);
+                console.log('   Template Name:', msg.template?.name);
+                console.log('   Template Parameters:', msg.template?.parameters);
+                console.log('   Content Preview:', msg.content.substring(0, 100));
+            }
+        });
+
         return res.json({ messages, total: messages.length });
     } catch (error) {
         console.error('Get messages error:', error);
