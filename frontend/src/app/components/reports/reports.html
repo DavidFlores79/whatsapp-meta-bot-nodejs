@@ -88,14 +88,14 @@
             </div>
 
             <!-- No Results State - After loading -->
-            <div *ngIf="!loadingPerformance && !agentPerformance && performanceInitialized" class="text-center py-12">
+            <div *ngIf="!loadingPerformance && agentPerformance && agentPerformance.analytics.totalAssignments === 0" class="text-center py-12">
                 <i class="fas fa-exclamation-circle text-6xl text-yellow-600 mb-4"></i>
-                <p class="text-gray-400 text-lg">{{ 'reports.noPerformanceData' | translate }}</p>
+                <p class="text-gray-400 text-lg">{{ 'reports.noAssignmentsFound' | translate }}</p>
                 <p class="text-gray-500 text-sm mt-2">{{ 'reports.tryDifferentDateRange' | translate }}</p>
             </div>
 
             <!-- Performance Data -->
-            <div *ngIf="!loadingPerformance && agentPerformance" class="space-y-6">
+            <div *ngIf="!loadingPerformance && agentPerformance && agentPerformance.analytics.totalAssignments > 0" class="space-y-6">
 
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -139,12 +139,24 @@
                 </div>
 
                 <!-- Performance Scores -->
-                <div *ngIf="agentPerformance.analytics.performance" class="bg-gray-800 rounded-lg p-6">
+                <div class="bg-gray-800 rounded-lg p-6">
                     <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fas fa-chart-bar text-blue-500"></i>
                         {{ 'reports.performanceBreakdown' | translate }}
                     </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    
+                    <!-- No AI Analysis Warning -->
+                    <div *ngIf="!agentPerformance.analytics.performance" class="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mt-1"></i>
+                            <div>
+                                <p class="text-sm text-gray-300 font-medium mb-1">{{ 'reports.noAIAnalysis' | translate }}</p>
+                                <p class="text-xs text-gray-400">{{ 'reports.releaseConversationsHint' | translate }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div *ngIf="agentPerformance.analytics.performance" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="bg-gray-700 rounded-lg p-4">
                             <div class="text-sm text-gray-400 mb-2">{{ 'reports.professionalism' | translate }}</div>
                             <div class="flex items-center gap-2">
@@ -190,6 +202,7 @@
                                 <div class="text-sm text-gray-500">/ 10</div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
 
