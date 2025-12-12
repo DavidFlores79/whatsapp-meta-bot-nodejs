@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
+import { timeout, catchError, finalize } from 'rxjs/operators';
+import { throwError, of } from 'rxjs';
 
 interface AgentPerformance {
   analytics: {
@@ -110,12 +112,16 @@ export class ReportsComponent implements OnInit {
   }
 
   loadConversations() {
+    console.log('[Reports] Loading conversations...');
     this.http.get<any>(`${this.apiUrl}/conversations?limit=100`).subscribe({
       next: (response) => {
+        console.log('[Reports] Conversations loaded:', response);
         this.conversations = response.conversations || [];
+        console.log('[Reports] Total conversations:', this.conversations.length);
       },
       error: (err) => {
-        console.error('Failed to load conversations:', err);
+        console.error('[Reports] Failed to load conversations:', err);
+        this.toastService.error('Failed to load conversations');
       }
     });
   }
@@ -127,6 +133,7 @@ export class ReportsComponent implements OnInit {
     }
 
     this.loadingPerformance = true;
+    this.agentPerformance = null;
 
     let url = `${this.apiUrl}/agents/${this.selectedAgentId}/performance`;
     const params = new URLSearchParams();
@@ -138,17 +145,35 @@ export class ReportsComponent implements OnInit {
       url += '?' + params.toString();
     }
 
-    this.http.get<AgentPerformance>(url).subscribe({
-      next: (data) => {
-        this.agentPerformance = data;
-        this.loadingPerformance = false;
-      },
-      error: (err) => {
-        console.error('Failed to load agent performance:', err);
-        this.toastService.error('Failed to load performance data');
-        this.loadingPerformance = false;
-      }
-    });
+    console.log('[Reports] Loading agent performance from:', url);
+
+    this.http.get<AgentPerformance>(url)
+      .pipe(
+        timeout(30000),
+        catchError((err) => {
+          console.error('[Reports] Failed to load agent performance:', err);
+          let errorMessage = 'Failed to load performance data';
+          if (err.name === 'TimeoutError') {
+            errorMessage = 'Request timed out. Please try again.';
+          } else if (err.error?.error) {
+            errorMessage = err.error.error;
+          }
+          this.toastService.error(errorMessage);
+          return throwError(() => err);
+        }),
+        finalize(() => {
+          this.loadingPerformance = false;
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          console.log('[Reports] Agent performance loaded:', data);
+          this.agentPerformance = data;
+        },
+        error: () => {
+          this.agentPerformance = null;
+        }
+      });
   }
 
   loadConversationHistory() {
@@ -157,19 +182,48 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
+    console.log('[Reports] Loading conversation history for:', this.selectedConversationId);
     this.loadingHistory = true;
+    this.conversationHistory = null; // Reset previous data
 
-    this.http.get<ConversationHistory>(`${this.apiUrl}/conversations/${this.selectedConversationId}/assignment-history`).subscribe({
-      next: (data) => {
-        this.conversationHistory = data;
-        this.loadingHistory = false;
-      },
-      error: (err) => {
-        console.error('Failed to load conversation history:', err);
-        this.toastService.error('Failed to load conversation history');
-        this.loadingHistory = false;
-      }
-    });
+    const url = `${this.apiUrl}/conversations/${this.selectedConversationId}/assignment-history`;
+    console.log('[Reports] Request URL:', url);
+
+    this.http.get<ConversationHistory>(url)
+      .pipe(
+        timeout(30000), // 30 second timeout
+        catchError((err) => {
+          console.error('[Reports] Failed to load conversation history:', err);
+          console.error('[Reports] Error status:', err.status);
+          console.error('[Reports] Error message:', err.message);
+
+          let errorMessage = 'Failed to load conversation history';
+          if (err.name === 'TimeoutError') {
+            errorMessage = 'Request timed out. Please try again.';
+          } else if (err.error?.error) {
+            errorMessage = err.error.error;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+
+          this.toastService.error(errorMessage);
+          return throwError(() => err);
+        }),
+        finalize(() => {
+          console.log('[Reports] Request finalized');
+          this.loadingHistory = false;
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          console.log('[Reports] Conversation history loaded successfully:', data);
+          this.conversationHistory = data;
+        },
+        error: (err) => {
+          console.error('[Reports] Final error handler:', err);
+          this.conversationHistory = null;
+        }
+      });
   }
 
   switchTab(tab: 'agent-performance' | 'conversation-history') {

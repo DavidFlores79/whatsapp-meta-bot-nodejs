@@ -278,12 +278,15 @@ async function addInternalNote(req, res) {
 async function getAssignmentHistory(req, res) {
     try {
         const conversationId = req.params.id;
+        console.log('[ConversationController] getAssignmentHistory called for conversation:', conversationId);
 
         const history = await AgentAssignmentHistory.find({ conversationId })
             .populate('agentId', 'firstName lastName email avatar')
             .populate('assignedBy', 'firstName lastName email')
             .populate('transferredTo', 'firstName lastName email')
             .sort({ assignedAt: -1 });
+
+        console.log('[ConversationController] Found', history.length, 'assignment records');
 
         const stats = {
             totalAssignments: history.length,
@@ -298,9 +301,11 @@ async function getAssignmentHistory(req, res) {
                 : 0
         };
 
+        console.log('[ConversationController] Calculated stats:', stats);
+
         return res.json({ history, stats });
     } catch (error) {
-        console.error('Get assignment history error:', error);
+        console.error('[ConversationController] Get assignment history error:', error);
         return res.status(500).json({ error: error.message });
     }
 }
