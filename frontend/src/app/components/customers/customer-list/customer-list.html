@@ -55,7 +55,7 @@
       <button (click)="toggleFilters()"
               class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
         <i class="fas fa-filter"></i>
-        <span>{{ 'customers.filters' | translate }}</span>
+        <span>{{ 'common.filters' | translate }}</span>
         <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showFilters"></i>
       </button>
 
@@ -64,7 +64,7 @@
               (click)="toggleBulkActions()"
               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
         <i class="fas fa-tasks"></i>
-        <span>{{ selectedCustomers.size }} {{ 'customers.selected' | translate }}</span>
+        <span>{{ selectedCustomers.size }} {{ 'common.selected' | translate }}</span>
       </button>
 
       <!-- Import/Export Dropdown -->
@@ -232,7 +232,7 @@
                 <i class="fas fa-sort-down text-xs" *ngIf="filters.sortBy === 'lastInteraction' && filters.sortOrder === 'desc'"></i>
               </div>
             </th>
-            <th class="px-4 py-3 text-center">{{ 'customers.actions' | translate }}</th>
+            <th class="px-4 py-3 text-center">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
