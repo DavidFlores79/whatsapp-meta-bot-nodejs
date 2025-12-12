@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService, Customer, CustomerDetailResponse } from '../../../services/customer';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../services/toast';
 @Component({
   selector: 'app-customer-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, CustomerModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent],
   templateUrl: './customer-detail.html',
   styleUrls: ['./customer-detail.css']
 })
@@ -22,6 +23,10 @@ export class CustomerDetailComponent implements OnInit {
   activeTab: 'overview' | 'conversations' | 'activity' = 'overview';
   isCustomerModalOpen = false;
   showDeleteConfirm = false;
+  showBlockReasonModal = false;
+  showAddTagModal = false;
+  blockReasonInput = '';
+  newTagInput = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -101,16 +106,24 @@ export class CustomerDetailComponent implements OnInit {
     if (!this.customer) return;
 
     const newBlockedState = !this.customer.isBlocked;
-    let blockReason = '';
 
     if (newBlockedState) {
-      blockReason = prompt('Reason for blocking this customer:') || 'No reason provided';
+      // Show modal to get block reason
+      this.blockReasonInput = '';
+      this.showBlockReasonModal = true;
+    } else {
+      // Unblock directly without reason
+      this.executeBlockToggle(false, '');
     }
+  }
+
+  executeBlockToggle(blocked: boolean, reason: string) {
+    if (!this.customer) return;
 
     this.customerService.toggleBlockCustomer(
       this.customer._id,
-      newBlockedState,
-      blockReason
+      blocked,
+      reason || 'No reason provided'
     ).subscribe({
       next: (response) => {
         this.customer = response.customer;
@@ -120,6 +133,16 @@ export class CustomerDetailComponent implements OnInit {
         this.toastService.error('Failed to update customer status');
       }
     });
+  }
+
+  confirmBlockReason() {
+    this.showBlockReasonModal = false;
+    this.executeBlockToggle(true, this.blockReasonInput);
+  }
+
+  cancelBlockReason() {
+    this.showBlockReasonModal = false;
+    this.blockReasonInput = '';
   }
 
   upgradeToVIP() {
@@ -141,23 +164,38 @@ export class CustomerDetailComponent implements OnInit {
 
   addTag() {
     if (!this.customer) return;
+    this.newTagInput = '';
+    this.showAddTagModal = true;
+  }
 
-    const newTag = prompt('Enter new tag:');
-    if (!newTag || newTag.trim() === '') return;
+  confirmAddTag() {
+    if (!this.customer) return;
+    if (!this.newTagInput || this.newTagInput.trim() === '') {
+      this.toastService.warning('Please enter a tag name');
+      return;
+    }
 
+    this.showAddTagModal = false;
     this.customerService.updateCustomerTags(
       this.customer._id,
-      [newTag.trim()],
+      [this.newTagInput.trim()],
       'add'
     ).subscribe({
       next: (response) => {
         this.customer = response.customer;
+        this.newTagInput = '';
+        this.toastService.success('Tag added successfully');
       },
       error: (err) => {
         console.error('Error adding tag:', err);
         this.toastService.error('Failed to add tag');
       }
     });
+  }
+
+  cancelAddTag() {
+    this.showAddTagModal = false;
+    this.newTagInput = '';
   }
 
   removeTag(tag: string) {

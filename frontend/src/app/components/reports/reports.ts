@@ -203,13 +203,13 @@ export class ReportsComponent implements OnInit {
           this.agentPerformance = data;
           this.loadingPerformance = false;
           this.cdr.detectChanges(); // Force change detection
-          
+
           console.log('[Reports] State check:', {
             loadingPerformance: this.loadingPerformance,
             hasData: !!this.agentPerformance,
             totalAssignments: data?.analytics?.totalAssignments
           });
-          
+
           // Show helpful message if no results with date filter
           if (data?.message) {
             this.toastService.info(data.message);

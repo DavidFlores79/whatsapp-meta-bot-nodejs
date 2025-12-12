@@ -100,9 +100,7 @@ export class TemplateListComponent implements OnInit {
     });
   }
   syncTemplates() {
-    if (!confirm('Sync templates from WhatsApp Business API? This will update all templates.')) {
-      return;
-    }
+    this.toast.info('Syncing templates from WhatsApp Business API...', 3000);
     this.syncing = true;
     this.templateService.syncTemplates().subscribe({
       next: (response) => {
@@ -238,9 +236,8 @@ export class TemplateListComponent implements OnInit {
         }
       }
     }
-    if (!confirm(`Send template to ${this.selectedCustomers.size} customer(s)?`)) {
-      return;
-    }
+    
+    this.toast.info(`Sending template to ${this.selectedCustomers.size} customer(s)...`, 3000);
     this.isSendingBulk = true;
     this.showBulkProgress = true;
     this.bulkSendProgress = { sent: 0, total: this.selectedCustomers.size };
@@ -316,9 +313,7 @@ export class TemplateListComponent implements OnInit {
     });
   }
   deleteTemplate(template: Template) {
-    if (!confirm(`Are you sure you want to delete template "${template.name}"?`)) {
-      return;
-    }
+    this.toast.warning(`Deleting template "${template.name}"...`, 3000);
     this.templateService.deleteTemplate(template._id).subscribe({
       next: (response) => {
         this.toast.success('Template deleted successfully');

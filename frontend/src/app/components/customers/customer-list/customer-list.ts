@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService, Customer, CustomerFilters } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ImportCustomersModalComponent } from '../import-customers-modal/import-customers-modal';
+import { ToastService } from '../../../services/toast';
 
 @Component({
   selector: 'app-customer-list',
@@ -70,7 +71,8 @@ export class CustomerListComponent implements OnInit {
     private customerService: CustomerService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -282,9 +284,7 @@ export class CustomerListComponent implements OnInit {
   deleteSelected() {
     if (this.selectedCustomers.size === 0) return;
 
-    if (!confirm(`Delete ${this.selectedCustomers.size} customer(s)? This will deactivate them.`)) {
-      return;
-    }
+    this.toast.warning(`Deleting ${this.selectedCustomers.size} customer(s)...`, 3000);
 
     let completed = 0;
     const total = this.selectedCustomers.size;
