@@ -349,6 +349,31 @@ async function handleInteractiveMessage(messageObject, phoneNumber, conversation
         title
       };
       console.log(`   Button clicked: "${title}" (ID: ${buttonId})`);
+
+      // Check if this is a resolution confirmation button
+      if (buttonId.startsWith('confirm_resolved_') || buttonId.startsWith('not_resolved_')) {
+        const confirmed = buttonId.startsWith('confirm_resolved_');
+        const extractedConversationId = buttonId.split('_').pop();
+
+        console.log(`   🔔 Resolution confirmation: ${confirmed ? 'YES' : 'NO'} for conversation ${extractedConversationId}`);
+
+        // Handle resolution confirmation
+        const lifecycleService = require('../services/conversationLifecycleService');
+        try {
+          const result = await lifecycleService.handleResolutionConfirmation(extractedConversationId, confirmed);
+
+          // Send response to customer
+          const whatsappService = require('../services/whatsappService');
+          const { buildTextJSON } = require('../shared/whatsappModels');
+          const responseData = buildTextJSON(phoneNumber, result.message);
+          await whatsappService.sendWhatsappResponse(responseData);
+
+          console.log(`   ✅ Resolution confirmation processed and response sent`);
+          return; // Don't process this as a regular message
+        } catch (error) {
+          console.error(`   ❌ Error handling resolution confirmation:`, error);
+        }
+      }
     } else if (interactiveType === 'list_reply') {
       // User selected from a list
       const { id: listItemId, title, description } = interactive.list_reply;

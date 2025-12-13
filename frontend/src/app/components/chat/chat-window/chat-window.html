@@ -42,10 +42,10 @@
         </div>
 
         <!-- Agent Control Buttons -->
-        <div class="px-4 pb-2 flex gap-2">
+        <div class="px-4 pb-2 flex gap-2 flex-wrap">
             <!-- Take Over Button (show when not assigned) -->
             <button
-                *ngIf="!chat.assignedAgent"
+                *ngIf="!chat.assignedAgent && chat.status !== 'closed'"
                 (click)="takeoverChat(chat.id)"
                 [disabled]="!canTakeOver() || isTakingOver"
                 [title]="(canTakeOver() ? 'chat.takeOverConversation' : 'chat.enableAutoAssignToTakeOver') | translate"
@@ -55,22 +55,57 @@
                 {{ (isTakingOver ? 'chat.takingOver' : 'chat.takeOver') | translate }}
             </button>
 
-            <!-- Resume AI Button (show when assigned to current agent) -->
+            <!-- Actions when assigned to current agent -->
+            <ng-container *ngIf="chat.assignedAgent && isAssignedToMe(chat) && chat.status !== 'closed'">
+                <!-- Mark Resolved Button -->
+                <button
+                    *ngIf="chat.status === 'assigned'"
+                    (click)="resolveConversation(chat.id)"
+                    [disabled]="isResolvingChat"
+                    class="px-4 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas" [ngClass]="isResolvingChat ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                    {{ (isResolvingChat ? 'chat.resolving' : 'chat.markResolved') | translate }}
+                </button>
+
+                <!-- Close Button (only for resolved status) -->
+                <button
+                    *ngIf="chat.status === 'resolved'"
+                    (click)="closeConversation(chat.id)"
+                    [disabled]="isClosingChat"
+                    class="px-4 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas" [ngClass]="isClosingChat ? 'fa-spinner fa-spin' : 'fa-times-circle'"></i>
+                    {{ (isClosingChat ? 'chat.closing' : 'chat.closeConversation') | translate }}
+                </button>
+
+                <!-- Resume AI Button -->
+                <button
+                    (click)="releaseChat(chat.id)"
+                    [disabled]="isReleasingChat"
+                    class="px-4 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas" [ngClass]="isReleasingChat ? 'fa-spinner fa-spin' : 'fa-robot'"></i>
+                    {{ (isReleasingChat ? 'chat.releasing' : 'chat.resumeAI') | translate }}
+                </button>
+            </ng-container>
+
+            <!-- Reopen Button (admin/supervisor only, for closed conversations) -->
             <button
-                *ngIf="chat.assignedAgent && isAssignedToMe(chat)"
-                (click)="releaseChat(chat.id)"
-                [disabled]="isReleasingChat"
-                class="px-4 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas" [ngClass]="isReleasingChat ? 'fa-spinner fa-spin' : 'fa-robot'"></i>
-                {{ (isReleasingChat ? 'chat.releasing' : 'chat.resumeAI') | translate }}
+                *ngIf="chat.status === 'closed' && isAdminOrSupervisor()"
+                (click)="reopenConversation(chat.id)"
+                [disabled]="isReopeningChat"
+                class="px-4 py-1.5 bg-yellow-600 text-white text-sm rounded-md hover:bg-yellow-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas" [ngClass]="isReopeningChat ? 'fa-spinner fa-spin' : 'fa-redo'"></i>
+                {{ (isReopeningChat ? 'chat.reopening' : 'chat.reopenConversation') | translate }}
             </button>
 
-            <!-- Info Badge (show when assigned to another agent) -->
+            <!-- Status Badge (show when assigned to another agent or closed) -->
             <div
-                *ngIf="chat.assignedAgent && !isAssignedToMe(chat)"
+                *ngIf="(chat.assignedAgent && !isAssignedToMe(chat)) || chat.status === 'closed'"
                 class="px-4 py-1.5 bg-gray-700 text-gray-300 text-sm rounded-md flex items-center gap-2">
-                <i class="fas fa-info-circle"></i>
-                {{ 'chat.assignedTo' | translate }} {{ getAssignedAgentFirstName(chat) }}
+                <i class="fas" [ngClass]="chat.status === 'closed' ? 'fa-lock' : 'fa-info-circle'"></i>
+                <span *ngIf="chat.status === 'closed'">{{ 'chat.conversationClosed' | translate }}</span>
+                <span *ngIf="chat.assignedAgent && !isAssignedToMe(chat)">
+                    {{ 'chat.assignedTo' | translate }} {{ getAssignedAgentFirstName(chat) }}
+                </span>
             </div>
         </div>
     </div>

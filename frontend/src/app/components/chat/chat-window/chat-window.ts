@@ -39,6 +39,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTakingOver = false;
   isReleasingChat = false;
 
+  // Lifecycle actions loading states
+  isResolvingChat = false;
+  isClosingChat = false;
+  isReopeningChat = false;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
@@ -270,5 +275,83 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   onTemplateSent() {
     console.log('Template sent successfully');
     // Messages will be updated via Socket.io
+  }
+
+  /**
+   * Check if current user is admin or supervisor
+   */
+  isAdminOrSupervisor(): boolean {
+    return this.authService.isAdminOrSupervisor();
+  }
+
+  /**
+   * Mark conversation as resolved
+   */
+  resolveConversation(chatId: string) {
+    this.isResolvingChat = true;
+
+    this.chatService.resolveConversation(chatId).subscribe({
+      next: () => {
+        console.log('Conversation marked as resolved');
+        this.isResolvingChat = false;
+        this.toastService.success('Conversation marked as resolved. Confirmation sent to customer.');
+      },
+      error: (err) => {
+        console.error('Resolve failed:', err);
+        this.isResolvingChat = false;
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to resolve conversation: ${errorMessage}`);
+      }
+    });
+  }
+
+  /**
+   * Close conversation (final state)
+   */
+  closeConversation(chatId: string) {
+    if (!confirm('Are you sure you want to close this conversation? This action marks it as complete.')) {
+      return;
+    }
+
+    this.isClosingChat = true;
+
+    this.chatService.closeConversation(chatId).subscribe({
+      next: () => {
+        console.log('Conversation closed');
+        this.isClosingChat = false;
+        this.toastService.success('Conversation closed successfully.');
+      },
+      error: (err) => {
+        console.error('Close failed:', err);
+        this.isClosingChat = false;
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to close conversation: ${errorMessage}`);
+      }
+    });
+  }
+
+  /**
+   * Reopen closed conversation (admin/supervisor only)
+   */
+  reopenConversation(chatId: string) {
+    if (!confirm('Are you sure you want to reopen this closed conversation?')) {
+      return;
+    }
+
+    this.isReopeningChat = true;
+
+    this.chatService.reopenConversation(chatId).subscribe({
+      next: () => {
+        console.log('Conversation reopened');
+        this.isReopeningChat = false;
+        this.toastService.success('Conversation reopened successfully.');
+      },
+      error: (err) => {
+        console.error('Reopen failed:', err);
+        this.isReopeningChat = false;
+        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
+        this.toastService.error(`Failed to reopen conversation: ${errorMessage}`);
+      }
+    });
   }
 }

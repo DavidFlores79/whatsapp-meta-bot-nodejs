@@ -593,4 +593,57 @@ export class ChatService {
       console.log(`Updated conversation for ${phoneNumber} with new customer name: ${chat.name}`);
     }
   }
+
+  /**
+   * Mark conversation as resolved
+   */
+  resolveConversation(conversationId: string, resolutionNotes?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/resolve`, {
+      resolutionNotes
+    }).pipe(
+      tap(() => {
+        const chat = this.mockChats.find(c => c.id === conversationId);
+        if (chat) {
+          chat.status = 'resolved';
+          this.chatsSubject.next([...this.mockChats]);
+        }
+      })
+    );
+  }
+
+  /**
+   * Close conversation (final state)
+   */
+  closeConversation(conversationId: string, reason?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/close`, {
+      reason
+    }).pipe(
+      tap(() => {
+        const chat = this.mockChats.find(c => c.id === conversationId);
+        if (chat) {
+          chat.status = 'closed';
+          chat.assignedAgent = undefined;
+          this.chatsSubject.next([...this.mockChats]);
+        }
+      })
+    );
+  }
+
+  /**
+   * Reopen closed conversation (admin/supervisor only)
+   */
+  reopenConversation(conversationId: string, reason?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/reopen`, {
+      reason
+    }).pipe(
+      tap(() => {
+        const chat = this.mockChats.find(c => c.id === conversationId);
+        if (chat) {
+          chat.status = 'open';
+          chat.isAIEnabled = true;
+          this.chatsSubject.next([...this.mockChats]);
+        }
+      })
+    );
+  }
 }
