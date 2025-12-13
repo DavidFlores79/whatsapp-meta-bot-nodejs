@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ChatListComponent } from '../../chat/chat-list/chat-list';
 import { ChatWindowComponent } from '../../chat/chat-window/chat-window';
-import { ReportsComponent } from '../../reports/reports';
 import { AuthService, Agent } from '../../../services/auth';
 import { ChatService, Chat } from '../../../services/chat';
 import { ToastService } from '../../../services/toast';
@@ -15,7 +14,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, ChatListComponent, ChatWindowComponent, ReportsComponent],
+  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, ChatListComponent, ChatWindowComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
