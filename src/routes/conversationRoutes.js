@@ -19,6 +19,14 @@ router.post('/:id/release', authenticateToken, apiLimiter, conversationControlle
 router.post('/:id/transfer', authenticateToken, apiLimiter, conversationController.transferConversation);
 
 // =====================================
+// LIFECYCLE MANAGEMENT
+// =====================================
+router.post('/:id/resolve', authenticateToken, apiLimiter, conversationController.resolveConversationEndpoint);
+router.post('/:id/close', authenticateToken, apiLimiter, conversationController.closeConversationEndpoint);
+router.post('/:id/reopen', authenticateToken, apiLimiter, conversationController.reopenConversationEndpoint);
+router.post('/:id/priority', authenticateToken, apiLimiter, conversationController.setConversationPriorityEndpoint);
+
+// =====================================
 // MESSAGING
 // =====================================
 router.post('/:id/reply', authenticateToken, apiLimiter, conversationController.sendReply);

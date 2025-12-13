@@ -579,6 +579,108 @@ function _getMostCommon(arr, topN = 5) {
         .map(([item, count]) => ({ item, count }));
 }
 
+/**
+ * POST /api/v2/conversations/:id/resolve
+ * Mark conversation as resolved
+ */
+async function resolveConversationEndpoint(req, res) {
+    try {
+        const { resolutionNotes } = req.body;
+        const conversationId = req.params.id;
+        const agentId = req.agent._id;
+
+        const lifecycleService = require('../services/conversationLifecycleService');
+        const result = await lifecycleService.resolveConversation(
+            conversationId,
+            agentId,
+            resolutionNotes
+        );
+
+        return res.json(result);
+    } catch (error) {
+        console.error('Resolve conversation error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * POST /api/v2/conversations/:id/close
+ * Close conversation (final state)
+ */
+async function closeConversationEndpoint(req, res) {
+    try {
+        const { reason, force } = req.body;
+        const conversationId = req.params.id;
+        const agentId = req.agent._id;
+
+        const lifecycleService = require('../services/conversationLifecycleService');
+        const result = await lifecycleService.closeConversation(
+            conversationId,
+            agentId,
+            reason,
+            force || false
+        );
+
+        return res.json(result);
+    } catch (error) {
+        console.error('Close conversation error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * POST /api/v2/conversations/:id/reopen
+ * Reopen closed conversation (admin/supervisor only)
+ */
+async function reopenConversationEndpoint(req, res) {
+    try {
+        const { reason } = req.body;
+        const conversationId = req.params.id;
+        const agentId = req.agent._id;
+
+        const lifecycleService = require('../services/conversationLifecycleService');
+        const result = await lifecycleService.reopenConversation(
+            conversationId,
+            agentId,
+            reason
+        );
+
+        return res.json(result);
+    } catch (error) {
+        console.error('Reopen conversation error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * POST /api/v2/conversations/:id/priority
+ * Set conversation priority
+ */
+async function setConversationPriorityEndpoint(req, res) {
+    try {
+        const { priority, reason } = req.body;
+        const conversationId = req.params.id;
+        const agentId = req.agent._id;
+
+        if (!['low', 'medium', 'high', 'urgent'].includes(priority)) {
+            return res.status(400).json({ error: 'Invalid priority value' });
+        }
+
+        const escalationService = require('../services/priorityEscalationService');
+        const result = await escalationService.setConversationPriority(
+            conversationId,
+            priority,
+            agentId,
+            reason
+        );
+
+        return res.json(result);
+    } catch (error) {
+        console.error('Set priority error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getConversations,
     getAssignedConversations,
@@ -592,5 +694,9 @@ module.exports = {
     resumeAI,
     addInternalNote,
     getAssignmentHistory,
-    getAgentPerformance
+    getAgentPerformance,
+    resolveConversationEndpoint,
+    closeConversationEndpoint,
+    reopenConversationEndpoint,
+    setConversationPriorityEndpoint
 };

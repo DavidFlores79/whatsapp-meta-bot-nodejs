@@ -77,6 +77,37 @@ const conversationSchema = new mongoose.Schema({
     lastAgentResponse: Date,
     lastCustomerMessage: Date,
 
+    // SLA Tracking
+    sla: {
+        firstResponseAt: Date,
+        firstResponseTarget: Number,      // Target in ms
+        firstResponseMet: Boolean,        // Did we meet the target?
+        resolutionTarget: Number,          // Target in ms
+        resolutionMet: Boolean,            // Did we meet the target?
+        breachAlertSent: { type: Boolean, default: false }
+    },
+
+    // Priority Escalation History
+    priorityHistory: [{
+        from: {
+            type: String,
+            enum: ['low', 'medium', 'high', 'urgent']
+        },
+        to: {
+            type: String,
+            enum: ['low', 'medium', 'high', 'urgent']
+        },
+        reason: String,
+        timestamp: { type: Date, default: Date.now },
+        triggeredBy: {
+            type: String,
+            enum: ['system', 'agent', 'keyword', 'wait_time', 'vip', 'reassignment']
+        }
+    }],
+
+    // Reassignment tracking
+    reassignmentCount: { type: Number, default: 0 },
+
     // Resolution
     resolvedAt: Date,
     resolvedBy: {
@@ -84,6 +115,12 @@ const conversationSchema = new mongoose.Schema({
         ref: 'Agent'
     },
     resolutionNotes: String,
+    resolutionConfirmationSent: { type: Boolean, default: false },
+    resolutionConfirmedAt: Date,
+    resolutionConfirmedBy: {
+        type: String,
+        enum: ['customer', 'agent', 'system']
+    },
     customerSatisfaction: {
         rating: { type: Number, min: 1, max: 5 },
         comment: String,

@@ -54,9 +54,43 @@ const buildReadWithTypingJSON = (messageId, typingType = 'text') => {
     });
 }
 
+/**
+ * Build JSON for interactive button message
+ * @param {string} number - Recipient phone number
+ * @param {string} bodyText - Message body text
+ * @param {Array} buttons - Array of buttons [{id, title}] (max 3 buttons)
+ * @returns {string} JSON string for WhatsApp API
+ */
+const buildInteractiveButtonJSON = (number, bodyText, buttons) => {
+    // WhatsApp allows max 3 buttons
+    const limitedButtons = buttons.slice(0, 3);
+
+    return JSON.stringify({
+        "messaging_product": "whatsapp",
+        "to": number,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {
+                "text": bodyText
+            },
+            "action": {
+                "buttons": limitedButtons.map(btn => ({
+                    "type": "reply",
+                    "reply": {
+                        "id": btn.id,
+                        "title": btn.title
+                    }
+                }))
+            }
+        }
+    });
+}
+
 
 module.exports = {
     buildTextJSON,
     buildTemplateJSON,
     buildReadWithTypingJSON,
+    buildInteractiveButtonJSON,
 }
