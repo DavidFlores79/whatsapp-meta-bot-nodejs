@@ -1,3 +1,10 @@
+/* Ensure host element fills available space */
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
 .settings-container {
   display: flex;
   flex-direction: column;
@@ -8,6 +15,7 @@
 .settings-container {
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .settings-header {
@@ -66,7 +74,7 @@
 .settings-content {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   /* allow its children to control scrolling in flex layouts */
   min-height: 0;
   background: linear-gradient(135deg, #0b141a 0%, #0b141a 100%);

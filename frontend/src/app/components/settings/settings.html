@@ -1,6 +1,6 @@
-<div class="settings-container h-full flex flex-col bg-whatsapp-gray">
+<div class="settings-container h-full flex flex-col bg-whatsapp-gray min-h-0 overflow-hidden">
   <!-- Header -->
-  <div class="settings-header px-8 py-5 border-b border-gray-700 bg-whatsapp-dark">
+  <div class="settings-header px-8 py-5 border-b border-gray-700 bg-whatsapp-dark flex-shrink-0">
     <div class="flex items-center space-x-3 mb-4">
       <i class="fas fa-cog text-whatsapp-teal text-2xl"></i>
       <h1 class="text-2xl font-bold text-white">
@@ -60,7 +60,7 @@
   </div>
 
   <!-- Content Area -->
-  <div class="settings-content flex-1 overflow-y-auto">
+  <div class="settings-content flex-1 overflow-y-auto min-h-0">
     <div class="settings-panel max-w-7xl mx-auto p-8 bg-whatsapp-gray">
       <!-- General Settings -->
       <div *ngIf="isTab('general')" class="space-y-6">
