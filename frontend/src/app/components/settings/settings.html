@@ -1,82 +1,86 @@
-<div class="settings-container h-full flex flex-col bg-gray-900">
+<div class="settings-container h-full flex flex-col bg-whatsapp-gray">
   <!-- Header -->
-  <div class="settings-header p-6 border-b border-gray-700 bg-whatsapp-dark">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-      {{ 'settings.title' | translate }}
-    </h1>
+  <div class="settings-header px-8 py-5 border-b border-gray-700 bg-whatsapp-dark">
+    <div class="flex items-center space-x-3 mb-4">
+      <i class="fas fa-cog text-whatsapp-teal text-2xl"></i>
+      <h1 class="text-2xl font-bold text-white">
+        {{ 'settings.title' | translate }}
+      </h1>
+    </div>
+    <p class="text-gray-400 text-sm mb-4">Manage your account preferences and CRM configuration</p>
+
+    <!-- Top Navigation Tabs -->
+    <nav class="flex space-x-1 overflow-x-auto settings-tabs">
+      <button
+        (click)="switchTab('general')"
+        [class.active]="activeTab === 'general'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-sliders-h"></i>
+        <span>{{ 'settings.general' | translate }}</span>
+      </button>
+
+      <button
+        (click)="switchTab('notifications')"
+        [class.active]="activeTab === 'notifications'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-bell"></i>
+        <span>{{ 'settings.notifications' | translate }}</span>
+      </button>
+
+      <button
+        (click)="switchTab('preferences')"
+        [class.active]="activeTab === 'preferences'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-user-cog"></i>
+        <span>{{ 'settings.preferences' | translate }}</span>
+      </button>
+
+      <button
+        *ngIf="isAdminOrSupervisor()"
+        (click)="switchTab('crm')"
+        [class.active]="activeTab === 'crm'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-chart-line"></i>
+        <span>CRM Settings</span>
+      </button>
+
+      <button
+        (click)="switchTab('account')"
+        [class.active]="activeTab === 'account'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-user-circle"></i>
+        <span>{{ 'settings.account' | translate }}</span>
+      </button>
+    </nav>
   </div>
 
-  <!-- Main Content -->
-  <div class="settings-content flex-1 flex overflow-hidden">
-    <!-- Sidebar Navigation -->
-    <div class="settings-sidebar w-64 border-r border-gray-700 p-4 bg-whatsapp-dark">
-      <nav class="space-y-1">
-        <button
-          (click)="switchTab('general')"
-          [class.bg-whatsapp-teal]="activeTab === 'general'"
-          [class.text-white]="activeTab === 'general'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
-        >
-          {{ 'settings.general' | translate }}
-        </button>
-
-        <button
-          (click)="switchTab('notifications')"
-          [class.bg-whatsapp-teal]="activeTab === 'notifications'"
-          [class.text-white]="activeTab === 'notifications'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
-        >
-          {{ 'settings.notifications' | translate }}
-        </button>
-
-        <button
-          (click)="switchTab('preferences')"
-          [class.bg-whatsapp-teal]="activeTab === 'preferences'"
-          [class.text-white]="activeTab === 'preferences'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
-        >
-          {{ 'settings.preferences' | translate }}
-        </button>
-
-        <button
-          *ngIf="isAdminOrSupervisor()"
-          (click)="switchTab('crm')"
-          [class.bg-whatsapp-teal]="activeTab === 'crm'"
-          [class.text-white]="activeTab === 'crm'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
-        >
-          <i class="fas fa-cogs mr-2"></i> CRM Settings
-        </button>
-
-        <button
-          (click)="switchTab('account')"
-          [class.bg-whatsapp-teal]="activeTab === 'account'"
-          [class.text-white]="activeTab === 'account'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
-        >
-          {{ 'settings.account' | translate }}
-        </button>
-      </nav>
-    </div>
-
-    <!-- Content Area -->
-    <div class="settings-panel flex-1 overflow-y-auto p-6 bg-whatsapp-gray">
+  <!-- Content Area -->
+  <div class="settings-content flex-1 overflow-y-auto">
+    <div class="settings-panel max-w-7xl mx-auto p-8 bg-whatsapp-gray">
       <!-- General Settings -->
-      <div *ngIf="activeTab === 'general'" class="space-y-6">
-        <div class="settings-section">
-          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-            {{ 'settings.general' | translate }}
-          </h2>
+      <div *ngIf="isTab('general')" class="space-y-6">
+        <div class="settings-section max-w-3xl">
+          <div class="bg-whatsapp-dark rounded-xl p-6 shadow-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-6 text-white flex items-center space-x-2">
+              <i class="fas fa-sliders-h text-whatsapp-teal"></i>
+              <span>{{ 'settings.general' | translate }}</span>
+            </h2>
 
           <!-- Language Selection -->
           <div class="setting-item mb-6">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            <label class="block text-sm font-semibold text-gray-200 mb-3">
+              <i class="fas fa-language mr-2 text-whatsapp-teal"></i>
               {{ 'settings.language' | translate }}
             </label>
             <select
               [(ngModel)]="selectedLanguage"
               (change)="changeLanguage()"
-              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+              class="w-full max-w-md px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-gray-800 text-gray-100 hover:border-whatsapp-teal transition-colors"
             >
               <option *ngFor="let lang of availableLanguages" [value]="lang.code">
                 {{ lang.flag }} {{ lang.name }}
@@ -99,11 +103,12 @@
               <option value="auto">{{ 'settings.auto' | translate }}</option>
             </select>
           </div>
+          </div>
         </div>
       </div>
 
       <!-- Notifications Settings -->
-      <div *ngIf="activeTab === 'notifications'" class="space-y-6">
+      <div *ngIf="isTab('notifications')" class="space-y-6">
         <div class="settings-section">
           <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             {{ 'settings.notifications' | translate }}
@@ -162,7 +167,7 @@
       </div>
 
       <!-- Preferences Settings -->
-      <div *ngIf="activeTab === 'preferences'" class="space-y-6">
+      <div *ngIf="isTab('preferences')" class="space-y-6">
         <div class="settings-section">
           <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             {{ 'settings.preferences' | translate }}
@@ -202,7 +207,7 @@
       </div>
 
       <!-- Account Settings -->
-      <div *ngIf="activeTab === 'account'" class="space-y-6">
+      <div *ngIf="isTab('account')" class="space-y-6">
         <div class="settings-section">
           <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             {{ 'settings.account' | translate }}
@@ -275,8 +280,8 @@
       </div>
 
       <!-- CRM Settings -->
-      <div *ngIf="activeTab === 'crm'" class="space-y-6">
-        <div *ngIf="!crmSettings" class="flex justify-center items-center py-12">
+      <div *ngIf="isTab('crm')" class="space-y-6">
+        <div *ngIf="isLoadingCRM" class="flex justify-center items-center py-12">
           <div class="text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-teal mb-4"></i>
             <p class="text-gray-400">Loading CRM settings...</p>

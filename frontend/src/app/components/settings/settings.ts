@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -22,6 +22,9 @@ interface Language {
 })
 export class SettingsComponent implements OnInit {
   activeTab: 'general' | 'notifications' | 'preferences' | 'account' | 'crm' = 'general';
+
+  // Type guard to help Angular template compiler
+  readonly tabType: 'general' | 'notifications' | 'preferences' | 'account' | 'crm' = 'general';
 
   // General settings
   selectedLanguage: string = 'es-MX';
@@ -52,12 +55,14 @@ export class SettingsComponent implements OnInit {
   // CRM Settings
   crmSettings: CRMSettings | null = null;
   isSavingCRM = false;
+  isLoadingCRM = false;
 
   constructor(
     private translate: TranslateService,
     private authService: AuthService,
     private toastService: ToastService,
-    private crmSettingsService: CRMSettingsService
+    private crmSettingsService: CRMSettingsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -78,12 +83,18 @@ export class SettingsComponent implements OnInit {
   }
 
   switchTab(tab: 'general' | 'notifications' | 'preferences' | 'account' | 'crm') {
+    console.log('[Settings] Switching to tab:', tab);
     this.activeTab = tab;
 
     // Load CRM settings when switching to CRM tab
-    if (tab === 'crm' && !this.crmSettings) {
+    if (tab === 'crm' && !this.crmSettings && !this.isLoadingCRM) {
       this.loadCRMSettings();
     }
+  }
+
+  // Helper method for template comparisons to avoid type narrowing issues
+  isTab(tab: string): boolean {
+    return this.activeTab === tab;
   }
 
   isAdminOrSupervisor(): boolean {
@@ -228,13 +239,27 @@ export class SettingsComponent implements OnInit {
    * Load CRM settings from backend
    */
   loadCRMSettings() {
+    this.isLoadingCRM = true;
     this.crmSettingsService.getSettings().subscribe({
       next: (settings) => {
         this.crmSettings = settings;
+        this.isLoadingCRM = false;
         console.log('[Settings] CRM settings loaded:', settings);
+        // Ensure view updates if this subscription executed outside Angular zone
+        try {
+          this.cdr.detectChanges();
+        } catch (e) {
+          /* ignore */
+        }
       },
       error: (err) => {
         console.error('[Settings] Error loading CRM settings:', err);
+        this.isLoadingCRM = false;
+        try {
+          this.cdr.detectChanges();
+        } catch (e) {
+          /* ignore */
+        }
         this.toastService.error('Failed to load CRM settings');
       }
     });

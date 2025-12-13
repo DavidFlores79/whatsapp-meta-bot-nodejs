@@ -1,36 +1,106 @@
 .settings-container {
   display: flex;
   flex-direction: column;
-  background-color: #111b21;
+  background-color: #0b141a;
+}
+
+/* Make container fill available space inside the app layout and allow inner scrolling */
+.settings-container {
+  height: 100%;
+  min-height: 0;
 }
 
 .settings-header {
   flex-shrink: 0;
-  background-color: #202c33;
+  background: linear-gradient(135deg, #202c33 0%, #1a252b 100%);
   border-bottom: 1px solid #2a3942;
+}
+
+/* Top Navigation Tabs */
+.settings-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding-bottom: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3942 transparent;
+}
+
+.settings-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.settings-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-tabs::-webkit-scrollbar-thumb {
+  background: #2a3942;
+  border-radius: 2px;
+}
+
+.tab-button {
+  background-color: transparent;
+  color: #8696a0;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  background-color: rgba(42, 57, 66, 0.5);
+  color: #d1d7db;
+}
+
+.tab-button.active {
+  background-color: #00a884;
+  color: #ffffff;
+  border-color: #00a884;
+  box-shadow: 0 4px 6px -1px rgba(0, 168, 132, 0.3), 0 2px 4px -1px rgba(0, 168, 132, 0.2);
+}
+
+.tab-button i {
+  font-size: 1rem;
 }
 
 .settings-content {
   display: flex;
   flex: 1;
   overflow: hidden;
-}
-
-.settings-sidebar {
-  flex-shrink: 0;
-  overflow-y: auto;
-  background-color: #202c33;
-  border-right: 1px solid #2a3942;
+  /* allow its children to control scrolling in flex layouts */
+  min-height: 0;
+  background: linear-gradient(135deg, #0b141a 0%, #0b141a 100%);
 }
 
 .settings-panel {
   flex: 1;
   overflow-y: auto;
-  background-color: #0b141a;
+  /* make panel background match the dark app background so the page looks continuous */
+  background: linear-gradient(135deg, #0b141a 0%, #0b141a 100%);
+  width: 100%;
+  /* allow inner scrolling to work inside flex container */
+  min-height: 0;
+}
+
+.settings-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: #0b141a;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background: #2a3942;
+  border-radius: 4px;
+}
+
+.settings-panel::-webkit-scrollbar-thumb:hover {
+  background: #00a884;
 }
 
 .settings-section {
-  max-width: 800px;
+  max-width: 900px;
 }
 
 .setting-item {
@@ -54,9 +124,10 @@ input[type="password"],
 input[type="time"],
 select,
 textarea {
-  background-color: #202c33 !important;
+  background-color: #1a252b !important;
   border-color: #2a3942 !important;
   color: #e9edef !important;
+  transition: all 0.2s;
 }
 
 input[type="text"]:focus,
@@ -66,7 +137,16 @@ input[type="time"]:focus,
 select:focus,
 textarea:focus {
   border-color: #00a884 !important;
-  ring-color: #00a884 !important;
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.1) !important;
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="password"]:hover,
+input[type="time"]:hover,
+select:hover,
+textarea:hover {
+  border-color: #3d4b54 !important;
 }
 
 /* Labels and text */
@@ -87,9 +167,115 @@ button:not(.settings-sidebar button) {
   transition: all 0.2s;
 }
 
+button:not(.settings-sidebar button):hover {
+  transform: translateY(-1px);
+}
+
 /* CRM Settings sections */
-.settings-section > div[class*="mb-8"] {
-  background-color: #202c33 !important;
+.settings-section > div[class*="mb-8"],
+.settings-section > div[class*="bg-whatsapp-dark"] {
+  background: linear-gradient(135deg, #202c33 0%, #1a252b 100%) !important;
   border-color: #2a3942 !important;
+  transition: all 0.2s;
+}
+
+.settings-section > div[class*="mb-8"]:hover,
+.settings-section > div[class*="bg-whatsapp-dark"]:hover {
+  border-color: #3d4b54 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Card styling */
+.bg-whatsapp-dark {
+  background: linear-gradient(135deg, #202c33 0%, #1a252b 100%);
+}
+
+/* Helper text */
+.text-xs.text-gray-400 {
+  color: #667781 !important;
+}
+
+/* Save buttons styling */
+button[class*="bg-whatsapp-teal"] {
+  background: linear-gradient(135deg, #00a884 0%, #00917a 100%);
+  box-shadow: 0 2px 8px rgba(0, 168, 132, 0.3);
+}
+
+button[class*="bg-whatsapp-teal"]:hover {
+  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4);
+  transform: translateY(-2px);
+}
+
+button[class*="bg-gray-600"] {
+  background: linear-gradient(135deg, #54656f 0%, #3d4b54 100%);
+}
+
+button[class*="bg-gray-600"]:hover {
+  background: linear-gradient(135deg, #667781 0%, #54656f 100%);
+}
+
+/* Loading states */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Grid improvements */
+.grid {
+  gap: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .settings-header {
+    padding: 1rem;
+  }
+
+  .settings-tabs {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .tab-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .settings-panel {
+    padding: 1rem;
+  }
+
+  .settings-section {
+    max-width: 100%;
+  }
+}
+
+/* Ensure buttons are clickable */
+.tab-button {
+  position: relative;
+  z-index: 10;
+  pointer-events: all;
+}
+
+
+}
+
+/* Section headings */
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* Icons in labels */
+label i {
+  opacity: 0.8;
 }
 
