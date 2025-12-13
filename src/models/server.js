@@ -97,6 +97,7 @@ class Server {
     this.app.use("/api/v2/conversations", require("../routes/conversationRoutes"));
     this.app.use("/api/v2/customers", require("../routes/customerRoutes"));
     this.app.use("/api/v2/templates", require("../routes/templateRoutes"));
+    this.app.use("/api/v2/crm-settings", require("../routes/crmSettingsRoutes"));
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));

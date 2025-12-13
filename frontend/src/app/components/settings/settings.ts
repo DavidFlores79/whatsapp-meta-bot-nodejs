@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
+import { CRMSettingsService, CRMSettings } from '../../services/crm-settings';
 import { AVAILABLE_LANGUAGES, LANGUAGE_STORAGE_KEY } from '../../config/translation.config';
 
 interface Language {
@@ -20,7 +21,7 @@ interface Language {
   styleUrls: ['./settings.css']
 })
 export class SettingsComponent implements OnInit {
-  activeTab: 'general' | 'notifications' | 'preferences' | 'account' = 'general';
+  activeTab: 'general' | 'notifications' | 'preferences' | 'account' | 'crm' = 'general';
 
   // General settings
   selectedLanguage: string = 'es-MX';
@@ -48,10 +49,15 @@ export class SettingsComponent implements OnInit {
     confirmPassword: ''
   };
 
+  // CRM Settings
+  crmSettings: CRMSettings | null = null;
+  isSavingCRM = false;
+
   constructor(
     private translate: TranslateService,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private crmSettingsService: CRMSettingsService
   ) {}
 
   ngOnInit() {
@@ -71,8 +77,17 @@ export class SettingsComponent implements OnInit {
     this.loadPreferences();
   }
 
-  switchTab(tab: 'general' | 'notifications' | 'preferences' | 'account') {
+  switchTab(tab: 'general' | 'notifications' | 'preferences' | 'account' | 'crm') {
     this.activeTab = tab;
+
+    // Load CRM settings when switching to CRM tab
+    if (tab === 'crm' && !this.crmSettings) {
+      this.loadCRMSettings();
+    }
+  }
+
+  isAdminOrSupervisor(): boolean {
+    return this.authService.isAdminOrSupervisor();
   }
 
   changeLanguage() {
@@ -207,5 +222,70 @@ export class SettingsComponent implements OnInit {
 
   private savePreferences() {
     this.toastService.success(this.translate.instant('settings.updateSuccess'));
+  }
+
+  /**
+   * Load CRM settings from backend
+   */
+  loadCRMSettings() {
+    this.crmSettingsService.getSettings().subscribe({
+      next: (settings) => {
+        this.crmSettings = settings;
+        console.log('[Settings] CRM settings loaded:', settings);
+      },
+      error: (err) => {
+        console.error('[Settings] Error loading CRM settings:', err);
+        this.toastService.error('Failed to load CRM settings');
+      }
+    });
+  }
+
+  /**
+   * Save CRM settings to backend
+   */
+  saveCRMSettings() {
+    if (!this.crmSettings) {
+      this.toastService.error('No settings to save');
+      return;
+    }
+
+    this.isSavingCRM = true;
+    this.crmSettingsService.updateSettings(this.crmSettings).subscribe({
+      next: (response) => {
+        this.crmSettings = response.settings;
+        this.isSavingCRM = false;
+        this.toastService.success(response.message || 'CRM settings saved successfully');
+        console.log('[Settings] CRM settings saved');
+      },
+      error: (err) => {
+        this.isSavingCRM = false;
+        console.error('[Settings] Error saving CRM settings:', err);
+        this.toastService.error('Failed to save CRM settings');
+      }
+    });
+  }
+
+  /**
+   * Reset CRM settings to defaults
+   */
+  resetCRMSettings() {
+    if (!confirm('Are you sure you want to reset all CRM settings to defaults? This cannot be undone.')) {
+      return;
+    }
+
+    this.isSavingCRM = true;
+    this.crmSettingsService.resetToDefaults().subscribe({
+      next: (response) => {
+        this.crmSettings = response.settings;
+        this.isSavingCRM = false;
+        this.toastService.success(response.message || 'CRM settings reset to defaults');
+        console.log('[Settings] CRM settings reset');
+      },
+      error: (err) => {
+        this.isSavingCRM = false;
+        console.error('[Settings] Error resetting CRM settings:', err);
+        this.toastService.error('Failed to reset CRM settings');
+      }
+    });
   }
 }

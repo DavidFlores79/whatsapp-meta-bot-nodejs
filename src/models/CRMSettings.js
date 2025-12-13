@@ -192,13 +192,41 @@ const crmSettingsSchema = new mongoose.Schema({
             default: 'America/Mexico_City'
         },
         schedule: {
-            monday: { start: '09:00', end: '18:00', enabled: true },
-            tuesday: { start: '09:00', end: '18:00', enabled: true },
-            wednesday: { start: '09:00', end: '18:00', enabled: true },
-            thursday: { start: '09:00', end: '18:00', enabled: true },
-            friday: { start: '09:00', end: '18:00', enabled: true },
-            saturday: { start: '09:00', end: '14:00', enabled: false },
-            sunday: { start: '00:00', end: '00:00', enabled: false }
+            monday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '18:00' }, 
+                enabled: { type: Boolean, default: true }
+            },
+            tuesday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '18:00' }, 
+                enabled: { type: Boolean, default: true }
+            },
+            wednesday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '18:00' }, 
+                enabled: { type: Boolean, default: true }
+            },
+            thursday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '18:00' }, 
+                enabled: { type: Boolean, default: true }
+            },
+            friday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '18:00' }, 
+                enabled: { type: Boolean, default: true }
+            },
+            saturday: { 
+                start: { type: String, default: '09:00' }, 
+                end: { type: String, default: '14:00' }, 
+                enabled: { type: Boolean, default: false }
+            },
+            sunday: { 
+                start: { type: String, default: '00:00' }, 
+                end: { type: String, default: '00:00' }, 
+                enabled: { type: Boolean, default: false }
+            }
         },
         afterHoursMessage: {
             type: String,

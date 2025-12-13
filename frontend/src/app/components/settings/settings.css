@@ -1,10 +1,13 @@
 .settings-container {
   display: flex;
   flex-direction: column;
+  background-color: #111b21;
 }
 
 .settings-header {
   flex-shrink: 0;
+  background-color: #202c33;
+  border-bottom: 1px solid #2a3942;
 }
 
 .settings-content {
@@ -16,11 +19,14 @@
 .settings-sidebar {
   flex-shrink: 0;
   overflow-y: auto;
+  background-color: #202c33;
+  border-right: 1px solid #2a3942;
 }
 
 .settings-panel {
   flex: 1;
   overflow-y: auto;
+  background-color: #0b141a;
 }
 
 .settings-section {
@@ -31,12 +37,59 @@
   padding: 1rem 0;
 }
 
-/* Toggle switch animations */
+/* Toggle switch animations - WhatsApp teal color */
 input[type="checkbox"]:checked + div {
-  background-color: rgb(37, 99, 235);
+  background-color: #00a884;
 }
 
 input[type="checkbox"]:disabled + div {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Input fields dark theme */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="time"],
+select,
+textarea {
+  background-color: #202c33 !important;
+  border-color: #2a3942 !important;
+  color: #e9edef !important;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+  border-color: #00a884 !important;
+  ring-color: #00a884 !important;
+}
+
+/* Labels and text */
+label {
+  color: #e9edef !important;
+}
+
+h2, h3 {
+  color: #ffffff !important;
+}
+
+p {
+  color: #8696a0 !important;
+}
+
+/* Buttons */
+button:not(.settings-sidebar button) {
+  transition: all 0.2s;
+}
+
+/* CRM Settings sections */
+.settings-section > div[class*="mb-8"] {
+  background-color: #202c33 !important;
+  border-color: #2a3942 !important;
+}
+

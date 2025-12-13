@@ -1,6 +1,6 @@
 <div class="settings-container h-full flex flex-col bg-gray-900">
   <!-- Header -->
-  <div class="settings-header p-6 border-b border-gray-200 dark:border-gray-700">
+  <div class="settings-header p-6 border-b border-gray-700 bg-whatsapp-dark">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
       {{ 'settings.title' | translate }}
     </h1>
@@ -9,48 +9,50 @@
   <!-- Main Content -->
   <div class="settings-content flex-1 flex overflow-hidden">
     <!-- Sidebar Navigation -->
-    <div class="settings-sidebar w-64 border-r border-gray-200 dark:border-gray-700 p-4">
+    <div class="settings-sidebar w-64 border-r border-gray-700 p-4 bg-whatsapp-dark">
       <nav class="space-y-1">
         <button
           (click)="switchTab('general')"
-          [class.bg-blue-50]="activeTab === 'general'"
-          [class.dark:bg-blue-900]="activeTab === 'general'"
-          [class.text-blue-600]="activeTab === 'general'"
-          [class.dark:text-blue-300]="activeTab === 'general'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          [class.bg-whatsapp-teal]="activeTab === 'general'"
+          [class.text-white]="activeTab === 'general'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
         >
           {{ 'settings.general' | translate }}
         </button>
 
         <button
           (click)="switchTab('notifications')"
-          [class.bg-blue-50]="activeTab === 'notifications'"
-          [class.dark:bg-blue-900]="activeTab === 'notifications'"
-          [class.text-blue-600]="activeTab === 'notifications'"
-          [class.dark:text-blue-300]="activeTab === 'notifications'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          [class.bg-whatsapp-teal]="activeTab === 'notifications'"
+          [class.text-white]="activeTab === 'notifications'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
         >
           {{ 'settings.notifications' | translate }}
         </button>
 
         <button
           (click)="switchTab('preferences')"
-          [class.bg-blue-50]="activeTab === 'preferences'"
-          [class.dark:bg-blue-900]="activeTab === 'preferences'"
-          [class.text-blue-600]="activeTab === 'preferences'"
-          [class.dark:text-blue-300]="activeTab === 'preferences'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          [class.bg-whatsapp-teal]="activeTab === 'preferences'"
+          [class.text-white]="activeTab === 'preferences'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
         >
           {{ 'settings.preferences' | translate }}
         </button>
 
         <button
+          *ngIf="isAdminOrSupervisor()"
+          (click)="switchTab('crm')"
+          [class.bg-whatsapp-teal]="activeTab === 'crm'"
+          [class.text-white]="activeTab === 'crm'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
+        >
+          <i class="fas fa-cogs mr-2"></i> CRM Settings
+        </button>
+
+        <button
           (click)="switchTab('account')"
-          [class.bg-blue-50]="activeTab === 'account'"
-          [class.dark:bg-blue-900]="activeTab === 'account'"
-          [class.text-blue-600]="activeTab === 'account'"
-          [class.dark:text-blue-300]="activeTab === 'account'"
-          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          [class.bg-whatsapp-teal]="activeTab === 'account'"
+          [class.text-white]="activeTab === 'account'"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300"
         >
           {{ 'settings.account' | translate }}
         </button>
@@ -58,7 +60,7 @@
     </div>
 
     <!-- Content Area -->
-    <div class="settings-panel flex-1 overflow-y-auto p-6">
+    <div class="settings-panel flex-1 overflow-y-auto p-6 bg-whatsapp-gray">
       <!-- General Settings -->
       <div *ngIf="activeTab === 'general'" class="space-y-6">
         <div class="settings-section">
@@ -68,13 +70,13 @@
 
           <!-- Language Selection -->
           <div class="setting-item mb-6">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               {{ 'settings.language' | translate }}
             </label>
             <select
               [(ngModel)]="selectedLanguage"
               (change)="changeLanguage()"
-              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
             >
               <option *ngFor="let lang of availableLanguages" [value]="lang.code">
                 {{ lang.flag }} {{ lang.name }}
@@ -84,13 +86,13 @@
 
           <!-- Theme Selection -->
           <div class="setting-item">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               {{ 'settings.theme' | translate }}
             </label>
             <select
               [(ngModel)]="selectedTheme"
               (change)="changeTheme()"
-              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
             >
               <option value="light">{{ 'settings.light' | translate }}</option>
               <option value="dark">{{ 'settings.dark' | translate }}</option>
@@ -109,7 +111,7 @@
 
           <!-- Enable Notifications -->
           <div class="setting-item mb-4 flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {{ 'settings.enableNotifications' | translate }}
             </label>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -125,7 +127,7 @@
 
           <!-- Sound Enabled -->
           <div class="setting-item mb-4 flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {{ 'settings.soundEnabled' | translate }}
             </label>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -142,7 +144,7 @@
 
           <!-- Desktop Notifications -->
           <div class="setting-item flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {{ 'settings.desktopNotifications' | translate }}
             </label>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -168,7 +170,7 @@
 
           <!-- Auto-assign -->
           <div class="setting-item mb-4 flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {{ 'settings.autoAssignEnabled' | translate }}
             </label>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -184,7 +186,7 @@
 
           <!-- Max Concurrent Chats -->
           <div class="setting-item">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               {{ 'settings.maxConcurrentChats' | translate }}
             </label>
             <input
@@ -193,7 +195,7 @@
               (change)="updateMaxConcurrentChats()"
               min="1"
               max="20"
-              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
@@ -211,7 +213,7 @@
             <h3 class="text-lg font-medium mb-3 text-gray-900 dark:text-white">
               {{ 'settings.personalInfo' | translate }}
             </h3>
-            <div *ngIf="currentAgent" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <div *ngIf="currentAgent" class="space-y-2 text-sm text-gray-200">
               <p><strong>{{ 'common.name' | translate }}:</strong> {{ currentAgent.firstName }} {{ currentAgent.lastName }}</p>
               <p><strong>{{ 'common.email' | translate }}:</strong> {{ currentAgent.email }}</p>
               <p><strong>{{ 'common.status' | translate }}:</strong> {{ currentAgent.status }}</p>
@@ -225,38 +227,38 @@
             </h3>
             <form class="space-y-4 max-w-md">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   {{ 'settings.currentPassword' | translate }}
                 </label>
                 <input
                   type="password"
                   [(ngModel)]="passwordForm.currentPassword"
                   name="currentPassword"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   {{ 'settings.newPassword' | translate }}
                 </label>
                 <input
                   type="password"
                   [(ngModel)]="passwordForm.newPassword"
                   name="newPassword"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   {{ 'settings.confirmPassword' | translate }}
                 </label>
                 <input
                   type="password"
                   [(ngModel)]="passwordForm.confirmPassword"
                   name="confirmPassword"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
                 />
               </div>
 
@@ -268,6 +270,342 @@
                 {{ 'settings.updateProfile' | translate }}
               </button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRM Settings -->
+      <div *ngIf="activeTab === 'crm'" class="space-y-6">
+        <div *ngIf="!crmSettings" class="flex justify-center items-center py-12">
+          <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-teal mb-4"></i>
+            <p class="text-gray-400">Loading CRM settings...</p>
+          </div>
+        </div>
+
+        <div *ngIf="crmSettings" class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <i class="fas fa-cogs mr-2"></i> CRM Settings
+          </h2>
+          <p class="text-sm text-gray-400 mb-6">
+            Configure conversation lifecycle, SLA targets, and escalation rules for customer support operations.
+          </p>
+
+          <!-- Auto-timeout Settings -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-clock mr-2"></i> Auto-timeout Settings
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Automatically close conversations after inactivity periods.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Open Status Timeout (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.autoTimeout.open"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 48 hours</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Assigned Status Timeout (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.autoTimeout.assigned"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 24 hours</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Waiting Status Timeout (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.autoTimeout.waiting"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 12 hours</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Resolved Status Timeout (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.autoTimeout.resolved"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 4 hours</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- SLA Targets -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-bullseye mr-2"></i> SLA Targets
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Define service level agreement targets for response and resolution times.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  First Response Time (minutes)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.sla.firstResponseTime"
+                  min="1"
+                  max="1440"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 5 minutes</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Resolution Time (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="crmSettings.sla.resolutionTime"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 24 hours</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority Escalation -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-exclamation-triangle mr-2"></i> Priority Escalation Rules
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Automatically escalate conversations based on keywords, wait times, or VIP status.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Urgent Keywords (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="crmSettings.priorityEscalation.urgentKeywords"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Messages containing these keywords will be marked as urgent</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  High Priority Keywords (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="crmSettings.priorityEscalation.highKeywords"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Messages containing these keywords will be marked as high priority</p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    Wait Time for Medium Priority (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    [(ngModel)]="crmSettings.priorityEscalation.waitTimeThreshold"
+                    min="1"
+                    max="1440"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                  />
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Escalate to medium after this wait time</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    Wait Time for High Priority (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    value="30"
+                    min="1"
+                    max="1440"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                  />
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Escalate to high after this wait time</p>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Auto-escalate VIP Customers to High Priority
+                </label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="crmSettings.priorityEscalation.vipAutoEscalate"
+                    class="sr-only peer"
+                  />
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resolution Confirmation -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-check-circle mr-2"></i> Resolution Confirmation
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Send WhatsApp interactive buttons to confirm resolution with customers.
+            </p>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Send Confirmation Buttons
+                </label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="crmSettings.resolutionConfirmation.enabled"
+                    class="sr-only peer"
+                  />
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Confirmation Message
+                </label>
+                <textarea
+                  rows="3"
+                  [(ngModel)]="crmSettings.resolutionConfirmation.messageTemplate"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                ></textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Message sent to customer when conversation is marked as resolved</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Business Hours -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-business-time mr-2"></i> Business Hours
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Define business hours for SLA calculations and auto-assignments.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  [(ngModel)]="crmSettings.businessHours.schedule.monday.start"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  End Time
+                </label>
+                <input
+                  type="time"
+                  [(ngModel)]="crmSettings.businessHours.schedule.monday.end"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                Working Days
+              </label>
+              <div class="flex flex-wrap gap-2">
+                <label class="inline-flex items-center">
+                  <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Monday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Tuesday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Wednesday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Thursday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Friday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Saturday</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" />
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sunday</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Buttons -->
+          <div class="flex justify-between">
+            <button
+              type="button"
+              (click)="resetCRMSettings()"
+              [disabled]="isSavingCRM"
+              class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-undo mr-2"></i> Reset to Defaults
+            </button>
+            <button
+              type="button"
+              (click)="saveCRMSettings()"
+              [disabled]="isSavingCRM"
+              class="px-6 py-2 bg-whatsapp-teal text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-save mr-2"></i>
+              {{ isSavingCRM ? 'Saving...' : 'Save CRM Settings' }}
+            </button>
           </div>
         </div>
       </div>
