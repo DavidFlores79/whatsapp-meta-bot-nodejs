@@ -88,6 +88,7 @@
       </button>
 
       <button
+        *ngIf="currentAgent?.role === 'admin' || currentAgent?.role === 'supervisor'"
         (click)="navigateToReports()"
         [class.bg-whatsapp-gray]="currentView === 'reports'"
         [class.text-whatsapp-green]="currentView === 'reports'"

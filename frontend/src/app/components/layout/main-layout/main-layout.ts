@@ -273,15 +273,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   logout() {
     this.closeMenu();
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-      },
-      error: (err) => {
-        console.error('Logout error:', err);
-        // Navigate to login anyway
-        this.router.navigate(['/login']);
-      }
+    // Logout now clears auth immediately and handles navigation
+    this.authService.logout().subscribe(() => {
+      this.router.navigate(['/login']);
     });
   }
 

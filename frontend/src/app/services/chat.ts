@@ -92,7 +92,14 @@ export class ChatService {
     // Load conversations based on agent authentication status
     this.authService.currentAgent$.subscribe((agent: Agent | null) => {
       this.currentAgent = agent; // Store current agent
-      this.loadConversations(agent);
+
+      // Only load conversations if agent is authenticated
+      if (agent) {
+        this.loadConversations(agent);
+      } else {
+        // Clear conversations when not authenticated
+        this.chatsSubject.next([]);
+      }
     });
   }
 

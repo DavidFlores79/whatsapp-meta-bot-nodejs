@@ -104,10 +104,17 @@ export class ReportsComponent implements OnInit {
       agentPerformance: this.agentPerformance
     });
 
+    // Only allow admin/supervisor access
+    const currentAgent = this.authService.getCurrentAgent();
+    if (!currentAgent || (currentAgent.role !== 'admin' && currentAgent.role !== 'supervisor')) {
+      console.log('[Reports] Access denied - insufficient permissions');
+      this.toastService.error(this.translate.instant('reports.accessDenied'));
+      return;
+    }
+
     // Load agents first, then auto-select and load data
     this.loadAgents().then(() => {
       // After agents load, set default agent to current user
-      const currentAgent = this.authService.getCurrentAgent();
       if (currentAgent && this.agents.length > 0) {
         this.selectedAgentId = currentAgent._id;
         console.log('[Reports] Auto-loading performance for current agent:', this.selectedAgentId);

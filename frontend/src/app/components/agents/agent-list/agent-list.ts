@@ -52,12 +52,14 @@ export class AgentListComponent implements OnInit, OnDestroy {
           this.currentAgent = agent;
           this.isAdmin = agent.role === 'admin';
           this.isSupervisor = agent.role === 'supervisor';
+
+          // Only load agents if user has permission
+          if (this.isAdmin || this.isSupervisor) {
+            this.loadAgents();
+          }
         }
       })
     );
-
-    // Load agents
-    this.loadAgents();
 
     // Subscribe to agents updates
     this.subscription.add(
@@ -85,11 +87,16 @@ export class AgentListComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('[AgentList] Error loading agents:', error);
-        console.error('[AgentList] Error status:', error.status);
-        console.error('[AgentList] Error message:', error.message);
-        this.toastService.error('Error loading agents: ' + (error.error?.error || error.message || 'Unknown error'));
         this.loading = false;
+
+        // Don't show errors for permission issues (expected for non-admin/supervisor users)
+        if (error.status === 403) {
+          console.log('[AgentList] Access denied - user does not have permission to view agents');
+        } else {
+          console.error('[AgentList] Error loading agents:', error);
+          this.toastService.error('Error loading agents: ' + (error.error?.error || error.message || 'Unknown error'));
+        }
+
         this.cdr.detectChanges();
       },
       complete: () => {

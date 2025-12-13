@@ -20,7 +20,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError(error => {
       // If 401 Unauthorized, try to refresh token (token expired/invalid)
       // Do NOT refresh on 403 Forbidden (user lacks permission - legitimate access denial)
-      if (error.status === 401 && !req.url.includes('/auth/refresh') && !req.url.includes('/auth/login')) {
+      // Do NOT refresh on logout endpoint (prevents infinite loop)
+      if (error.status === 401 && !req.url.includes('/auth/refresh') && !req.url.includes('/auth/login') && !req.url.includes('/auth/logout')) {
         return authService.refreshAccessToken().pipe(
           switchMap(() => {
             // Retry request with new token
@@ -33,8 +34,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return next(retryReq);
           }),
           catchError(refreshError => {
-            // Refresh failed, logout
-            authService.logout().subscribe();
+            // Refresh failed, clear auth and redirect to login
+            authService.clearAuthAndRedirect();
             return throwError(() => refreshError);
           })
         );

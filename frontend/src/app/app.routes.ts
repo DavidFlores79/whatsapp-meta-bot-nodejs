@@ -24,6 +24,23 @@ const authGuard = () => {
     return router.createUrlTree(['/login']);
 };
 
+// Admin/Supervisor guard function
+const adminGuard = () => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    if (!authService.isAuthenticated()) {
+        return router.createUrlTree(['/login']);
+    }
+
+    if (authService.isAdminOrSupervisor()) {
+        return true;
+    }
+
+    // Redirect to home if not admin/supervisor
+    return router.createUrlTree(['/']);
+};
+
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
     {
@@ -36,8 +53,8 @@ export const routes: Routes = [
             { path: 'customers/:id', component: CustomerDetailComponent },
             { path: 'customers/:id/edit', component: CustomerFormComponent },
             { path: 'templates', component: TemplateListComponent },
-            { path: 'agents', component: AgentListComponent },
-            { path: 'reports', component: ReportsComponent },
+            { path: 'agents', component: AgentListComponent, canActivate: [adminGuard] },
+            { path: 'reports', component: ReportsComponent, canActivate: [adminGuard] },
             { path: 'settings', component: SettingsComponent }
         ]
     }

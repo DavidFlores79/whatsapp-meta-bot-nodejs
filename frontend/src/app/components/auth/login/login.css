@@ -1,1 +1,7 @@
 /* Login component styles */
+.login-background {
+  position: relative;
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(0, 168, 132, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 168, 132, 0.05) 0%, transparent 50%);
+}

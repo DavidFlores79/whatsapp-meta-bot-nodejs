@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 
 export interface Agent {
   _id: string;
@@ -32,6 +33,7 @@ export interface AuthResponse {
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private router = inject(Router);
   private apiUrl = '/api/v2/agents';
 
   private currentAgentSubject = new BehaviorSubject<Agent | null>(null);
@@ -77,17 +79,33 @@ export class AuthService {
 
   logout(): Observable<any> {
     const refreshToken = localStorage.getItem('refreshToken');
+
+    // Send logout request BEFORE clearing auth (endpoint needs valid token)
     return this.http.post(`${this.apiUrl}/auth/logout`, { refreshToken }).pipe(
-      tap(() => this.clearAuth())
+      tap(() => {
+        // Clear auth after successful logout
+        this.clearAuth();
+      }),
+      catchError((error) => {
+        // Even if logout fails, clear auth locally
+        console.warn('Logout request failed, clearing auth anyway:', error);
+        this.clearAuth();
+        return [];
+      })
     );
   }
 
-  private clearAuth() {
+  clearAuth() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('agent');
     this.currentAgentSubject.next(null);
     this.isAuthenticatedSubject.next(false);
+  }
+
+  clearAuthAndRedirect() {
+    this.clearAuth();
+    this.router.navigate(['/login']);
   }
 
   getAccessToken(): string | null {
@@ -96,6 +114,12 @@ export class AuthService {
 
   refreshAccessToken(): Observable<{ accessToken: string }> {
     const refreshToken = localStorage.getItem('refreshToken');
+
+    // Don't attempt refresh if no refresh token exists
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
     return this.http.post<{ accessToken: string }>(`${this.apiUrl}/auth/refresh`, {
       refreshToken
     }).pipe(
@@ -140,5 +164,22 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this.isAuthenticatedSubject.value;
+  }
+
+  hasRole(...roles: Agent['role'][]): boolean {
+    const agent = this.getCurrentAgent();
+    return agent ? roles.includes(agent.role) : false;
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
+  isSupervisor(): boolean {
+    return this.hasRole('supervisor');
+  }
+
+  isAdminOrSupervisor(): boolean {
+    return this.hasRole('admin', 'supervisor');
   }
 }
