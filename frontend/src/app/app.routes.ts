@@ -9,6 +9,7 @@ import { CustomerFormComponent } from './components/customers/customer-form/cust
 import { TemplateListComponent } from './components/templates/template-list/template-list';
 import { ReportsComponent } from './components/reports/reports';
 import { SettingsComponent } from './components/settings/settings';
+import { AgentListComponent } from './components/agents/agent-list/agent-list';
 import { AuthService } from './services/auth';
 
 // Auth guard function
@@ -35,6 +36,7 @@ export const routes: Routes = [
             { path: 'customers/:id', component: CustomerDetailComponent },
             { path: 'customers/:id/edit', component: CustomerFormComponent },
             { path: 'templates', component: TemplateListComponent },
+            { path: 'agents', component: AgentListComponent },
             { path: 'reports', component: ReportsComponent },
             { path: 'settings', component: SettingsComponent }
         ]

@@ -18,8 +18,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError(error => {
-      // If 403, try to refresh token
-      if (error.status === 403 && !req.url.includes('/auth/refresh')) {
+      // If 401 Unauthorized, try to refresh token (token expired/invalid)
+      // Do NOT refresh on 403 Forbidden (user lacks permission - legitimate access denial)
+      if (error.status === 401 && !req.url.includes('/auth/refresh') && !req.url.includes('/auth/login')) {
         return authService.refreshAccessToken().pipe(
           switchMap(() => {
             // Retry request with new token

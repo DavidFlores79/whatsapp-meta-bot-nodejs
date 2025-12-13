@@ -23,7 +23,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   currentAgent: Agent | null = null;
   hasSelectedChat = false;
   showMenu = false;
-  currentView: 'chat' | 'customers' | 'templates' | 'reports' | 'settings' = 'chat';
+  currentView: 'chat' | 'customers' | 'templates' | 'agents' | 'reports' | 'settings' = 'chat';
   sidebarCollapsed = false;
 
   // Resizable sidebar
@@ -191,6 +191,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       this.currentView = 'customers';
     } else if (url.includes('/templates')) {
       this.currentView = 'templates';
+    } else if (url.includes('/agents')) {
+      this.currentView = 'agents';
     } else if (url.includes('/reports')) {
       this.currentView = 'reports';
     } else if (url.includes('/settings')) {
@@ -213,6 +215,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   navigateToTemplates() {
     this.currentView = 'templates';
     this.router.navigate(['/templates']);
+  }
+
+  navigateToAgents() {
+    this.currentView = 'agents';
+    this.router.navigate(['/agents']);
   }
 
   navigateToReports() {

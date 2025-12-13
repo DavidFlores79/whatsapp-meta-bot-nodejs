@@ -1,0 +1,227 @@
+<div class="h-full flex flex-col bg-whatsapp-dark">
+  <!-- Header -->
+  <div class="bg-whatsapp-dark border-b border-gray-700 px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-100">{{ 'agents.title' | translate }}</h1>
+        <p class="mt-1 text-sm text-gray-400">{{ 'agents.subtitle' | translate }}</p>
+      </div>
+      <button
+        *ngIf="isAdmin"
+        (click)="createAgent()"
+        class="inline-flex items-center px-4 py-2 bg-whatsapp-green hover:bg-green-600 text-white rounded-lg transition-colors"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        {{ 'agents.createAgent' | translate }}
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+      <!-- Search -->
+      <div class="md:col-span-2">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="{{ 'agents.searchPlaceholder' | translate }}"
+          class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 text-gray-100 placeholder-gray-500 rounded-lg focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+        />
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <select
+          [(ngModel)]="statusFilter"
+          (change)="onFilterChange()"
+          class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+        >
+          <option value="all">{{ 'agents.filters.allStatuses' | translate }}</option>
+          <option value="online">{{ 'agents.status.online' | translate }}</option>
+          <option value="offline">{{ 'agents.status.offline' | translate }}</option>
+          <option value="busy">{{ 'agents.status.busy' | translate }}</option>
+          <option value="away">{{ 'agents.status.away' | translate }}</option>
+        </select>
+      </div>
+
+      <!-- Role Filter -->
+      <div>
+        <select
+          [(ngModel)]="roleFilter"
+          (change)="onFilterChange()"
+          class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+        >
+          <option value="all">{{ 'agents.filters.allRoles' | translate }}</option>
+          <option value="admin">{{ 'agents.role.admin' | translate }}</option>
+          <option value="supervisor">{{ 'agents.role.supervisor' | translate }}</option>
+          <option value="agent">{{ 'agents.role.agent' | translate }}</option>
+        </select>
+      </div>
+
+      <!-- Active Filter -->
+      <div>
+        <select
+          [(ngModel)]="isActiveFilter"
+          (change)="onFilterChange()"
+          class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+        >
+          <option value="all">{{ 'agents.filters.allActive' | translate }}</option>
+          <option value="active">{{ 'agents.filters.active' | translate }}</option>
+          <option value="inactive">{{ 'agents.filters.inactive' | translate }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex-1 flex items-center justify-center">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green mx-auto"></div>
+      <p class="mt-4 text-gray-400">{{ 'common.loading' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Agent List -->
+  <div *ngIf="!loading" class="flex-1 overflow-auto p-6">
+    <div *ngIf="filteredAgents.length === 0" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-100">{{ 'agents.noAgents' | translate }}</h3>
+      <p class="mt-1 text-sm text-gray-400">{{ 'agents.noAgentsDescription' | translate }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        *ngFor="let agent of filteredAgents"
+        class="bg-whatsapp-dark rounded-lg shadow hover:shadow-md transition-shadow border border-gray-700"
+      >
+        <div class="p-6">
+          <!-- Header -->
+          <div class="flex items-start justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="h-12 w-12 rounded-full bg-whatsapp-green bg-opacity-20 flex items-center justify-center">
+                  <span class="text-whatsapp-green font-semibold text-lg">
+                    {{ agent.firstName.charAt(0) }}{{ agent.lastName.charAt(0) }}
+                  </span>
+                </div>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-lg font-medium text-gray-100">
+                  {{ agent.firstName }} {{ agent.lastName }}
+                </h3>
+                <p class="text-sm text-gray-400">{{ agent.email }}</p>
+              </div>
+            </div>
+            <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + getStatusBadgeClass(agent.status)">
+              {{ 'agents.status.' + agent.status | translate }}
+            </span>
+          </div>
+
+          <!-- Info -->
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-400">{{ 'agents.fields.role' | translate }}:</span>
+              <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + getRoleBadgeClass(agent.role)">
+                {{ 'agents.role.' + agent.role | translate }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-400">{{ 'agents.fields.status' | translate }}:</span>
+              <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + (agent.isActive ? 'bg-green-900 bg-opacity-50 text-green-300' : 'bg-red-900 bg-opacity-50 text-red-300')">
+                {{ agent.isActive ? ('agents.filters.active' | translate) : ('agents.filters.inactive' | translate) }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-400">{{ 'agents.fields.assignedChats' | translate }}:</span>
+              <span class="text-sm font-medium text-gray-100">
+                {{ agent.assignedConversations?.length || 0 }} / {{ agent.maxConcurrentChats }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Statistics -->
+          <div class="mt-4 pt-4 border-t border-gray-700">
+            <div class="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <p class="text-2xl font-semibold text-gray-100">{{ agent.statistics?.totalConversations || 0 }}</p>
+                <p class="text-xs text-gray-400">{{ 'agents.stats.total' | translate }}</p>
+              </div>
+              <div>
+                <p class="text-2xl font-semibold text-whatsapp-green">{{ agent.statistics?.resolvedConversations || 0 }}</p>
+                <p class="text-xs text-gray-400">{{ 'agents.stats.resolved' | translate }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-4 flex gap-2">
+            <button
+              (click)="viewAgent(agent)"
+              class="flex-1 px-3 py-2 text-sm bg-whatsapp-input hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+            >
+              {{ 'common.view' | translate }}
+            </button>
+            <button
+              *ngIf="canEditAgent(agent)"
+              (click)="editAgent(agent)"
+              class="flex-1 px-3 py-2 text-sm bg-whatsapp-green bg-opacity-20 hover:bg-opacity-30 text-whatsapp-green rounded-lg transition-colors"
+            >
+              {{ 'common.edit' | translate }}
+            </button>
+            <button
+              *ngIf="canDeleteAgent(agent)"
+              (click)="confirmDelete(agent)"
+              class="px-3 py-2 text-sm bg-red-900 bg-opacity-30 hover:bg-opacity-40 text-red-300 rounded-lg transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Create/Edit Modal -->
+<app-agent-modal
+  [show]="showAgentModal"
+  [agentId]="selectedAgentId"
+  [isAdmin]="isAdmin"
+  (close)="closeAgentModal()"
+  (saved)="onAgentSaved()"
+></app-agent-modal>
+
+<!-- Delete Confirmation Modal -->
+<div
+  *ngIf="showDeleteModal"
+  class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+  (click)="cancelDelete()"
+>
+  <div class="bg-whatsapp-dark border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+    <h3 class="text-lg font-semibold text-gray-100 mb-4">{{ 'agents.deleteConfirmTitle' | translate }}</h3>
+    <p class="text-gray-300 mb-6">
+      {{ 'agents.deleteConfirmMessage' | translate }}
+      <strong *ngIf="agentToDelete" class="text-gray-100">{{ agentToDelete.firstName }} {{ agentToDelete.lastName }}</strong>?
+    </p>
+    <div class="flex gap-3 justify-end">
+      <button
+        (click)="cancelDelete()"
+        class="px-4 py-2 text-gray-200 bg-whatsapp-input hover:bg-gray-600 rounded-lg transition-colors"
+      >
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        (click)="deleteAgent()"
+        class="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+      >
+        {{ 'common.delete' | translate }}
+      </button>
+    </div>
+  </div>
+</div>

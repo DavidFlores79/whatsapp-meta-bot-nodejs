@@ -75,6 +75,19 @@
       </button>
 
       <button
+        *ngIf="currentAgent?.role === 'admin' || currentAgent?.role === 'supervisor'"
+        (click)="navigateToAgents()"
+        [class.bg-whatsapp-gray]="currentView === 'agents'"
+        [class.text-whatsapp-green]="currentView === 'agents'"
+        [class.border-l-whatsapp-green]="currentView === 'agents'"
+        [class.justify-center]="sidebarCollapsed"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
+        [title]="sidebarCollapsed ? ('navigation.agents' | translate) : ''">
+        <i class="fas fa-user-shield text-xl flex-shrink-0"></i>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.agents' | translate }}</span>
+      </button>
+
+      <button
         (click)="navigateToReports()"
         [class.bg-whatsapp-gray]="currentView === 'reports'"
         [class.text-whatsapp-green]="currentView === 'reports'"

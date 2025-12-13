@@ -14,7 +14,10 @@
       "Bash(dir /b)",
       "Bash(taskkill:*)",
       "Bash(npm start)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run deploy:prepare:*)"
     ],
     "deny": [],
     "ask": []

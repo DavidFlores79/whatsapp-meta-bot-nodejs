@@ -38,7 +38,11 @@
     "previous": "Previous",
     "settings": "Settings",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "view": "View",
+    "create": "Create",
+    "update": "Update",
+    "saving": "Saving..."
   },
   "auth": {
     "login": "Login",
@@ -56,6 +60,7 @@
     "conversations": "Conversations",
     "customers": "Customers",
     "templates": "Templates",
+    "agents": "Agents",
     "reports": "Reports",
     "settings": "Settings",
     "myProfile": "My Profile",
@@ -499,6 +504,67 @@
     "aiLanguageNote": "AI-generated insights (strengths, improvements) are shown in the language that was active when each conversation was analyzed. Change your language preference in Settings to affect future analyses.",
     "noAIAnalysis": "No AI analysis available yet",
     "releaseConversationsHint": "AI-powered insights will appear here after you release conversations. Release a conversation to generate performance analysis."
+  },
+  "agents": {
+    "title": "Agents",
+    "subtitle": "Manage CRM agents and administrators",
+    "createAgent": "Create Agent",
+    "editAgent": "Edit Agent",
+    "createAgentSubtitle": "Add a new agent to your CRM system",
+    "editAgentSubtitle": "Update agent information and permissions",
+    "searchPlaceholder": "Search by name or email...",
+    "noAgents": "No agents found",
+    "noAgentsDescription": "Get started by creating your first agent",
+    "deleteConfirmTitle": "Deactivate Agent?",
+    "deleteConfirmMessage": "Are you sure you want to deactivate",
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "phoneNumber": "Phone Number",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "role": "Role",
+      "status": "Account Status",
+      "maxConcurrentChats": "Max Concurrent Chats",
+      "assignedChats": "Assigned Chats",
+      "isActive": "Active Account"
+    },
+    "role": {
+      "admin": "Administrator",
+      "supervisor": "Supervisor",
+      "agent": "Agent"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "busy": "Busy",
+      "away": "Away"
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allRoles": "All Roles",
+      "allActive": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "permissions": {
+      "viewConversations": "View Conversations",
+      "assignConversations": "Assign Conversations",
+      "manageAgents": "Manage Agents",
+      "viewAnalytics": "View Analytics"
+    },
+    "sections": {
+      "basicInfo": "Basic Information",
+      "password": "Password",
+      "roleSettings": "Role & Settings",
+      "permissions": "Permissions"
+    },
+    "stats": {
+      "total": "Total Chats",
+      "resolved": "Resolved"
+    },
+    "permissionsNote": "Permissions will be automatically set based on role selection"
   },
   "settings": {
     "title": "Settings",

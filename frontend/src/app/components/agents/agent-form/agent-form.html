@@ -1,0 +1,252 @@
+<div class="h-full flex flex-col bg-gray-50">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="flex items-center">
+      <button
+        (click)="cancel()"
+        class="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">
+          {{ isEditMode ? ('agents.editAgent' | translate) : ('agents.createAgent' | translate) }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          {{ isEditMode ? ('agents.editAgentSubtitle' | translate) : ('agents.createAgentSubtitle' | translate) }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex-1 flex items-center justify-center">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="mt-4 text-gray-600">{{ 'common.loading' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!loading" class="flex-1 overflow-auto p-6">
+    <form (ngSubmit)="onSubmit()" class="max-w-3xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <!-- Basic Information -->
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-lg font-medium text-gray-900 mb-4">{{ 'agents.sections.basicInfo' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- First Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.firstName' | translate }} *
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="formData.firstName"
+                name="firstName"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['firstName']"
+              />
+              <p *ngIf="errors['firstName']" class="mt-1 text-sm text-red-600">{{ errors['firstName'] }}</p>
+            </div>
+
+            <!-- Last Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.lastName' | translate }} *
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="formData.lastName"
+                name="lastName"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['lastName']"
+              />
+              <p *ngIf="errors['lastName']" class="mt-1 text-sm text-red-600">{{ errors['lastName'] }}</p>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.email' | translate }} *
+              </label>
+              <input
+                type="email"
+                [(ngModel)]="formData.email"
+                name="email"
+                [readonly]="isEditMode"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['email']"
+                [class.bg-gray-100]="isEditMode"
+              />
+              <p *ngIf="errors['email']" class="mt-1 text-sm text-red-600">{{ errors['email'] }}</p>
+            </div>
+
+            <!-- Phone Number -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.phoneNumber' | translate }}
+              </label>
+              <input
+                type="tel"
+                [(ngModel)]="formData.phoneNumber"
+                name="phoneNumber"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Section (only for new agents or password change) -->
+        <div *ngIf="!isEditMode">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">{{ 'agents.sections.password' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.password' | translate }} *
+              </label>
+              <input
+                type="password"
+                [(ngModel)]="formData.password"
+                name="password"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['password']"
+              />
+              <p *ngIf="errors['password']" class="mt-1 text-sm text-red-600">{{ errors['password'] }}</p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.confirmPassword' | translate }} *
+              </label>
+              <input
+                type="password"
+                [(ngModel)]="formData.confirmPassword"
+                name="confirmPassword"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['confirmPassword']"
+              />
+              <p *ngIf="errors['confirmPassword']" class="mt-1 text-sm text-red-600">{{ errors['confirmPassword'] }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role & Settings -->
+        <div>
+          <h2 class="text-lg font-medium text-gray-900 mb-4">{{ 'agents.sections.roleSettings' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Role -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.role' | translate }} *
+              </label>
+              <select
+                [(ngModel)]="formData.role"
+                name="role"
+                (change)="onRoleChange()"
+                [disabled]="!isAdmin"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.bg-gray-100]="!isAdmin"
+              >
+                <option value="agent">{{ 'agents.role.agent' | translate }}</option>
+                <option value="supervisor">{{ 'agents.role.supervisor' | translate }}</option>
+                <option value="admin">{{ 'agents.role.admin' | translate }}</option>
+              </select>
+            </div>
+
+            <!-- Max Concurrent Chats -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ 'agents.fields.maxConcurrentChats' | translate }} *
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="formData.maxConcurrentChats"
+                name="maxConcurrentChats"
+                min="1"
+                max="50"
+                required
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                [class.border-red-500]="errors['maxConcurrentChats']"
+              />
+              <p *ngIf="errors['maxConcurrentChats']" class="mt-1 text-sm text-red-600">{{ errors['maxConcurrentChats'] }}</p>
+            </div>
+
+            <!-- Active Status (only in edit mode) -->
+            <div *ngIf="isEditMode">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="formData.isActive"
+                  name="isActive"
+                  class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span class="ml-2 text-sm text-gray-700">{{ 'agents.fields.isActive' | translate }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions -->
+        <div>
+          <h2 class="text-lg font-medium text-gray-900 mb-4">{{ 'agents.sections.permissions' | translate }}</h2>
+
+          <div class="space-y-2">
+            <div *ngFor="let permission of availablePermissions" class="flex items-start">
+              <input
+                type="checkbox"
+                [id]="permission.value"
+                [checked]="hasPermission(permission.value)"
+                (change)="togglePermission(permission.value)"
+                class="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label [for]="permission.value" class="ml-2 text-sm text-gray-700 cursor-pointer">
+                {{ permission.label | translate }}
+              </label>
+            </div>
+          </div>
+
+          <p class="mt-2 text-sm text-gray-500">
+            {{ 'agents.permissionsNote' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="cancel()"
+          [disabled]="saving"
+          class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="submit"
+          [disabled]="saving"
+          class="px-6 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center"
+        >
+          <svg *ngIf="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ saving ? ('common.saving' | translate) : (isEditMode ? ('common.update' | translate) : ('common.create' | translate)) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

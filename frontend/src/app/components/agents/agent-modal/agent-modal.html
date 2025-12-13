@@ -1,0 +1,267 @@
+<div
+  *ngIf="show"
+  class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+  (click)="onClose()"
+>
+  <div
+    class="bg-whatsapp-dark border border-gray-700 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+    (click)="stopPropagation($event)"
+  >
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-100">
+          {{ isEditMode ? ('agents.editAgent' | translate) : ('agents.createAgent' | translate) }}
+        </h2>
+        <p class="mt-1 text-sm text-gray-400">
+          {{ isEditMode ? ('agents.editAgentSubtitle' | translate) : ('agents.createAgentSubtitle' | translate) }}
+        </p>
+      </div>
+      <button
+        (click)="onClose()"
+        class="text-gray-400 hover:text-gray-200 transition-colors"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex-1 flex items-center justify-center p-12">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green mx-auto"></div>
+        <p class="mt-4 text-gray-400">{{ 'common.loading' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form *ngIf="!loading" (ngSubmit)="onSubmit()" class="flex-1 overflow-y-auto">
+      <div class="p-6 space-y-6">
+        <!-- Basic Information -->
+        <div>
+          <h3 class="text-base font-medium text-gray-100 mb-4">{{ 'agents.sections.basicInfo' | translate }}</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- First Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.firstName' | translate }} *
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="formData.firstName"
+                name="firstName"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['firstName']"
+                [class.border-gray-600]="!errors['firstName']"
+              />
+              <p *ngIf="errors['firstName']" class="mt-1 text-sm text-red-400">{{ errors['firstName'] }}</p>
+            </div>
+
+            <!-- Last Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.lastName' | translate }} *
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="formData.lastName"
+                name="lastName"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['lastName']"
+                [class.border-gray-600]="!errors['lastName']"
+              />
+              <p *ngIf="errors['lastName']" class="mt-1 text-sm text-red-400">{{ errors['lastName'] }}</p>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.email' | translate }} *
+              </label>
+              <input
+                type="email"
+                [(ngModel)]="formData.email"
+                name="email"
+                [readonly]="isEditMode"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['email']"
+                [class.border-gray-600]="!errors['email']"
+                [class.bg-gray-700]="isEditMode"
+                [class.cursor-not-allowed]="isEditMode"
+              />
+              <p *ngIf="errors['email']" class="mt-1 text-sm text-red-400">{{ errors['email'] }}</p>
+            </div>
+
+            <!-- Phone Number -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.phoneNumber' | translate }}
+              </label>
+              <input
+                type="tel"
+                [(ngModel)]="formData.phoneNumber"
+                name="phoneNumber"
+                class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Section (only for new agents) -->
+        <div *ngIf="!isEditMode">
+          <h3 class="text-base font-medium text-gray-100 mb-4">{{ 'agents.sections.password' | translate }}</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.password' | translate }} *
+              </label>
+              <input
+                type="password"
+                [(ngModel)]="formData.password"
+                name="password"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['password']"
+                [class.border-gray-600]="!errors['password']"
+              />
+              <p *ngIf="errors['password']" class="mt-1 text-sm text-red-400">{{ errors['password'] }}</p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.confirmPassword' | translate }} *
+              </label>
+              <input
+                type="password"
+                [(ngModel)]="formData.confirmPassword"
+                name="confirmPassword"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['confirmPassword']"
+                [class.border-gray-600]="!errors['confirmPassword']"
+              />
+              <p *ngIf="errors['confirmPassword']" class="mt-1 text-sm text-red-400">{{ errors['confirmPassword'] }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role & Settings -->
+        <div>
+          <h3 class="text-base font-medium text-gray-100 mb-4">{{ 'agents.sections.roleSettings' | translate }}</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Role (Only admin can change roles) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.role' | translate }} *
+              </label>
+              <select
+                [(ngModel)]="formData.role"
+                name="role"
+                (change)="onRoleChange()"
+                [disabled]="!isAdmin"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.bg-gray-700]="!isAdmin"
+                [class.cursor-not-allowed]="!isAdmin"
+              >
+                <option value="agent">{{ 'agents.role.agent' | translate }}</option>
+                <option value="supervisor">{{ 'agents.role.supervisor' | translate }}</option>
+                <option value="admin">{{ 'agents.role.admin' | translate }}</option>
+              </select>
+              <p *ngIf="!isAdmin" class="mt-1 text-xs text-gray-500">Only admins can change roles</p>
+            </div>
+
+            <!-- Max Concurrent Chats -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                {{ 'agents.fields.maxConcurrentChats' | translate }} *
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="formData.maxConcurrentChats"
+                name="maxConcurrentChats"
+                min="1"
+                max="50"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['maxConcurrentChats']"
+                [class.border-gray-600]="!errors['maxConcurrentChats']"
+              />
+              <p *ngIf="errors['maxConcurrentChats']" class="mt-1 text-sm text-red-400">{{ errors['maxConcurrentChats'] }}</p>
+            </div>
+
+            <!-- Active Status (only in edit mode) -->
+            <div *ngIf="isEditMode" class="flex items-center">
+              <label class="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="formData.isActive"
+                  name="isActive"
+                  class="w-4 h-4 text-whatsapp-green bg-whatsapp-input border-gray-600 rounded focus:ring-whatsapp-green focus:ring-2"
+                />
+                <span class="ml-2 text-sm text-gray-300">{{ 'agents.fields.isActive' | translate }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions -->
+        <div>
+          <h3 class="text-base font-medium text-gray-100 mb-4">{{ 'agents.sections.permissions' | translate }}</h3>
+
+          <div class="space-y-2">
+            <div *ngFor="let permission of availablePermissions" class="flex items-start">
+              <input
+                type="checkbox"
+                [id]="permission.value"
+                [checked]="hasPermission(permission.value)"
+                (change)="togglePermission(permission.value)"
+                class="mt-1 w-4 h-4 text-whatsapp-green bg-whatsapp-input border-gray-600 rounded focus:ring-whatsapp-green focus:ring-2"
+              />
+              <label [for]="permission.value" class="ml-2 text-sm text-gray-300 cursor-pointer">
+                {{ permission.label | translate }}
+              </label>
+            </div>
+          </div>
+
+          <p class="mt-2 text-sm text-gray-500">
+            {{ 'agents.permissionsNote' | translate }}
+          </p>
+        </div>
+      </div>
+    </form>
+
+    <!-- Footer Actions -->
+    <div class="px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
+      <button
+        type="button"
+        (click)="onClose()"
+        [disabled]="saving"
+        class="px-6 py-2 text-gray-200 bg-whatsapp-input hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+      >
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="saving || loading"
+        class="px-6 py-2 text-white bg-whatsapp-green hover:bg-green-600 rounded-lg transition-colors disabled:opacity-50 flex items-center"
+      >
+        <svg *ngIf="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        {{ saving ? ('common.saving' | translate) : (isEditMode ? ('common.update' | translate) : ('common.create' | translate)) }}
+      </button>
+    </div>
+  </div>
+</div>

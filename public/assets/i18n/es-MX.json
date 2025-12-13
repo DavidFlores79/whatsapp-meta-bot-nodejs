@@ -66,7 +66,8 @@
     "of": "de",
     "results": "resultados",
     "noResults": "Sin resultados",
-    "notSet": "No establecido"
+    "notSet": "No establecido",
+    "view": "Ver"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -84,6 +85,7 @@
     "conversations": "Conversaciones",
     "customers": "Clientes",
     "templates": "Plantillas",
+    "agents": "Agentes",
     "reports": "Reportes",
     "settings": "Configuración",
     "myProfile": "Mi Perfil",
@@ -537,6 +539,67 @@
     "aiLanguageNote": "Los insights generados por IA (fortalezas, mejoras) se muestran en el idioma que estaba activo cuando se analizó cada conversación. Cambia tu preferencia de idioma en Configuración para afectar futuros análisis.",
     "noAIAnalysis": "Sin análisis de IA disponible aún",
     "releaseConversationsHint": "Los insights impulsados por IA aparecerán aquí después de liberar conversaciones. Libera una conversación para generar análisis de rendimiento."
+  },
+  "agents": {
+    "title": "Agentes",
+    "subtitle": "Administrar agentes y administradores del CRM",
+    "createAgent": "Crear Agente",
+    "editAgent": "Editar Agente",
+    "createAgentSubtitle": "Agregar un nuevo agente a tu sistema CRM",
+    "editAgentSubtitle": "Actualizar información y permisos del agente",
+    "searchPlaceholder": "Buscar por nombre o correo...",
+    "noAgents": "No se encontraron agentes",
+    "noAgentsDescription": "Comienza creando tu primer agente",
+    "deleteConfirmTitle": "¿Desactivar Agente?",
+    "deleteConfirmMessage": "¿Estás seguro de que deseas desactivar a",
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo Electrónico",
+      "phoneNumber": "Número de Teléfono",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "role": "Rol",
+      "status": "Estado de la Cuenta",
+      "maxConcurrentChats": "Máximo de Chats Simultáneos",
+      "assignedChats": "Chats Asignados",
+      "isActive": "Cuenta Activa"
+    },
+    "role": {
+      "admin": "Administrador",
+      "supervisor": "Supervisor",
+      "agent": "Agente"
+    },
+    "status": {
+      "online": "En línea",
+      "offline": "Fuera de línea",
+      "busy": "Ocupado",
+      "away": "Ausente"
+    },
+    "filters": {
+      "allStatuses": "Todos los Estados",
+      "allRoles": "Todos los Roles",
+      "allActive": "Todos",
+      "active": "Activos",
+      "inactive": "Inactivos"
+    },
+    "permissions": {
+      "viewConversations": "Ver Conversaciones",
+      "assignConversations": "Asignar Conversaciones",
+      "manageAgents": "Administrar Agentes",
+      "viewAnalytics": "Ver Analíticas"
+    },
+    "sections": {
+      "basicInfo": "Información Básica",
+      "password": "Contraseña",
+      "roleSettings": "Rol y Configuración",
+      "permissions": "Permisos"
+    },
+    "stats": {
+      "total": "Total de Chats",
+      "resolved": "Resueltos"
+    },
+    "permissionsNote": "Los permisos se establecerán automáticamente según el rol seleccionado"
   },
   "settings": {
     "title": "Configuración",

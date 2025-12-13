@@ -31,11 +31,18 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
 
+    console.log('[Login] Attempting login with email:', this.email);
+
     this.authService.login(this.email, this.password).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('[Login] Login successful:', response);
+        console.log('[Login] Navigating to home page...');
         this.router.navigate(['/']);
       },
       error: (err) => {
+        console.error('[Login] Login failed:', err);
+        console.error('[Login] Error status:', err.status);
+        console.error('[Login] Error message:', err.error);
         this.error = err.error?.error || this.translate.instant('auth.loginError');
         this.loading = false;
       }
