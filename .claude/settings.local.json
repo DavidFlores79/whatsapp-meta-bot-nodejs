@@ -17,7 +17,8 @@
       "Bash(npm run dev:*)",
       "Bash(robocopy:*)",
       "Bash(powershell:*)",
-      "Bash(npm run deploy:prepare:*)"
+      "Bash(npm run deploy:prepare:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

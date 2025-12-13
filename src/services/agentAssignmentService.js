@@ -286,14 +286,14 @@ async function releaseConversation(conversationId, agentId, reason = null) {
         console.warn('⚠️ No active assignment history found for this conversation');
     }
 
-    // Update conversation - CLOSE IT when returning to AI
+    // Update conversation - REOPEN IT when returning to AI
     conversation.assignedAgent = null;
     conversation.assignedAt = null;
     conversation.isAIEnabled = true;  // Re-enable AI
-    conversation.status = 'closed';  // Close conversation when returning to AI
-    conversation.closedAt = new Date();
-    conversation.resolvedBy = agentId;
-    conversation.resolvedAt = new Date();
+    conversation.status = 'open';  // Reopen conversation for AI to handle
+    conversation.closedAt = null;  // Clear closed timestamp
+    conversation.resolvedBy = null;  // Clear resolved by
+    conversation.resolvedAt = null;  // Clear resolved timestamp
     conversation.resolutionNotes = reason || 'Conversation returned to AI';
 
     // Add internal note
@@ -302,7 +302,7 @@ async function releaseConversation(conversationId, agentId, reason = null) {
     }
     conversation.internalNotes.push({
         agent: agentId,
-        content: `Agent released conversation and closed it. Reason: ${reason || 'Not specified'}`,
+        content: `Agent released conversation back to AI. Reason: ${reason || 'Not specified'}`,
         timestamp: new Date(),
         isVisible: false
     });
