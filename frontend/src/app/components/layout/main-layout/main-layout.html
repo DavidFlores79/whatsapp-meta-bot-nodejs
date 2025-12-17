@@ -1,5 +1,148 @@
 <div class="flex h-screen overflow-hidden bg-whatsapp-gray">
-  <!-- Left Navigation Sidebar (Collapsible) -->
+  <!-- Mobile Header with Hamburger Menu -->
+  <div class="md:hidden fixed top-0 left-0 right-0 z-50 bg-whatsapp-dark border-b border-gray-700 h-14 flex items-center px-4">
+    <button (click)="toggleMobileMenu()" class="text-gray-200 p-2 -ml-2 hover:bg-whatsapp-gray rounded-lg transition-colors">
+      <i class="fas fa-bars text-xl"></i>
+    </button>
+    <div class="flex-1 flex items-center justify-center">
+      <img src="/media/favicon.png" alt="Logo" class="w-8 h-8">
+      <span class="text-gray-100 font-semibold text-sm ml-2">WhatsApp CRM</span>
+    </div>
+    <div class="w-10"></div> <!-- Spacer for centering -->
+  </div>
+
+  <!-- Mobile Menu Overlay -->
+  <div *ngIf="mobileMenuOpen"
+       (click)="closeMobileMenu()"
+       class="md:hidden fixed inset-0 bg-black/50 z-50 transition-opacity"></div>
+
+  <!-- Mobile Slide-out Navigation -->
+  <div class="md:hidden fixed top-0 left-0 bottom-0 w-72 bg-whatsapp-dark z-50 transform transition-transform duration-300 flex flex-col"
+       [class.-translate-x-full]="!mobileMenuOpen"
+       [class.translate-x-0]="mobileMenuOpen">
+    <!-- Mobile Nav Header -->
+    <div class="h-14 flex items-center justify-between px-4 border-b border-gray-700">
+      <div class="flex items-center gap-2">
+        <img src="/media/favicon.png" alt="Logo" class="w-8 h-8">
+        <span class="text-gray-100 font-semibold">WhatsApp CRM</span>
+      </div>
+      <button (click)="closeMobileMenu()" class="text-gray-400 hover:text-gray-200 p-2">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Nav Items -->
+    <nav class="flex-1 py-4 px-3 flex flex-col gap-1 overflow-y-auto">
+      <button
+        (click)="navigateToConversations(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'chat'"
+        [class.text-whatsapp-green]="currentView === 'chat'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <div class="relative flex-shrink-0">
+          <i class="fas fa-comments text-xl"></i>
+          <span *ngIf="unattendedCount > 0"
+                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[1.25rem] flex items-center justify-center px-1">
+            {{ unattendedCount }}
+          </span>
+        </div>
+        <span class="font-medium">{{ 'navigation.conversations' | translate }}</span>
+        <span *ngIf="unattendedCount > 0"
+              class="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+          {{ unattendedCount }}
+        </span>
+      </button>
+
+      <button
+        (click)="navigateToCustomers(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'customers'"
+        [class.text-whatsapp-green]="currentView === 'customers'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-users text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.customers' | translate }}</span>
+      </button>
+
+      <button
+        (click)="navigateToTemplates(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'templates'"
+        [class.text-whatsapp-green]="currentView === 'templates'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-file-alt text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.templates' | translate }}</span>
+      </button>
+
+      <button
+        *ngIf="currentAgent?.role === 'admin' || currentAgent?.role === 'supervisor'"
+        (click)="navigateToAgents(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'agents'"
+        [class.text-whatsapp-green]="currentView === 'agents'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-user-shield text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.agents' | translate }}</span>
+      </button>
+
+      <button
+        *ngIf="currentAgent?.role === 'admin' || currentAgent?.role === 'supervisor'"
+        (click)="navigateToReports(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'reports'"
+        [class.text-whatsapp-green]="currentView === 'reports'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-chart-bar text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.reports' | translate }}</span>
+      </button>
+
+      <button
+        (click)="navigateToSettings(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'settings'"
+        [class.text-whatsapp-green]="currentView === 'settings'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-cog text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.settings' | translate }}</span>
+      </button>
+    </nav>
+
+    <!-- Mobile Profile Section -->
+    <div class="border-t border-gray-700 p-3">
+      <div class="flex items-center gap-3 px-4 py-3" *ngIf="currentAgent">
+        <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center flex-shrink-0">
+          <img *ngIf="currentAgent.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
+          <span *ngIf="!currentAgent.avatar" class="text-white text-sm font-medium">
+            {{ (currentAgent.firstName || 'A')[0] }}{{ (currentAgent.lastName || '')[0] }}
+          </span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-gray-100 text-sm font-medium block truncate">{{ currentAgent.firstName }} {{ currentAgent.lastName }}</span>
+          <span class="text-xs text-gray-400 block truncate">{{ currentAgent.email }}</span>
+        </div>
+      </div>
+
+      <!-- Auto-Assign Toggle -->
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3 text-gray-200">
+            <i class="fas fa-user-clock w-5"></i>
+            <span class="text-sm">{{ 'navigation.autoAssign' | translate }}</span>
+          </div>
+          <button
+            (click)="toggleAutoAssign()"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+            [ngClass]="currentAgent?.autoAssign ? 'bg-green-600' : 'bg-gray-600'">
+            <span
+              class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+              [ngClass]="currentAgent?.autoAssign ? 'translate-x-6' : 'translate-x-1'">
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <button (click)="logout(); closeMobileMenu()"
+              class="w-full px-4 py-3 text-left hover:bg-red-900/30 transition-colors flex items-center gap-3 text-red-400 rounded-lg">
+        <i class="fas fa-sign-out-alt w-5"></i>
+        <span>{{ 'common.logout' | translate }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Left Navigation Sidebar (Collapsible) - Desktop Only -->
   <div class="hidden md:flex flex-col bg-whatsapp-dark border-r border-gray-700 shrink-0 transition-all duration-300"
        [class.w-60]="!sidebarCollapsed"
        [class.w-20]="sidebarCollapsed">
@@ -210,7 +353,7 @@
   </div>
 
   <!-- Content Area Sidebar (Chat List or Other Views) -->
-  <div class="w-full md:flex flex-col border-r border-gray-700 bg-whatsapp-dark relative"
+  <div class="w-full md:flex flex-col border-r border-gray-700 bg-whatsapp-dark relative pt-14 md:pt-0"
        [ngClass]="{'hidden md:flex': hasSelectedChat && currentView === 'chat'}"
        [style.width.px]="sidebarWidth"
        *ngIf="currentView === 'chat'">
@@ -239,7 +382,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex flex-1 flex-col bg-whatsapp-dark relative"
+  <div class="flex flex-1 flex-col bg-whatsapp-dark relative pt-14 md:pt-0"
        [ngClass]="{'flex': hasSelectedChat || currentView !== 'chat', 'hidden md:flex': !hasSelectedChat && currentView === 'chat'}">
 
     <!-- Show Chat Window when in chat view -->
@@ -248,13 +391,6 @@
       <div class="absolute inset-0 opacity-5 pointer-events-none"
            style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');">
       </div>
-
-      <!-- Mobile Back Button -->
-      <button *ngIf="hasSelectedChat"
-              (click)="backToList()"
-              class="md:hidden absolute top-4 left-4 z-20 bg-whatsapp-gray/80 backdrop-blur-sm text-gray-200 p-2 rounded-full shadow-lg hover:bg-whatsapp-gray transition-colors">
-        <i class="fas fa-arrow-left"></i>
-      </button>
 
       <app-chat-window class="flex-1 overflow-hidden z-10"></app-chat-window>
     </ng-container>

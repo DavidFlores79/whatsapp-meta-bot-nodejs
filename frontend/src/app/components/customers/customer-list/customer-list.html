@@ -1,46 +1,46 @@
-<div class="flex flex-col h-screen bg-whatsapp-dark text-gray-100">
+<div class="flex flex-col h-full bg-whatsapp-dark text-gray-100 overflow-hidden">
   <!-- Header with Stats -->
-  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-4 shrink-0">
-    <div class="flex items-center justify-between mb-4">
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 shrink-0">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-100">{{ 'customers.title' | translate }}</h1>
-        <p class="text-sm text-gray-400 mt-1">{{ 'customers.subtitle' | translate }}</p>
+        <h1 class="text-xl md:text-2xl font-semibold text-gray-100">{{ 'customers.title' | translate }}</h1>
+        <p class="text-sm text-gray-400 mt-1 hidden sm:block">{{ 'customers.subtitle' | translate }}</p>
       </div>
       <button (click)="createCustomer()"
-              class="bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              class="bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm md:text-base">
         <i class="fas fa-plus"></i>
         <span>{{ 'customers.newCustomer' | translate }}</span>
       </button>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.totalCustomers' | translate }}</div>
-        <div class="text-2xl font-bold text-gray-100">{{ stats.totalCustomers }}</div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.totalCustomers' | translate }}</div>
+        <div class="text-xl md:text-2xl font-bold text-gray-100">{{ stats.totalCustomers }}</div>
       </div>
-      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.activeCustomers' | translate }}</div>
-        <div class="text-2xl font-bold text-green-400">{{ stats.activeCustomers }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.activeCustomers' | translate }}</div>
+        <div class="text-xl md:text-2xl font-bold text-green-400">{{ stats.activeCustomers }}</div>
       </div>
-      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.vipCustomers' | translate }}</div>
-        <div class="text-2xl font-bold text-yellow-400">{{ stats.vipCustomers }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.vipCustomers' | translate }}</div>
+        <div class="text-xl md:text-2xl font-bold text-yellow-400">{{ stats.vipCustomers }}</div>
       </div>
-      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.blockedCustomers' | translate }}</div>
-        <div class="text-2xl font-bold text-red-400">{{ stats.blockedCustomers }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.blockedCustomers' | translate }}</div>
+        <div class="text-xl md:text-2xl font-bold text-red-400">{{ stats.blockedCustomers }}</div>
       </div>
-      <div class="bg-whatsapp-dark p-3 rounded-lg border border-gray-700">
-        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">{{ 'customers.newThisMonth' | translate }}</div>
-        <div class="text-2xl font-bold text-blue-400">{{ stats.newThisMonth }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700 col-span-2 md:col-span-1">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.newThisMonth' | translate }}</div>
+        <div class="text-xl md:text-2xl font-bold text-blue-400">{{ stats.newThisMonth }}</div>
       </div>
     </div>
   </div>
 
   <!-- Filters and Search -->
-  <div class="bg-whatsapp-gray border-b border-gray-700 px-6 py-3 shrink-0">
-    <div class="flex flex-col md:flex-row gap-3">
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-3 shrink-0">
+    <div class="flex flex-col md:flex-row gap-2 md:gap-3">
       <!-- Search -->
       <div class="flex-1 relative">
         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
@@ -53,26 +53,26 @@
 
       <!-- Filter Toggle -->
       <button (click)="toggleFilters()"
-              class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
+              class="bg-whatsapp-dark text-gray-100 px-3 md:px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center justify-center gap-2 text-sm md:text-base flex-shrink-0">
         <i class="fas fa-filter"></i>
-        <span>{{ 'common.filters' | translate }}</span>
+        <span class="hidden sm:inline">{{ 'common.filters' | translate }}</span>
         <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showFilters"></i>
       </button>
 
       <!-- Bulk Actions -->
       <button *ngIf="selectedCustomers.size > 0"
               (click)="toggleBulkActions()"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              class="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm md:text-base flex-shrink-0">
         <i class="fas fa-tasks"></i>
-        <span>{{ selectedCustomers.size }} {{ 'common.selected' | translate }}</span>
+        <span>{{ selectedCustomers.size }}</span>
       </button>
 
       <!-- Import/Export Dropdown -->
-      <div class="relative">
+      <div class="relative flex-shrink-0">
         <button (click)="toggleImportExportDropdown(); $event.stopPropagation()"
-                class="bg-whatsapp-dark text-gray-100 px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center gap-2">
+                class="bg-whatsapp-dark text-gray-100 px-3 md:px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center justify-center gap-2 text-sm md:text-base">
           <i class="fas fa-exchange-alt"></i>
-          <span>{{ 'customers.importExport' | translate }}</span>
+          <span class="hidden sm:inline">{{ 'customers.importExport' | translate }}</span>
           <i class="fas fa-chevron-down text-xs" [class.rotate-180]="showImportExportDropdown"></i>
         </button>
         <div *ngIf="showImportExportDropdown"
@@ -172,7 +172,7 @@
   </div>
 
   <!-- Table -->
-  <div class="flex-1 overflow-auto px-6 py-4">
+  <div class="flex-1 overflow-auto px-4 md:px-6 py-4">
     <!-- Loading State -->
     <div *ngIf="loading" class="flex items-center justify-center h-full">
       <div class="text-center">
@@ -202,8 +202,8 @@
     </div>
 
     <!-- Customers Table -->
-    <div *ngIf="!loading && !error && customers.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-hidden">
-      <table class="w-full">
+    <div *ngIf="!loading && !error && customers.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-x-auto">
+      <table class="w-full min-w-[800px]">
         <thead class="bg-whatsapp-dark border-b border-gray-700">
           <tr>
             <th class="px-4 py-3 text-left w-12">
@@ -299,15 +299,15 @@
     </div>
 
     <!-- Pagination -->
-    <div *ngIf="!loading && customers.length > 0" class="mt-4 flex items-center justify-between">
-      <div class="text-sm text-gray-400">
-        {{ 'common.showing' | translate }} {{ (pagination.page - 1) * pagination.limit + 1 }} {{ 'common.to' | translate }} {{ Math.min(pagination.page * pagination.limit, pagination.total) }} {{ 'common.of' | translate }} {{ pagination.total }} {{ 'customers.customers' | translate }}
+    <div *ngIf="!loading && customers.length > 0" class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="text-sm text-gray-400 text-center sm:text-left">
+        {{ 'common.showing' | translate }} {{ (pagination.page - 1) * pagination.limit + 1 }} {{ 'common.to' | translate }} {{ Math.min(pagination.page * pagination.limit, pagination.total) }} {{ 'common.of' | translate }} {{ pagination.total }}
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-1 sm:gap-2 flex-wrap justify-center">
         <button (click)="onPageChange(pagination.page - 1)"
                 [disabled]="pagination.page === 1"
-                class="px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                class="px-2 sm:px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           <i class="fas fa-chevron-left"></i>
         </button>
 
@@ -315,13 +315,13 @@
                 (click)="onPageChange(page)"
                 [class.bg-whatsapp-green]="page === pagination.page"
                 [class.bg-whatsapp-dark]="page !== pagination.page"
-                class="px-3 py-1 rounded text-gray-100 border border-gray-600 hover:border-whatsapp-green transition-colors">
+                class="px-2 sm:px-3 py-1 rounded text-gray-100 border border-gray-600 hover:border-whatsapp-green transition-colors text-sm">
           {{ page }}
         </button>
 
         <button (click)="onPageChange(pagination.page + 1)"
                 [disabled]="pagination.page === pagination.pages"
-                class="px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                class="px-2 sm:px-3 py-1 rounded bg-whatsapp-dark text-gray-100 border border-gray-600 hover:border-whatsapp-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>

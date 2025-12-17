@@ -1,25 +1,32 @@
 <div class="flex flex-col h-full bg-whatsapp-image bg-repeat" *ngIf="selectedChat$ | async as chat; else noChat">
     <!-- Header -->
     <div class="h-auto bg-whatsapp-gray flex flex-col border-b border-gray-700 shrink-0 z-10">
-        <div class="flex items-center justify-between px-4 py-2">
-            <div class="flex items-center cursor-pointer" (click)="openCustomerModal(chat)" [title]="'chat.viewEditCustomer' | translate">
-                <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
-                    <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
-                </div>
-                <div>
-                    <h3 class="text-gray-100 font-medium">{{ chat.name }}</h3>
-                    <div class="flex items-center gap-2 text-xs">
-                        <!-- Agent Assignment Indicator -->
-                        <span *ngIf="chat.assignedAgent" class="text-blue-400">
-                            <i class="fas fa-user-tie"></i> {{ getAssignedAgentName(chat) }}
-                        </span>
-                        <!-- AI Status Indicator -->
-                        <span *ngIf="chat.isAIEnabled" class="text-green-400">
-                            <i class="fas fa-robot"></i> {{ 'chat.aiActive' | translate }}
-                        </span>
-                        <span *ngIf="!chat.isAIEnabled && chat.assignedAgent" class="text-yellow-400">
-                            <i class="fas fa-pause"></i> {{ 'chat.aiPaused' | translate }}
-                        </span>
+        <div class="flex items-center justify-between px-2 md:px-4 py-2">
+            <div class="flex items-center">
+                <!-- Mobile Back Button -->
+                <button (click)="goBack()"
+                        class="md:hidden text-gray-200 p-2 mr-1 hover:bg-whatsapp-dark rounded-full transition-colors">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                <div class="flex items-center cursor-pointer" (click)="openCustomerModal(chat)" [title]="'chat.viewEditCustomer' | translate">
+                    <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
+                        <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h3 class="text-gray-100 font-medium">{{ chat.name }}</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <!-- Agent Assignment Indicator -->
+                            <span *ngIf="chat.assignedAgent" class="text-blue-400">
+                                <i class="fas fa-user-tie"></i> {{ getAssignedAgentName(chat) }}
+                            </span>
+                            <!-- AI Status Indicator -->
+                            <span *ngIf="chat.isAIEnabled" class="text-green-400">
+                                <i class="fas fa-robot"></i> {{ 'chat.aiActive' | translate }}
+                            </span>
+                            <span *ngIf="!chat.isAIEnabled && chat.assignedAgent" class="text-yellow-400">
+                                <i class="fas fa-pause"></i> {{ 'chat.aiPaused' | translate }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,46 +1,49 @@
 <div class="h-full flex flex-col bg-gray-900 min-h-0 overflow-hidden">
     <!-- Header -->
-    <div class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex-shrink-0">
-        <div class="flex items-center justify-between">
+    <div class="bg-gray-800 border-b border-gray-700 px-4 md:px-6 py-4 flex-shrink-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <h1 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
                     <i class="fas fa-chart-line text-blue-500"></i>
                     {{ 'reports.performanceAnalytics' | translate }}
                 </h1>
-                <p class="text-sm text-gray-400 mt-1">{{ 'reports.subtitle' | translate }}</p>
+                <p class="text-sm text-gray-400 mt-1 hidden sm:block">{{ 'reports.subtitle' | translate }}</p>
             </div>
             <button (click)="exportToCSV()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    class="px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm md:text-base">
                 <i class="fas fa-file-export"></i>
-                {{ 'reports.exportReport' | translate }}
+                <span class="hidden sm:inline">{{ 'reports.exportReport' | translate }}</span>
+                <span class="sm:hidden">Export</span>
             </button>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 mt-4">
+        <div class="flex gap-2 mt-4 overflow-x-auto pb-1">
             <button (click)="switchTab('agent-performance')"
                     [class]="activeTab === 'agent-performance' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
-                    class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    class="px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm md:text-base whitespace-nowrap flex-shrink-0">
                 <i class="fas fa-user-tie"></i>
-                {{ 'reports.agentPerformance' | translate }}
+                <span class="hidden sm:inline">{{ 'reports.agentPerformance' | translate }}</span>
+                <span class="sm:hidden">Agents</span>
             </button>
             <button (click)="switchTab('conversation-history')"
                     [class]="activeTab === 'conversation-history' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
-                    class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    class="px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm md:text-base whitespace-nowrap flex-shrink-0">
                 <i class="fas fa-history"></i>
-                {{ 'reports.conversationHistory' | translate }}
+                <span class="hidden sm:inline">{{ 'reports.conversationHistory' | translate }}</span>
+                <span class="sm:hidden">History</span>
             </button>
         </div>
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+    <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
 
         <!-- AGENT PERFORMANCE TAB -->
         <div *ngIf="activeTab === 'agent-performance'" class="max-w-7xl mx-auto">
             <!-- Filters -->
-            <div class="bg-gray-800 rounded-lg p-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-800 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'reports.selectAgent' | translate }}</label>
                         <select [(ngModel)]="selectedAgentId"
@@ -114,14 +117,14 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-4 text-white">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-tasks text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">{{ 'reports.total' | translate }}</span>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-3 md:p-4 text-white">
+                        <div class="flex items-center justify-between mb-1 md:mb-2">
+                            <i class="fas fa-tasks text-xl md:text-2xl opacity-80"></i>
+                            <span class="text-xs md:text-sm opacity-80">{{ 'reports.total' | translate }}</span>
                         </div>
-                        <div class="text-3xl font-bold">{{ agentPerformance.analytics.totalAssignments }}</div>
-                        <div class="text-sm opacity-80">
+                        <div class="text-2xl md:text-3xl font-bold">{{ agentPerformance.analytics.totalAssignments }}</div>
+                        <div class="text-xs md:text-sm opacity-80 truncate">
                             {{ 'reports.assignments' | translate }}
                             <span *ngIf="agentPerformance.analytics.activeAssignments > 0" class="ml-1">
                                 ({{ agentPerformance.analytics.activeAssignments }} activas)
@@ -129,47 +132,47 @@
                         </div>
                     </div>
 
-                    <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-4 text-white">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-check-circle text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">{{ 'reports.successRate' | translate }}</span>
+                    <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-3 md:p-4 text-white">
+                        <div class="flex items-center justify-between mb-1 md:mb-2">
+                            <i class="fas fa-check-circle text-xl md:text-2xl opacity-80"></i>
+                            <span class="text-xs md:text-sm opacity-80 truncate">{{ 'reports.successRate' | translate }}</span>
                         </div>
-                        <div class="text-3xl font-bold">{{ agentPerformance.analytics.resolution.resolutionRate }}%</div>
-                        <div class="text-sm opacity-80">{{ 'reports.resolvedIssues' | translate }}</div>
+                        <div class="text-2xl md:text-3xl font-bold">{{ agentPerformance.analytics.resolution.resolutionRate }}%</div>
+                        <div class="text-xs md:text-sm opacity-80 truncate">{{ 'reports.resolvedIssues' | translate }}</div>
                     </div>
 
-                    <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-4 text-white">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-star text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">{{ 'reports.performance' | translate }}</span>
+                    <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-3 md:p-4 text-white">
+                        <div class="flex items-center justify-between mb-1 md:mb-2">
+                            <i class="fas fa-star text-xl md:text-2xl opacity-80"></i>
+                            <span class="text-xs md:text-sm opacity-80">{{ 'reports.performance' | translate }}</span>
                         </div>
-                        <div class="text-3xl font-bold">
+                        <div class="text-2xl md:text-3xl font-bold">
                             {{ agentPerformance.analytics.performance?.overallScore || 'N/A' }}
                         </div>
-                        <div class="text-sm opacity-80">{{ 'reports.averageScore' | translate }}</div>
+                        <div class="text-xs md:text-sm opacity-80 truncate">{{ 'reports.averageScore' | translate }}</div>
                     </div>
 
-                    <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-4 text-white">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-clock text-2xl opacity-80"></i>
-                            <span class="text-sm opacity-80">{{ 'reports.avgDuration' | translate }}</span>
+                    <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-3 md:p-4 text-white">
+                        <div class="flex items-center justify-between mb-1 md:mb-2">
+                            <i class="fas fa-clock text-xl md:text-2xl opacity-80"></i>
+                            <span class="text-xs md:text-sm opacity-80 truncate">{{ 'reports.avgDuration' | translate }}</span>
                         </div>
-                        <div class="text-3xl font-bold">{{ formatDuration(agentPerformance.analytics.averageDuration) }}</div>
-                        <div class="text-sm opacity-80">{{ 'reports.perConversation' | translate }}</div>
+                        <div class="text-2xl md:text-3xl font-bold">{{ formatDuration(agentPerformance.analytics.averageDuration) }}</div>
+                        <div class="text-xs md:text-sm opacity-80 truncate">{{ 'reports.perConversation' | translate }}</div>
                     </div>
                 </div>
 
                 <!-- Performance Scores -->
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                         <i class="fas fa-chart-bar text-blue-500"></i>
                         {{ 'reports.performanceBreakdown' | translate }}
                     </h3>
 
                     <!-- No AI Analysis Warning -->
-                    <div *ngIf="!agentPerformance.analytics.performance" class="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-4 mb-4">
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mt-1"></i>
+                    <div *ngIf="!agentPerformance.analytics.performance" class="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-3 md:p-4 mb-4">
+                        <div class="flex items-start gap-2 md:gap-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-lg md:text-xl mt-1 flex-shrink-0"></i>
                             <div>
                                 <p class="text-sm text-gray-300 font-medium mb-1">{{ 'reports.noAIAnalysis' | translate }}</p>
                                 <p class="text-xs text-gray-400">{{ 'reports.releaseConversationsHint' | translate }}</p>
@@ -177,7 +180,7 @@
                         </div>
                     </div>
 
-                    <div *ngIf="agentPerformance.analytics.performance" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div *ngIf="agentPerformance.analytics.performance" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                         <div class="bg-gray-700 rounded-lg p-4">
                             <div class="text-sm text-gray-400 mb-2">{{ 'reports.professionalism' | translate }}</div>
                             <div class="flex items-center gap-2">
@@ -227,26 +230,26 @@
                 </div>
 
                 <!-- Sentiment Analysis -->
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                         <i class="fas fa-smile text-yellow-500"></i>
                         {{ 'reports.customerSentiment' | translate }}
                     </h3>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="text-center p-4 bg-green-900 bg-opacity-30 rounded-lg">
-                            <div class="text-3xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improved }}</div>
-                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.improved' | translate }}</div>
-                            <i class="fas fa-arrow-up text-green-400 text-2xl mt-2"></i>
+                    <div class="grid grid-cols-3 gap-2 md:gap-4">
+                        <div class="text-center p-2 md:p-4 bg-green-900 bg-opacity-30 rounded-lg">
+                            <div class="text-xl md:text-3xl font-bold text-green-400">{{ agentPerformance.analytics.sentiment.improved }}</div>
+                            <div class="text-xs md:text-sm text-gray-400 mt-1">{{ 'reports.improved' | translate }}</div>
+                            <i class="fas fa-arrow-up text-green-400 text-lg md:text-2xl mt-1 md:mt-2"></i>
                         </div>
-                        <div class="text-center p-4 bg-gray-700 rounded-lg">
-                            <div class="text-3xl font-bold text-gray-400">{{ agentPerformance.analytics.sentiment.unchanged }}</div>
-                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.unchanged' | translate }}</div>
-                            <i class="fas fa-minus text-gray-400 text-2xl mt-2"></i>
+                        <div class="text-center p-2 md:p-4 bg-gray-700 rounded-lg">
+                            <div class="text-xl md:text-3xl font-bold text-gray-400">{{ agentPerformance.analytics.sentiment.unchanged }}</div>
+                            <div class="text-xs md:text-sm text-gray-400 mt-1">{{ 'reports.unchanged' | translate }}</div>
+                            <i class="fas fa-minus text-gray-400 text-lg md:text-2xl mt-1 md:mt-2"></i>
                         </div>
-                        <div class="text-center p-4 bg-red-900 bg-opacity-30 rounded-lg">
-                            <div class="text-3xl font-bold text-red-400">{{ agentPerformance.analytics.sentiment.worsened }}</div>
-                            <div class="text-sm text-gray-400 mt-1">{{ 'reports.worsened' | translate }}</div>
-                            <i class="fas fa-arrow-down text-red-400 text-2xl mt-2"></i>
+                        <div class="text-center p-2 md:p-4 bg-red-900 bg-opacity-30 rounded-lg">
+                            <div class="text-xl md:text-3xl font-bold text-red-400">{{ agentPerformance.analytics.sentiment.worsened }}</div>
+                            <div class="text-xs md:text-sm text-gray-400 mt-1">{{ 'reports.worsened' | translate }}</div>
+                            <i class="fas fa-arrow-down text-red-400 text-lg md:text-2xl mt-1 md:mt-2"></i>
                         </div>
                     </div>
                     <div class="mt-4 text-center">
@@ -262,17 +265,17 @@
                 </div>
 
                 <!-- Strengths & Improvements -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-800 rounded-lg p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                        <h3 class="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                             <i class="fas fa-thumbs-up text-green-500"></i>
                             {{ 'reports.topStrengths' | translate }}
                         </h3>
                         <div class="space-y-2">
                             <div *ngFor="let strength of agentPerformance.analytics.commonStrengths"
-                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-                                <span class="text-sm text-gray-300">{{ strength.item }}</span>
-                                <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">{{ strength.count }}</span>
+                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-2 md:p-3">
+                                <span class="text-xs md:text-sm text-gray-300 flex-1 mr-2">{{ strength.item }}</span>
+                                <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">{{ strength.count }}</span>
                             </div>
                             <div *ngIf="agentPerformance.analytics.commonStrengths.length === 0" class="text-gray-500 text-sm text-center py-4">
                                 {{ 'reports.noData' | translate }}
@@ -280,16 +283,16 @@
                         </div>
                     </div>
 
-                    <div class="bg-gray-800 rounded-lg p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                        <h3 class="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                             <i class="fas fa-arrow-up text-yellow-500"></i>
                             {{ 'reports.areasForImprovement' | translate }}
                         </h3>
                         <div class="space-y-2">
                             <div *ngFor="let improvement of agentPerformance.analytics.commonImprovements"
-                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-                                <span class="text-sm text-gray-300">{{ improvement.item }}</span>
-                                <span class="bg-yellow-600 text-white text-xs px-2 py-1 rounded-full">{{ improvement.count }}</span>
+                                 class="flex items-center justify-between bg-gray-700 rounded-lg p-2 md:p-3">
+                                <span class="text-xs md:text-sm text-gray-300 flex-1 mr-2">{{ improvement.item }}</span>
+                                <span class="bg-yellow-600 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">{{ improvement.count }}</span>
                             </div>
                             <div *ngIf="agentPerformance.analytics.commonImprovements.length === 0" class="text-gray-500 text-sm text-center py-4">
                                 {{ 'reports.noData' | translate }}
@@ -299,13 +302,13 @@
                 </div>
 
                 <!-- Recent Assignments -->
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                         <i class="fas fa-history text-blue-500"></i>
                         {{ 'reports.recentAssignments' | translate }}
                     </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                    <div class="overflow-x-auto -mx-4 md:mx-0">
+                        <table class="w-full text-sm min-w-[600px]">
                             <thead class="bg-gray-700 text-gray-300">
                                 <tr>
                                     <th class="px-4 py-3 text-left">{{ 'reports.date' | translate }}</th>
@@ -380,8 +383,8 @@
         <!-- CONVERSATION HISTORY TAB -->
         <div *ngIf="activeTab === 'conversation-history'" class="max-w-7xl mx-auto">
             <!-- Filters -->
-            <div class="bg-gray-800 rounded-lg p-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-800 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'reports.selectConversation' | translate }}</label>
                         <select [(ngModel)]="selectedConversationId"
@@ -415,42 +418,42 @@
             <div *ngIf="!loadingHistory && conversationHistory" class="space-y-6">
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.totalAssignments' | translate }}</div>
-                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.totalAssignments }}</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <div class="bg-gray-800 rounded-lg p-3 md:p-4">
+                        <div class="text-xs md:text-sm text-gray-400 mb-1 md:mb-2 truncate">{{ 'reports.totalAssignments' | translate }}</div>
+                        <div class="text-xl md:text-2xl font-bold text-white">{{ conversationHistory.stats.totalAssignments }}</div>
                     </div>
-                    <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.uniqueAgents' | translate }}</div>
-                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.uniqueAgents }}</div>
+                    <div class="bg-gray-800 rounded-lg p-3 md:p-4">
+                        <div class="text-xs md:text-sm text-gray-400 mb-1 md:mb-2 truncate">{{ 'reports.uniqueAgents' | translate }}</div>
+                        <div class="text-xl md:text-2xl font-bold text-white">{{ conversationHistory.stats.uniqueAgents }}</div>
                     </div>
-                    <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.avgPerformance' | translate }}</div>
-                        <div class="text-2xl font-bold text-white">{{ conversationHistory.stats.averagePerformanceScore || 'N/A' }}</div>
+                    <div class="bg-gray-800 rounded-lg p-3 md:p-4">
+                        <div class="text-xs md:text-sm text-gray-400 mb-1 md:mb-2 truncate">{{ 'reports.avgPerformance' | translate }}</div>
+                        <div class="text-xl md:text-2xl font-bold text-white">{{ conversationHistory.stats.averagePerformanceScore || 'N/A' }}</div>
                     </div>
-                    <div class="bg-gray-800 rounded-lg p-4">
-                        <div class="text-sm text-gray-400 mb-2">{{ 'reports.resolved' | translate }}</div>
-                        <div class="text-2xl font-bold text-green-400">{{ conversationHistory.stats.resolvedCount }}</div>
+                    <div class="bg-gray-800 rounded-lg p-3 md:p-4">
+                        <div class="text-xs md:text-sm text-gray-400 mb-1 md:mb-2 truncate">{{ 'reports.resolved' | translate }}</div>
+                        <div class="text-xl md:text-2xl font-bold text-green-400">{{ conversationHistory.stats.resolvedCount }}</div>
                     </div>
                 </div>
 
                 <!-- Assignment Timeline -->
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-semibold text-white mb-3 md:mb-4 flex items-center gap-2">
                         <i class="fas fa-history text-blue-500"></i>
                         {{ 'reports.assignmentTimeline' | translate }}
                     </h3>
-                    <div class="space-y-4">
+                    <div class="space-y-3 md:space-y-4">
                         <div *ngFor="let assignment of conversationHistory.history"
-                             class="bg-gray-700 rounded-lg p-4 border-l-4"
+                             class="bg-gray-700 rounded-lg p-3 md:p-4 border-l-4"
                              [ngClass]="assignment.aiAnalysis?.issueResolution?.wasResolved ? 'border-green-500' : 'border-gray-500'">
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                        <i class="fas fa-user-tie text-white"></i>
+                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2 md:gap-3">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-user-tie text-white text-sm md:text-base"></i>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-white">
+                                        <div class="font-semibold text-white text-sm md:text-base">
                                             {{ assignment.agentId?.firstName }} {{ assignment.agentId?.lastName }}
                                         </div>
                                         <div class="text-xs text-gray-400">
@@ -458,16 +461,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-400">{{ 'reports.duration' | translate }}</div>
-                                    <div class="font-semibold text-white">{{ formatDuration(assignment.duration || 0) }}</div>
+                                <div class="text-left sm:text-right ml-10 sm:ml-0">
+                                    <div class="text-xs md:text-sm text-gray-400">{{ 'reports.duration' | translate }}</div>
+                                    <div class="font-semibold text-white text-sm md:text-base">{{ formatDuration(assignment.duration || 0) }}</div>
                                 </div>
                             </div>
 
                             <!-- AI Analysis Summary -->
-                            <div *ngIf="assignment.aiAnalysis" class="mt-4 space-y-3">
+                            <div *ngIf="assignment.aiAnalysis" class="mt-3 md:mt-4 space-y-2 md:space-y-3">
                                 <!-- Brief Summary -->
-                                <div *ngIf="assignment.aiAnalysis.summary?.brief" class="text-sm text-gray-300 bg-gray-800 p-3 rounded">
+                                <div *ngIf="assignment.aiAnalysis.summary?.brief" class="text-xs md:text-sm text-gray-300 bg-gray-800 p-2 md:p-3 rounded">
                                     {{ assignment.aiAnalysis.summary.brief }}
                                 </div>
 

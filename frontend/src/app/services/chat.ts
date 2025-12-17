@@ -483,6 +483,13 @@ export class ChatService {
     }
   }
 
+  /**
+   * Deselect current chat (used for mobile back navigation)
+   */
+  deselectChat() {
+    this.selectedChatIdSubject.next(null);
+  }
+
   sendMessage(text: string) {
     const currentChatId = this.selectedChatIdSubject.value;
     if (!currentChatId) return;

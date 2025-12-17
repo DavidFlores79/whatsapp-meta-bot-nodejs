@@ -24,6 +24,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   showMenu = false;
   currentView: 'chat' | 'customers' | 'templates' | 'agents' | 'reports' | 'settings' = 'chat';
   sidebarCollapsed = false;
+  mobileMenuOpen = false;
 
   // Resizable sidebar
   sidebarWidth = 400;
@@ -182,6 +183,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   toggleSidebar() {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+  }
+
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen = false;
   }
 
   updateCurrentView() {

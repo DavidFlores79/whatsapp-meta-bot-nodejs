@@ -88,6 +88,13 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   /**
+   * Go back to conversation list (mobile)
+   */
+  goBack(): void {
+    this.chatService.deselectChat();
+  }
+
+  /**
    * Check if current agent can take over conversations
    */
   canTakeOver(): boolean {
