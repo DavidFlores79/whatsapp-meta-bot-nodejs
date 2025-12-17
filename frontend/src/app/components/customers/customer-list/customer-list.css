@@ -1,20 +1,75 @@
-/* Custom scrollbar */
-:host ::ng-deep .overflow-auto::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-:host ::ng-deep .overflow-auto::-webkit-scrollbar-track {
+/* Custom scrollbar for vertical scroll */
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-track {
   background: #1f2937;
 }
 
-:host ::ng-deep .overflow-auto::-webkit-scrollbar-thumb {
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-thumb {
   background: #4b5563;
   border-radius: 4px;
 }
 
-:host ::ng-deep .overflow-auto::-webkit-scrollbar-thumb:hover {
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Custom scrollbar for horizontal scroll */
+:host ::ng-deep .overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+:host ::ng-deep .overflow-x-auto::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+:host ::ng-deep .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+:host ::ng-deep .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Smooth scrolling for table */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky checkbox column */
+th.sticky,
+td.sticky {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+/* Shadow for sticky column when scrolling */
+th.sticky::after,
+td.sticky::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+  pointer-events: none;
+}
+
+/* Ensure sticky column has proper background */
+tbody tr:hover td.sticky {
+  background: #1f2937;
 }
 
 /* Rotate animation for filter chevron */

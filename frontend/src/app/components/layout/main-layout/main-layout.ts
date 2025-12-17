@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +31,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   minSidebarWidth = 280;
   maxSidebarWidth = 600;
   isResizing = false;
+  isDesktop = false;
 
   // Unattended conversations tracking
   unattendedCount = 0;
@@ -54,6 +55,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.chatService.selectedChat$.subscribe((chat: Chat | null) => {
       this.hasSelectedChat = chat !== null;
     });
+
+    // Detect desktop vs mobile for sidebar width
+    this.checkIfDesktop();
 
     // Load saved sidebar width from localStorage
     const savedWidth = localStorage.getItem('sidebarWidth');
@@ -106,6 +110,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (this.selectedChatSubscription) {
       this.selectedChatSubscription.unsubscribe();
     }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.checkIfDesktop();
+  }
+
+  private checkIfDesktop() {
+    // md breakpoint in Tailwind is 768px
+    this.isDesktop = window.innerWidth >= 768;
   }
 
   private updateUnattendedCount(chats: Chat[]) {

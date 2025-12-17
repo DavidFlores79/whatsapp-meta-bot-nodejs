@@ -1,6 +1,6 @@
-<div class="flex flex-col h-full bg-whatsapp-dark text-gray-100 overflow-hidden">
+<div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full max-w-full overflow-hidden">
   <!-- Header with Stats -->
-  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 shrink-0">
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 flex-none w-full max-w-full overflow-hidden">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <div>
         <h1 class="text-xl md:text-2xl font-semibold text-gray-100">{{ 'customers.title' | translate }}</h1>
@@ -14,7 +14,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 w-full max-w-full">
       <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
         <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">{{ 'customers.totalCustomers' | translate }}</div>
         <div class="text-xl md:text-2xl font-bold text-gray-100">{{ stats.totalCustomers }}</div>
@@ -39,7 +39,7 @@
   </div>
 
   <!-- Filters and Search -->
-  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-3 shrink-0">
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-3 flex-none w-full max-w-full overflow-hidden">
     <div class="flex flex-col md:flex-row gap-2 md:gap-3">
       <!-- Search -->
       <div class="flex-1 relative">
@@ -172,7 +172,7 @@
   </div>
 
   <!-- Table -->
-  <div class="flex-1 overflow-auto px-4 md:px-6 py-4">
+  <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 w-full max-w-full">
     <!-- Loading State -->
     <div *ngIf="loading" class="flex items-center justify-center h-full">
       <div class="text-center">
@@ -202,44 +202,45 @@
     </div>
 
     <!-- Customers Table -->
-    <div *ngIf="!loading && !error && customers.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-x-auto">
-      <table class="w-full min-w-[800px]">
+    <div *ngIf="!loading && !error && customers.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[800px]">
         <thead class="bg-whatsapp-dark border-b border-gray-700">
           <tr>
-            <th class="px-4 py-3 text-left w-12">
+            <th class="px-4 py-3 text-left w-12 sticky left-0 bg-whatsapp-dark z-10">
               <input type="checkbox"
                      [checked]="allSelected"
                      (change)="toggleSelectAll()"
                      class="rounded border-gray-600 text-whatsapp-green focus:ring-whatsapp-green">
             </th>
-            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green" (click)="onSort('phoneNumber')">
-              <div class="flex items-center gap-2">
+            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green min-w-[200px]" (click)="onSort('phoneNumber')">
+              <div class="flex items-center gap-2 whitespace-nowrap">
                 <span>{{ 'customers.customer' | translate }}</span>
                 <i class="fas fa-sort text-xs" *ngIf="filters.sortBy !== 'phoneNumber'"></i>
                 <i class="fas fa-sort-up text-xs" *ngIf="filters.sortBy === 'phoneNumber' && filters.sortOrder === 'asc'"></i>
                 <i class="fas fa-sort-down text-xs" *ngIf="filters.sortBy === 'phoneNumber' && filters.sortOrder === 'desc'"></i>
               </div>
             </th>
-            <th class="px-4 py-3 text-left">{{ 'customers.contact' | translate }}</th>
-            <th class="px-4 py-3 text-left">{{ 'customers.segment' | translate }}</th>
-            <th class="px-4 py-3 text-left">{{ 'customers.status' | translate }}</th>
-            <th class="px-4 py-3 text-left">{{ 'customers.tags' | translate }}</th>
-            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green" (click)="onSort('lastInteraction')">
-              <div class="flex items-center gap-2">
+            <th class="px-4 py-3 text-left min-w-[150px]">{{ 'customers.contact' | translate }}</th>
+            <th class="px-4 py-3 text-left min-w-[120px]">{{ 'customers.segment' | translate }}</th>
+            <th class="px-4 py-3 text-left min-w-[100px]">{{ 'customers.status' | translate }}</th>
+            <th class="px-4 py-3 text-left min-w-[150px]">{{ 'customers.tags' | translate }}</th>
+            <th class="px-4 py-3 text-left cursor-pointer hover:text-whatsapp-green min-w-[140px]" (click)="onSort('lastInteraction')">
+              <div class="flex items-center gap-2 whitespace-nowrap">
                 <span>{{ 'customers.lastContact' | translate }}</span>
                 <i class="fas fa-sort text-xs" *ngIf="filters.sortBy !== 'lastInteraction'"></i>
                 <i class="fas fa-sort-up text-xs" *ngIf="filters.sortBy === 'lastInteraction' && filters.sortOrder === 'asc'"></i>
                 <i class="fas fa-sort-down text-xs" *ngIf="filters.sortBy === 'lastInteraction' && filters.sortOrder === 'desc'"></i>
               </div>
             </th>
-            <th class="px-4 py-3 text-center">{{ 'common.actions' | translate }}</th>
+            <th class="px-4 py-3 text-center min-w-[80px]">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let customer of customers"
               class="border-b border-gray-700 hover:bg-whatsapp-dark transition-colors cursor-pointer"
               (click)="viewCustomer(customer)">
-            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+            <td class="px-4 py-3 sticky left-0 bg-whatsapp-gray z-10" (click)="$event.stopPropagation()">
               <input type="checkbox"
                      [checked]="isSelected(customer._id)"
                      (change)="toggleSelectCustomer(customer._id)"
@@ -296,6 +297,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Pagination -->
