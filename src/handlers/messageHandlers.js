@@ -171,7 +171,45 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
     whatsappService.sendWhatsappResponse(replyPayload);
 
-    console.log(`✅ AI response sent to ${phoneNumber} (with image context)\n`);
+    console.log(`✅ AI response sent to ${phoneNumber} (with image context)`);
+
+    // Save AI response to database
+    const aiResponseMessage = await Message.create({
+      conversationId,
+      customerId,
+      content: aiReply,
+      type: 'text',
+      direction: 'outbound',
+      sender: 'ai',
+      status: 'sent'
+    });
+
+    // Update conversation stats
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $inc: { messageCount: 1 },
+      lastAgentResponse: new Date(),
+      lastMessage: {
+        content: aiReply,
+        timestamp: new Date(),
+        from: 'agent',
+        type: 'text'
+      }
+    });
+
+    // Emit AI response to frontend via Socket.io
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: aiResponseMessage._id.toString(),
+        text: aiResponseMessage.content,
+        sender: 'me',
+        isAI: true,
+        timestamp: aiResponseMessage.timestamp,
+        type: 'text'
+      }
+    });
+
+    console.log(`✅ AI response saved to database and emitted to frontend\n`);
 
   } catch (error) {
     console.error("❌ Error processing image:", error);
@@ -311,7 +349,45 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
     whatsappService.sendWhatsappResponse(replyPayload);
 
-    console.log(`✅ AI response sent to ${phoneNumber} (with location context)\n`);
+    console.log(`✅ AI response sent to ${phoneNumber} (with location context)`);
+
+    // Save AI response to database
+    const aiMessage = await Message.create({
+      conversationId,
+      customerId,
+      content: aiReply,
+      type: 'text',
+      direction: 'outbound',
+      sender: 'ai',
+      status: 'sent'
+    });
+
+    // Update conversation stats
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $inc: { messageCount: 1 },
+      lastAgentResponse: new Date(),
+      lastMessage: {
+        content: aiReply,
+        timestamp: new Date(),
+        from: 'agent',
+        type: 'text'
+      }
+    });
+
+    // Emit AI response to frontend via Socket.io
+    io.emit('new_message', {
+      chatId: conversationId,
+      message: {
+        id: aiMessage._id.toString(),
+        text: aiMessage.content,
+        sender: 'me',
+        isAI: true,
+        timestamp: aiMessage.timestamp,
+        type: 'text'
+      }
+    });
+
+    console.log(`✅ AI response saved to database and emitted to frontend\n`);
 
   } catch (error) {
     console.error("❌ Error processing location:", error);
