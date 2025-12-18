@@ -374,10 +374,12 @@
     <app-chat-list class="flex-1 overflow-hidden"></app-chat-list>
 
     <!-- Resize Handle -->
-    <div class="hidden md:block absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-whatsapp-green hover:w-1.5 transition-all z-10 group"
+    <div class="hidden md:flex absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-whatsapp-green/50 transition-all z-20 items-center justify-center"
          (mousedown)="startResize($event)"
-         [class.bg-whatsapp-green]="isResizing">
-      <div class="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-gray-600 group-hover:bg-whatsapp-green rounded-full transition-colors"></div>
+         [class.bg-whatsapp-green]="isResizing"
+         [class.w-1]="isResizing">
+      <div class="w-0.5 h-16 bg-gray-500 hover:bg-whatsapp-green rounded-full transition-colors"
+           [class.bg-whatsapp-green]="isResizing"></div>
     </div>
   </div>
 

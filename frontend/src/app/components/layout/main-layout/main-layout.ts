@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -43,7 +43,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private chatService: ChatService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -310,17 +312,26 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     event.preventDefault();
     this.isResizing = true;
 
+    // Get the left navigation sidebar width (w-60 = 240px when expanded, w-20 = 80px when collapsed)
+    const navSidebarWidth = this.sidebarCollapsed ? 80 : 240;
+
     const onMouseMove = (e: MouseEvent) => {
       if (this.isResizing) {
-        const newWidth = e.clientX;
+        // Calculate width relative to the left navigation sidebar
+        const newWidth = e.clientX - navSidebarWidth;
         if (newWidth >= this.minSidebarWidth && newWidth <= this.maxSidebarWidth) {
-          this.sidebarWidth = newWidth;
+          // Use NgZone to trigger Angular change detection
+          this.ngZone.run(() => {
+            this.sidebarWidth = newWidth;
+          });
         }
       }
     };
 
     const onMouseUp = () => {
-      this.isResizing = false;
+      this.ngZone.run(() => {
+        this.isResizing = false;
+      });
       localStorage.setItem('sidebarWidth', this.sidebarWidth.toString());
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
