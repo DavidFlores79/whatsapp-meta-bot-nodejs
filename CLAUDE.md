@@ -19,16 +19,27 @@ npm run create-admin # Create admin agent
 npm run reset-admin  # Reset admin password
 ```
 
-### Frontend (cd frontend/)
+### Frontend
 ```bash
-npm start            # Dev server (ng serve)
-npm run build        # Production build (outputs to dist/frontend/browser/)
-npm run watch        # Build with watch mode
+cd frontend && npm start   # Dev server (ng serve)
+cd frontend && npm run build   # Production build (outputs to dist/frontend/browser/)
+cd frontend && npm run watch   # Build with watch mode
 ```
 
 ### Full Stack Build
 ```bash
-npm run build        # Builds both backend dependencies and frontend Angular app
+npm run build         # Builds frontend Angular app (cross-platform)
+npm run build:install # Install all dependencies + build (fresh setup)
+```
+
+### Deployment
+```bash
+# Windows
+npm run deploy:prepare   # Build + run PowerShell deployment script
+
+# Linux/Mac
+npm run deploy:prepare:unix   # Build + run Bash deployment script
+# Or manually: ./deploy.sh
 ```
 
 ## High-Level Architecture
@@ -55,19 +66,23 @@ npm run build        # Builds both backend dependencies and frontend Angular app
 - **Auto-cleanup**: Keeps last 10 messages per thread, triggers at 15 messages
 - **Token optimization**: Reduces OpenAI costs 70%+ by preventing unlimited context
 - **Tool calling**: Assistant can execute `create_ticket_report()`, `get_ticket_information()`
+- **Race condition protection**: Concurrent requests for same user are queued to prevent thread conflicts
+- **Message ordering**: Ensures messages are processed in the order received per user
 
 **Message Queue System** (`src/services/queueService.js`):
-- Batches messages per user with configurable wait time (default 3s)
-- Deduplicates using message IDs stored in `Set` with TTL
+- Batches messages per user with configurable wait time (default 3000ms = 3 seconds)
+- Deduplicates using message IDs stored in `Set` with TTL (60 seconds)
 - Checks conversation assignment before routing to AI or agent
+- Prevents message fragmentation during rapid user input (burst detection)
 
 **CRM Integration**:
 - **Agent authentication**: JWT-based (`authService.js`, `authMiddleware.js`)
 - **Conversation lifecycle**: open → assigned → resolved → closed
 - **Agent takeover**: `takeoverSuggestionService.js` monitors keywords, suggests agent assignment
-- **Auto-timeout**: `autoTimeoutService.js` auto-resolves inactive conversations (default 24h)
-- **Assignment**: `agentAssignmentService.js` assigns conversations to online agents
+- **Auto-timeout**: `autoTimeoutService.js` auto-resolves inactive conversations (default 24h, configurable per conversation)
+- **Assignment**: `agentAssignmentService.js` assigns conversations to online agents (round-robin)
 - **Message relay**: `agentMessageRelayService.js` sends agent messages to WhatsApp
+- **Background jobs**: Auto-timeout service runs continuously checking for stale conversations
 
 ### Data Models
 
@@ -125,6 +140,12 @@ try {
 - Conversation routes: `/api/v2/conversations/*`
 - Angular catch-all: `app.get('*')` returns index.html (handles frontend routing)
 
+### Webhook Response Time Requirements
+- WhatsApp Cloud API requires webhook response within **20 seconds** or it will timeout and retry
+- Current architecture responds immediately (200 OK) and processes messages asynchronously via queue
+- **Critical**: Never block webhook response with slow operations (AI calls, DB writes, etc.)
+- Message processing happens in `queueService` after webhook acknowledgment
+
 ## Important Rules
 
 1. **NO AI Attribution in Commits**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", emojis (🤖), or any AI tool references in commit messages. All commits must appear human-authored.
@@ -146,6 +167,7 @@ Required in `.env`:
 ```env
 # Server
 PORT=5000
+NODE_ENV=production
 MONGODB=mongodb://connection_string
 
 # WhatsApp Cloud API
@@ -160,9 +182,33 @@ WHATSAPP_ADMIN=admin_phone_number
 # OpenAI
 OPENAI_API_KEY=your_key
 OPENAI_ASSISTANT_ID=your_assistant_id
+
+# JWT Authentication
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=24h
+
+# Security & Rate Limiting
+RATE_LIMIT_MAX=100
+RATE_LIMIT_WINDOW_MS=900000
 ```
 
-**Note**: `WHATSAPP_BUSINESS_ACCOUNT_ID` is required for template management - fetch from Meta Business Manager.
+**Optional variables** (for extended features):
+```env
+# Image Upload (Cloudinary)
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Geocoding (Google Maps API)
+GOOGLE_MAPS_API_KEY=your_google_maps_key
+```
+
+**Notes**:
+- `WHATSAPP_BUSINESS_ACCOUNT_ID` is required for template management - fetch from Meta Business Manager
+- `JWT_SECRET` must be set for agent authentication to work
+- Cloudinary variables are needed for image message handling
+- Google Maps API key enables location message geocoding
 
 ## Testing & Debugging
 
@@ -171,6 +217,11 @@ OPENAI_ASSISTANT_ID=your_assistant_id
 - **Database inspection**: Check `UserThread` collection for cleanup operations
 - **Frontend dev**: Run Angular dev server separately (`cd frontend && npm start`) during development
 - **Socket.io debug**: Monitor browser console for real-time events
+- **Health checks**:
+  - `GET /health` - Full health check with MongoDB and dependency status
+  - `GET /health/ready` - Readiness probe (for load balancers)
+  - `GET /health/live` - Liveness probe (for container orchestration)
+  - `GET /info` - Service information and statistics
 
 ## Message Type Handlers
 
@@ -234,3 +285,19 @@ The system integrates with WhatsApp Business API to manage and send pre-approved
 - **Build output**: `frontend/dist/frontend/browser/` served by Express as static files
 - **Routing**: Angular Router handles client-side routes; Express catch-all serves index.html
 - **Pages**: Login, Conversations (chat), Customers, Templates
+- **Build compatibility**: Build scripts work cross-platform (Windows/Mac/Linux)
+
+## Documentation Structure
+
+**Root directory files** (user-facing):
+- `README.md` - Project overview and quick start
+- `CLAUDE.md` - AI assistant guidance (this file)
+- `CONTRIBUTING.md` - Contribution guidelines
+- `CHANGELOG.md` - Version history
+- `DEPLOYMENT_GUIDE.md` - Deployment instructions
+
+**docs/ directory** (technical documentation):
+- API documentation, implementation guides, testing guides
+- Database schema, thread optimization details
+- Migration guides, bug fix summaries
+- Development tasks and TODO lists
