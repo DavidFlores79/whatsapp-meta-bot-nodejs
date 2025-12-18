@@ -3,6 +3,7 @@ const Conversation = require('../models/Conversation');
 const AgentAssignmentHistory = require('../models/AgentAssignmentHistory');
 const Message = require('../models/Message');
 const conversationAnalysisService = require('./conversationAnalysisService');
+const agentNotificationService = require('./agentNotificationService');
 
 /**
  * Get available agents for assignment
@@ -174,6 +175,16 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
     });
 
     console.log(`✅ Conversation ${conversationId} assigned to agent ${agentId}`);
+
+    // Send WhatsApp notification to agent (non-blocking)
+    agentNotificationService.sendAssignmentNotification(
+        agent,
+        conversation.customerId,
+        conversation
+    ).catch(error => {
+        console.error('Failed to send WhatsApp notification to agent:', error);
+        // Continue even if notification fails
+    });
 
     return {
         conversation,
