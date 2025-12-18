@@ -280,7 +280,7 @@ async function releaseConversation(conversationId, agentId, reason = null) {
         assignmentHistory.aiAnalysis = {
             ...aiAnalysis,
             analyzedAt: new Date(),
-            analysisModel: 'gpt-4o'
+            analysisModel: 'gpt-4o-mini'
         };
 
         await assignmentHistory.save();

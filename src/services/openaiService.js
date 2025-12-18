@@ -457,7 +457,7 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
 async function getChatCompletion(messages, options = {}) {
   try {
     const {
-      model = 'gpt-4o',
+      model = 'gpt-4o-mini',
       temperature = 0.7,
       max_tokens = 2000,
       response_format = null

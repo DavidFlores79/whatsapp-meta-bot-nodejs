@@ -44,7 +44,7 @@ const conversationSchema = new mongoose.Schema({
 
     // AI and Automation
     isAIEnabled: { type: Boolean, default: true },
-    aiModel: { type: String, default: 'gpt-4' },
+    aiModel: { type: String, default: 'gpt-4o-mini' },
     autoResponses: { type: Boolean, default: true },
 
     // Conversation Metadata
