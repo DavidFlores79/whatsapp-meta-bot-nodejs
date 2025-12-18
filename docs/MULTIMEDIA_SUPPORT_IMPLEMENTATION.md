@@ -273,7 +273,7 @@ CLOUDINARY_API_KEY=854558844635244
 CLOUDINARY_API_SECRET=BYR9Y0vqZJ5svGdC0cicuvWpntc
 
 # Google Maps (already configured ✅)
-GOOGLE_MAPS_API_KEY=AIzaSyAZAfssv9yke8YOvt-lYH8esqTNEtKGurg
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 # OpenCage (fallback, already configured ✅)
 OPENCAGE_API_KEY=6f7eb49c3ed2444c96dd164851f12807

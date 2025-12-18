@@ -86,7 +86,7 @@ Customer → WhatsApp Webhook → whatsappController.js
 
 ## Environment Variables Used
 ```env
-GOOGLE_MAPS_API_KEY=AIzaSyAZAfssv9yke8YOvt-lYH8esqTNEtKGurg
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
 ## Testing Checklist
