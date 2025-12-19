@@ -100,14 +100,20 @@
             <!-- Phone Number -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                {{ 'agents.fields.phoneNumber' | translate }}
+                {{ 'agents.fields.phoneNumber' | translate }} *
               </label>
               <input
                 type="tel"
                 [(ngModel)]="formData.phoneNumber"
                 name="phoneNumber"
-                class="w-full px-4 py-2 bg-whatsapp-input border border-gray-600 rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                required
+                placeholder="529991234567"
+                class="w-full px-4 py-2 bg-whatsapp-input border rounded-lg text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-whatsapp-green focus:border-transparent"
+                [class.border-red-500]="errors['phoneNumber']"
+                [class.border-gray-600]="!errors['phoneNumber']"
               />
+              <p *ngIf="errors['phoneNumber']" class="mt-1 text-sm text-red-400">{{ errors['phoneNumber'] }}</p>
+              <p class="mt-1 text-xs text-gray-400">{{ 'agents.fields.phoneNumberHelp' | translate }}</p>
             </div>
           </div>
         </div>

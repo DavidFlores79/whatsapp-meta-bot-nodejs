@@ -522,6 +522,7 @@
       "lastName": "Last Name",
       "email": "Email Address",
       "phoneNumber": "Phone Number",
+      "phoneNumberHelp": "Required for WhatsApp notifications (e.g., 529991234567)",
       "password": "Password",
       "confirmPassword": "Confirm Password",
       "role": "Role",

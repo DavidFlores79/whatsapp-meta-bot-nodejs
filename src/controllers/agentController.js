@@ -180,8 +180,8 @@ async function createAgent(req, res) {
     try {
         const { email, password, firstName, lastName, role, phoneNumber } = req.body;
 
-        if (!email || !password || !firstName || !lastName) {
-            return res.status(400).json({ error: 'Required fields missing' });
+        if (!email || !password || !firstName || !lastName || !phoneNumber) {
+            return res.status(400).json({ error: 'Required fields missing: email, password, firstName, lastName, and phoneNumber are required' });
         }
 
         // Check if agent already exists
@@ -237,12 +237,13 @@ async function getAgentById(req, res) {
  */
 async function updateAgent(req, res) {
     try {
-        const { firstName, lastName, role, isActive, maxConcurrentChats, permissions } = req.body;
+        const { firstName, lastName, role, phoneNumber, isActive, maxConcurrentChats, permissions } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
         if (role) updateData.role = role;
+        if (phoneNumber) updateData.phoneNumber = phoneNumber;
         if (isActive !== undefined) updateData.isActive = isActive;
         if (maxConcurrentChats) updateData.maxConcurrentChats = maxConcurrentChats;
         if (permissions) updateData.permissions = permissions;
