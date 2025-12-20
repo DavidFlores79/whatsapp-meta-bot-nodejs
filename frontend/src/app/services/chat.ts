@@ -9,11 +9,15 @@ import { ToastService } from './toast';
 export interface Message {
   id: string;
   text: string;
-  sender: 'me' | 'other';
+  sender: 'me' | 'other' | 'system';
   timestamp: Date;
   type?: string;
   status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
   isAI?: boolean; // Flag to indicate AI-generated message
+  isSystemMessage?: boolean; // Flag for system messages (assignment transitions, etc.)
+  systemMessageType?: 'agent_assigned' | 'agent_released' | 'ai_resumed';
+  agentName?: string; // Agent name (for both regular agent messages and system transitions)
+  agentId?: string; // Agent ID for identification
   attachments?: Array<{
     type: string;
     url: string;
@@ -70,10 +74,17 @@ export class ChatService {
   private metadataUpdateSubject = new BehaviorSubject<any>(null);
   private newMessageSubject = new BehaviorSubject<any>(null);
 
+  // Store conversation summaries from auto-assignment
+  private conversationSummaries = new Map<string, any>();
+  private conversationSummarySubject = new BehaviorSubject<any>(null);
+
   chats$ = this.chatsSubject.asObservable();
   selectedChat$ = this.selectedChatIdSubject.asObservable().pipe(
     map(chatId => this.mockChats.find(c => c.id === chatId) || null)
   );
+
+  // Observable for conversation summaries (when auto-assigned or manually taken over)
+  conversationSummary$ = this.conversationSummarySubject.asObservable();
 
   /**
    * Get currently selected chat ID
@@ -164,12 +175,12 @@ export class ChatService {
 
   private loadMessages(chatId: string) {
     return this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/messages`).pipe(
-      tap(response => {
+      tap(async (response) => {
         const chat = this.mockChats.find(c => c.id === chatId);
         if (chat) {
           // Map backend message format to frontend Message format
           const backendMessages = response.messages || [];
-          chat.messages = backendMessages.map((msg: any) => ({
+          let messages: Message[] = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
             // Agent and AI messages show on the right (sender: 'me')
@@ -181,8 +192,72 @@ export class ChatService {
             status: msg.status,
             attachments: msg.attachments,
             location: msg.location,
-            template: msg.template
+            template: msg.template,
+            // Include agent information if available (populated by backend)
+            agentName: msg.agentId
+              ? `${msg.agentId.firstName} ${msg.agentId.lastName}`.trim()
+              : undefined,
+            agentId: msg.agentId?._id
           }));
+
+          // Fetch assignment history to inject context markers
+          try {
+            const historyResponse = await firstValueFrom(
+              this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/assignment-history`)
+            );
+
+            if (historyResponse?.history && historyResponse.history.length > 0) {
+              // Sort assignment history by assignedAt (oldest first)
+              const sortedHistory = [...historyResponse.history].sort((a, b) =>
+                new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime()
+              );
+
+              // Create system messages for each assignment transition
+              const systemMessages: Message[] = [];
+
+              sortedHistory.forEach((assignment: any) => {
+                const agentName = assignment.agentId
+                  ? `${assignment.agentId.firstName} ${assignment.agentId.lastName}`
+                  : 'Agent';
+
+                // Add "Agent assigned" marker
+                systemMessages.push({
+                  id: `system-assigned-${assignment._id}`,
+                  text: `🔵 ${agentName} joined the conversation`,
+                  sender: 'system',
+                  timestamp: new Date(assignment.assignedAt),
+                  isSystemMessage: true,
+                  systemMessageType: 'agent_assigned',
+                  agentName: agentName
+                });
+
+                // Add "Agent released" marker if released
+                if (assignment.releasedAt) {
+                  systemMessages.push({
+                    id: `system-released-${assignment._id}`,
+                    text: `🟢 AI resumed control (${agentName} left)`,
+                    sender: 'system',
+                    timestamp: new Date(assignment.releasedAt),
+                    isSystemMessage: true,
+                    systemMessageType: 'ai_resumed',
+                    agentName: agentName
+                  });
+                }
+              });
+
+              // Merge system messages with regular messages and sort by timestamp
+              messages = [...messages, ...systemMessages].sort((a, b) =>
+                a.timestamp.getTime() - b.timestamp.getTime()
+              );
+
+              console.log(`📋 Injected ${systemMessages.length} context markers into conversation timeline`);
+            }
+          } catch (error) {
+            console.error('Failed to load assignment history for context markers:', error);
+            // Continue without context markers
+          }
+
+          chat.messages = messages;
           this.chatsSubject.next([...this.mockChats]);
         }
       })
@@ -264,6 +339,12 @@ export class ChatService {
 
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
+
+      // Store summary for later display
+      if (data.summary) {
+        console.log('📊 Storing conversation summary for', data.conversationId);
+        this.conversationSummaries.set(data.conversationId, data.summary);
+      }
 
       // Play notification sound
       this.playNotificationSound();
@@ -469,6 +550,55 @@ export class ChatService {
       await firstValueFrom(this.loadMessages(chatId));
     } catch (error) {
       console.error('Error loading messages:', error);
+    }
+
+    // Check if there's a stored summary for this conversation (from auto-assignment)
+    if (this.conversationSummaries.has(chatId)) {
+      const summary = this.conversationSummaries.get(chatId);
+      console.log('📊 Found stored summary for conversation, emitting to components');
+      this.conversationSummarySubject.next({
+        conversationId: chatId,
+        summary: summary,
+        source: 'auto-assignment'
+      });
+    } else {
+      // Try to fetch active assignment history
+      console.log('🔍 No stored summary, fetching assignment history...');
+      try {
+        const historyResponse = await firstValueFrom(
+          this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/assignment-history`)
+        );
+
+        if (historyResponse?.history && historyResponse.history.length > 0) {
+          // Get the most recent (active) assignment
+          const activeAssignment = historyResponse.history.find((h: any) => !h.releasedAt);
+
+          if (activeAssignment && activeAssignment.contextSummary) {
+            console.log('📊 Found active assignment, emitting summary');
+            // Reconstruct summary from contextSummary
+            const summary = {
+              summary: activeAssignment.contextSummary.keyTopics?.join(', ') || 'Recent conversation context',
+              keyPoints: activeAssignment.contextSummary.keyTopics || [],
+              sentiment: activeAssignment.contextSummary.customerSentiment || 'neutral',
+              metadata: {
+                totalMessages: activeAssignment.contextSummary.totalMessages || 0,
+                aiMessagesCount: activeAssignment.contextSummary.aiMessagesCount || 0,
+                customerMessagesCount: activeAssignment.contextSummary.customerMessagesCount || 0,
+                lastMessages: activeAssignment.contextSummary.lastMessages || []
+              }
+            };
+
+            this.conversationSummarySubject.next({
+              conversationId: chatId,
+              summary: summary,
+              source: 'assignment-history'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch assignment history:', error);
+        // Not critical, continue without summary
+      }
     }
 
     // Reset unread count and clear "assigned" status for NEW indicator

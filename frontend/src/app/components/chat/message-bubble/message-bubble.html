@@ -1,4 +1,12 @@
-<div class="flex mb-2"
+<!-- System message (context marker for agent/AI transitions) -->
+<div *ngIf="message.isSystemMessage" class="flex justify-center mb-2">
+    <div class="bg-gray-700/50 text-gray-300 text-xs px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-2">
+        <span>{{ message.text }}</span>
+    </div>
+</div>
+
+<!-- Regular message bubble -->
+<div *ngIf="!message.isSystemMessage" class="flex mb-2"
     [ngClass]="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
     <div class="max-w-[65%] rounded-lg relative shadow-md text-sm"
         [ngClass]="{
@@ -55,6 +63,12 @@
             <div *ngIf="message.isAI" class="flex items-center gap-1 mb-1 text-blue-300">
                 <i class="fas fa-robot text-xs"></i>
                 <span class="text-[10px] font-medium uppercase tracking-wide">{{ 'chat.aiAssistant' | translate }}</span>
+            </div>
+
+            <!-- Agent Name Badge (for agent messages, subtle and discrete) -->
+            <div *ngIf="!message.isAI && message.sender === 'me' && message.agentName" class="flex items-center gap-1 mb-1 text-gray-300 opacity-75">
+                <i class="fas fa-user text-[9px]"></i>
+                <span class="text-[10px] font-medium">{{ message.agentName }}</span>
             </div>
 
             <!-- Text/Caption (shown for all types except standalone location without text, and hide [Image] placeholder) -->

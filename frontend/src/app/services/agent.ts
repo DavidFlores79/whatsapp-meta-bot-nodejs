@@ -35,7 +35,7 @@ export interface CreateAgentRequest {
   firstName: string;
   lastName: string;
   role?: 'admin' | 'supervisor' | 'agent';
-  phoneNumber: string;
+  phoneNumber?: string;
 }
 
 export interface UpdateAgentRequest {

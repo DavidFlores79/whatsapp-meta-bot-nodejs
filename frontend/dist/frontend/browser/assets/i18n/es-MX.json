@@ -557,6 +557,7 @@
       "lastName": "Apellido",
       "email": "Correo Electrónico",
       "phoneNumber": "Número de Teléfono",
+      "phoneNumberHelp": "Requerido para notificaciones de WhatsApp (ej: 529991234567)",
       "password": "Contraseña",
       "confirmPassword": "Confirmar Contraseña",
       "role": "Rol",

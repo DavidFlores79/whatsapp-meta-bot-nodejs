@@ -75,6 +75,15 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         }
       });
     });
+
+    // Subscribe to conversation summaries (from auto-assignment or manual takeover)
+    this.chatService.conversationSummary$.subscribe(summaryData => {
+      if (summaryData && summaryData.summary) {
+        console.log('📊 Received summary from service:', summaryData.source);
+        this.conversationSummary = summaryData.summary;
+        this.isSummaryModalOpen = true;
+      }
+    });
   }
 
   ngAfterViewChecked() {
@@ -155,8 +164,10 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         console.log('Conversation taken over successfully', response);
         this.isTakingOver = false;
 
-        // Show summary modal if available
+        // Emit summary through the service for consistent handling
         if (response.summary) {
+          // The summary will be shown via the conversationSummary$ subscription
+          // This ensures consistent behavior for both manual and auto-assignment
           this.conversationSummary = response.summary;
           this.isSummaryModalOpen = true;
         }
