@@ -91,13 +91,21 @@ async function getProfile(req, res) {
  */
 async function updateProfile(req, res) {
     try {
-        const { firstName, lastName, avatar, phoneNumber, settings, autoAssign, languages } = req.body;
+        let { firstName, lastName, avatar, phoneNumber, settings, autoAssign, languages } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
         if (avatar) updateData.avatar = avatar;
-        if (phoneNumber) updateData.phoneNumber = phoneNumber;
+        if (phoneNumber) {
+            // Format phone number (ensure consistent 12-digit format)
+            const { formatNumber } = require('../shared/processMessage');
+            if (phoneNumber.length === 13) {
+                phoneNumber = formatNumber(phoneNumber);
+                console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
+            }
+            updateData.phoneNumber = phoneNumber;
+        }
         if (settings) updateData.settings = settings;
         if (typeof autoAssign === 'boolean') updateData.autoAssign = autoAssign;
         if (languages && Array.isArray(languages)) updateData.languages = languages;
@@ -178,10 +186,17 @@ async function getAllAgents(req, res) {
  */
 async function createAgent(req, res) {
     try {
-        const { email, password, firstName, lastName, role, phoneNumber } = req.body;
+        let { email, password, firstName, lastName, role, phoneNumber } = req.body;
 
         if (!email || !password || !firstName || !lastName || !phoneNumber) {
             return res.status(400).json({ error: 'Required fields missing: email, password, firstName, lastName, and phoneNumber are required' });
+        }
+
+        // Format phone number (ensure consistent 12-digit format)
+        const { formatNumber } = require('../shared/processMessage');
+        if (phoneNumber.length === 13) {
+            phoneNumber = formatNumber(phoneNumber);
+            console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
         }
 
         // Check if agent already exists
@@ -237,13 +252,21 @@ async function getAgentById(req, res) {
  */
 async function updateAgent(req, res) {
     try {
-        const { firstName, lastName, role, phoneNumber, isActive, maxConcurrentChats, permissions } = req.body;
+        let { firstName, lastName, role, phoneNumber, isActive, maxConcurrentChats, permissions } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
         if (role) updateData.role = role;
-        if (phoneNumber) updateData.phoneNumber = phoneNumber;
+        if (phoneNumber) {
+            // Format phone number (ensure consistent 12-digit format)
+            const { formatNumber } = require('../shared/processMessage');
+            if (phoneNumber.length === 13) {
+                phoneNumber = formatNumber(phoneNumber);
+                console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
+            }
+            updateData.phoneNumber = phoneNumber;
+        }
         if (isActive !== undefined) updateData.isActive = isActive;
         if (maxConcurrentChats) updateData.maxConcurrentChats = maxConcurrentChats;
         if (permissions) updateData.permissions = permissions;
