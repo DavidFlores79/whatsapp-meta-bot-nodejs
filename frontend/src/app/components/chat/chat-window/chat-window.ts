@@ -80,9 +80,18 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     // Subscribe to conversation summaries (from auto-assignment or manual takeover)
     this.chatService.conversationSummary$.subscribe(summaryData => {
       if (summaryData && summaryData.summary) {
-        console.log('📊 Received summary from service:', summaryData.source);
-        this.conversationSummary = summaryData.summary;
-        this.isSummaryModalOpen = true;
+        // Validate that summary has actual content before showing modal
+        const hasContent = summaryData.summary.briefSummary ||
+                          summaryData.summary.keyPoints?.length > 0 ||
+                          summaryData.summary.customerIntent;
+
+        if (hasContent) {
+          console.log('📊 Received summary from service:', summaryData.source);
+          this.conversationSummary = summaryData.summary;
+          this.isSummaryModalOpen = true;
+        } else {
+          console.log('⚠️ Summary received but has no content, skipping modal');
+        }
       }
     });
   }

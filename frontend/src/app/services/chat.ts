@@ -552,7 +552,11 @@ export class ChatService {
       console.error('Error loading messages:', error);
     }
 
-    // Check if there's a stored summary for this conversation (from auto-assignment)
+    const chat = this.mockChats.find(c => c.id === chatId);
+
+    // Show summary in these cases:
+    // 1. Summary was stored during takeover/auto-assignment (conversationSummaries Map)
+    // 2. Conversation has status 'assigned' and is assigned to current agent (newly assigned)
     if (this.conversationSummaries.has(chatId)) {
       const summary = this.conversationSummaries.get(chatId);
       console.log('📊 Found stored summary for conversation, emitting to components');
@@ -561,9 +565,11 @@ export class ChatService {
         summary: summary,
         source: 'auto-assignment'
       });
-    } else {
-      // Try to fetch active assignment history
-      console.log('🔍 No stored summary, fetching assignment history...');
+      // Clear the summary after showing it once
+      this.conversationSummaries.delete(chatId);
+    } else if (chat && chat.status === 'assigned' && this.isAssignedToCurrentAgent(chat)) {
+      // Fetch summary for newly assigned conversation that agent is viewing for first time
+      console.log('🔍 Fetching summary for newly assigned conversation...');
       try {
         const historyResponse = await firstValueFrom(
           this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/assignment-history`)
@@ -573,34 +579,11 @@ export class ChatService {
           // Get the most recent (active) assignment
           const activeAssignment = historyResponse.history.find((h: any) => !h.releasedAt);
 
-          if (activeAssignment && activeAssignment.contextSummary) {
-            console.log('📊 Found active assignment, checking for stored AI summary');
-
-            // Use stored AI summary if available, otherwise reconstruct basic summary
-            let summary;
-            if (activeAssignment.contextSummary.aiSummary) {
-              console.log('✅ Using stored AI summary from assignment history');
-              summary = activeAssignment.contextSummary.aiSummary;
-            } else {
-              console.log('⚠️ No AI summary found, reconstructing basic summary from context');
-              // Fallback: reconstruct basic summary from available context
-              summary = {
-                briefSummary: activeAssignment.contextSummary.keyTopics?.join(', ') || 'Recent conversation context',
-                keyPoints: activeAssignment.contextSummary.keyTopics || [],
-                sentiment: activeAssignment.contextSummary.customerSentiment || 'neutral',
-                customerIntent: 'Review conversation history',
-                currentStatus: activeAssignment.contextSummary.conversationStatus || 'in-progress',
-                urgency: activeAssignment.contextSummary.priority || 'medium',
-                estimatedCategory: activeAssignment.contextSummary.category || 'support',
-                suggestedApproach: 'Review recent messages and continue conversation',
-                previousActions: [],
-                outstandingQuestions: []
-              };
-            }
-
+          if (activeAssignment?.contextSummary?.aiSummary) {
+            console.log('✅ Using stored AI summary from assignment history');
             this.conversationSummarySubject.next({
               conversationId: chatId,
-              summary: summary,
+              summary: activeAssignment.contextSummary.aiSummary,
               source: 'assignment-history'
             });
           }
@@ -621,6 +604,21 @@ export class ChatService {
       }
       this.chatsSubject.next([...this.mockChats]);
     }
+  }
+
+  /**
+   * Check if conversation is assigned to current agent
+   */
+  private isAssignedToCurrentAgent(chat: Chat): boolean {
+    if (!this.currentAgent || !chat.assignedAgent) {
+      return false;
+    }
+
+    const assignedAgentId = typeof chat.assignedAgent === 'string'
+      ? chat.assignedAgent
+      : chat.assignedAgent._id;
+
+    return assignedAgentId === this.currentAgent._id;
   }
 
   /**
