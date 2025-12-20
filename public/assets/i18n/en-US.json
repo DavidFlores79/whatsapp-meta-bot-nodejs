@@ -135,7 +135,25 @@
     "whatsappWebDesc1": "Send and receive messages on your computer",
     "whatsappWebDesc2": "Use WhatsApp on up to 4 linked devices at the same time",
     "location": "Location",
-    "aiAssistant": "AI Assistant"
+    "aiAssistant": "AI Assistant",
+    "takeOverConversation": "Take over this conversation",
+    "markResolved": "Mark Resolved",
+    "resolving": "Resolving...",
+    "closeConversation": "Close Conversation",
+    "closing": "Closing...",
+    "reopenConversation": "Reopen Conversation",
+    "reopening": "Reopening...",
+    "conversationClosed": "Conversation Closed",
+    "gotIt": "Got it",
+    "whatsappWebDescription": "Send and receive messages right from your computer",
+    "filterByStatus": "Filter by status"
+  },
+  "status": {
+    "open": "Open",
+    "assigned": "Assigned",
+    "waiting": "Waiting",
+    "resolved": "Resolved",
+    "closed": "Closed"
   },
   "customers": {
     "title": "Customers",

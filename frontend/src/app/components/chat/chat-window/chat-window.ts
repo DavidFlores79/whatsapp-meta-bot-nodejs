@@ -9,12 +9,13 @@ import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
 import { CustomerModalComponent } from '../../customers/customer-modal/customer-modal';
 import { TemplateSenderComponent } from '../../templates/template-sender/template-sender';
+import { StatusBadgeComponent } from '../../shared/status-badge/status-badge';
 import { Customer } from '../../../services/customer';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent],
+  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })

@@ -13,7 +13,10 @@
                         <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
                     </div>
                     <div>
-                        <h3 class="text-gray-100 font-medium">{{ chat.name }}</h3>
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="text-gray-100 font-medium">{{ chat.name }}</h3>
+                            <app-status-badge *ngIf="chat.status" [status]="chat.status" size="sm"></app-status-badge>
+                        </div>
                         <div class="flex items-center gap-2 text-xs">
                             <!-- Agent Assignment Indicator -->
                             <span *ngIf="chat.assignedAgent" class="text-blue-400">
