@@ -194,6 +194,9 @@ RATE_LIMIT_WINDOW_MS=900000
 
 **Optional variables** (for extended features):
 ```env
+# Company/Brand Configuration
+COMPANY_NAME=Luxfree  # Used in WhatsApp notifications (agent assignment templates)
+
 # Image Upload (Cloudinary)
 CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 CLOUDINARY_CLOUD_NAME=your_cloud_name

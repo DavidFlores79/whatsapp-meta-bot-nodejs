@@ -2,6 +2,58 @@
 
 ## Issues Found from Production Logs
 
+### Issue 0: Template Parameter Count Mismatch ✅ FIXED
+**Error:** `#132000 - Number of parameters does not match the expected number of params: body: number of localizable_params (3) does not match the expected number of params (4)`
+
+**Location:** `agentNotificationService.js:70-78` - Assignment notification templates
+
+**Root Cause:**
+- The WhatsApp templates `agent_assignment_notification_en` and `agent_assignment_notification_es` expect 4 parameters
+- Template structure: Customer Name, Phone Number, Priority, **Dashboard Name**
+- Code was only sending 3 parameters (missing dashboard name)
+
+**Fix Applied:**
+- Added 4th parameter `dashboardName` to template parameters array
+- Made dashboard name configurable via `COMPANY_NAME` environment variable (defaults to "Luxfree")
+- Updated console logging to show all 4 parameters
+
+**Template Parameters (Before):**
+```javascript
+[
+  { type: 'text', text: customerName },
+  { type: 'text', text: customerPhone },
+  { type: 'text', text: priorityText }
+]
+```
+
+**Template Parameters (After):**
+```javascript
+[
+  { type: 'text', text: customerName },
+  { type: 'text', text: customerPhone },
+  { type: 'text', text: priorityText },
+  { type: 'text', text: dashboardName }  // ✅ Added
+]
+```
+
+**Files Modified:**
+- `src/services/agentNotificationService.js`
+- `CLAUDE.md` (documented new environment variable)
+- `.env.example` (added COMPANY_NAME example)
+
+**Environment Variable:**
+Add to your `.env` file:
+```env
+COMPANY_NAME=Luxfree  # Or your company/brand name
+```
+
+**Testing:**
+- Created `test-template-fix.js` to verify 4 parameters are sent
+- Created `check-template.js` to inspect template structure from database
+- Verified notification sends successfully without WhatsApp API errors
+
+---
+
 ### Issue 1: Missing `getActiveUsersCount` Function ✅ FIXED
 **Error:** `TypeError: openaiService.getActiveUsersCount is not a function`
 

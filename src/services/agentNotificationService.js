@@ -67,16 +67,21 @@ const sendAssignmentNotification = async (agent, customer, conversation = null) 
             ? priority
             : translatePriority(priority);
 
+        // Dashboard name (4th parameter) - configurable via environment variable
+        const dashboardName = process.env.COMPANY_NAME || 'Luxfree';
+
         const parameters = [
             { type: 'text', text: customerName },
             { type: 'text', text: customerPhone },
-            { type: 'text', text: priorityText }
+            { type: 'text', text: priorityText },
+            { type: 'text', text: dashboardName }
         ];
 
         console.log(`📤 Sending assignment notification to agent ${agent.email} (${agentPhone})`);
         console.log(`   Template: ${templateName} (${languageCode})`);
         console.log(`   Customer: ${customerName} (${customerPhone})`);
         console.log(`   Priority: ${priorityText}`);
+        console.log(`   Dashboard: ${dashboardName}`);
 
         // Build and send template message
         const templateData = buildTemplateJSON(
