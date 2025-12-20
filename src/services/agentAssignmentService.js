@@ -143,7 +143,21 @@ async function assignConversationToAgent(conversationId, agentId, assignedBy = n
             tags: conversation.tags,
             keyTopics: conversationSummary.keyPoints || [],
             customerSentiment: conversationSummary.sentiment || 'neutral',
-            assignmentTime: new Date() // Track when agent took over
+            assignmentTime: new Date(), // Track when agent took over
+
+            // Store full AI-generated summary for later retrieval
+            aiSummary: {
+                briefSummary: conversationSummary.briefSummary,
+                customerIntent: conversationSummary.customerIntent,
+                currentStatus: conversationSummary.currentStatus,
+                keyPoints: conversationSummary.keyPoints,
+                suggestedApproach: conversationSummary.suggestedApproach,
+                urgency: conversationSummary.urgency,
+                sentiment: conversationSummary.sentiment,
+                estimatedCategory: conversationSummary.estimatedCategory,
+                previousActions: conversationSummary.previousActions,
+                outstandingQuestions: conversationSummary.outstandingQuestions
+            }
         }
     });
 

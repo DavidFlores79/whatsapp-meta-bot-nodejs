@@ -574,19 +574,29 @@ export class ChatService {
           const activeAssignment = historyResponse.history.find((h: any) => !h.releasedAt);
 
           if (activeAssignment && activeAssignment.contextSummary) {
-            console.log('📊 Found active assignment, emitting summary');
-            // Reconstruct summary from contextSummary
-            const summary = {
-              summary: activeAssignment.contextSummary.keyTopics?.join(', ') || 'Recent conversation context',
-              keyPoints: activeAssignment.contextSummary.keyTopics || [],
-              sentiment: activeAssignment.contextSummary.customerSentiment || 'neutral',
-              metadata: {
-                totalMessages: activeAssignment.contextSummary.totalMessages || 0,
-                aiMessagesCount: activeAssignment.contextSummary.aiMessagesCount || 0,
-                customerMessagesCount: activeAssignment.contextSummary.customerMessagesCount || 0,
-                lastMessages: activeAssignment.contextSummary.lastMessages || []
-              }
-            };
+            console.log('📊 Found active assignment, checking for stored AI summary');
+
+            // Use stored AI summary if available, otherwise reconstruct basic summary
+            let summary;
+            if (activeAssignment.contextSummary.aiSummary) {
+              console.log('✅ Using stored AI summary from assignment history');
+              summary = activeAssignment.contextSummary.aiSummary;
+            } else {
+              console.log('⚠️ No AI summary found, reconstructing basic summary from context');
+              // Fallback: reconstruct basic summary from available context
+              summary = {
+                briefSummary: activeAssignment.contextSummary.keyTopics?.join(', ') || 'Recent conversation context',
+                keyPoints: activeAssignment.contextSummary.keyTopics || [],
+                sentiment: activeAssignment.contextSummary.customerSentiment || 'neutral',
+                customerIntent: 'Review conversation history',
+                currentStatus: activeAssignment.contextSummary.conversationStatus || 'in-progress',
+                urgency: activeAssignment.contextSummary.priority || 'medium',
+                estimatedCategory: activeAssignment.contextSummary.category || 'support',
+                suggestedApproach: 'Review recent messages and continue conversation',
+                previousActions: [],
+                outstandingQuestions: []
+              };
+            }
 
             this.conversationSummarySubject.next({
               conversationId: chatId,

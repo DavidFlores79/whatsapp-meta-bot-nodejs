@@ -55,7 +55,21 @@ const agentAssignmentHistorySchema = new mongoose.Schema({
         tags: [{ type: String }],
         keyTopics: [{ type: String }], // AI-extracted topics from conversation
         customerSentiment: { type: String }, // 'positive', 'neutral', 'negative', 'frustrated'
-        assignmentTime: { type: Date } // When agent took over
+        assignmentTime: { type: Date }, // When agent took over
+
+        // Full AI-generated summary for agent context
+        aiSummary: {
+            briefSummary: { type: String },
+            customerIntent: { type: String },
+            currentStatus: { type: String },
+            keyPoints: [{ type: String }],
+            suggestedApproach: { type: String },
+            urgency: { type: String },
+            sentiment: { type: String },
+            estimatedCategory: { type: String },
+            previousActions: [{ type: String }],
+            outstandingQuestions: [{ type: String }]
+        }
     },
 
     // Agent Interaction Summary (when releasing back to AI)
