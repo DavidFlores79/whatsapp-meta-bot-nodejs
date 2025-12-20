@@ -540,4 +540,19 @@ async function getThreadMetadata(userId) {
   }
 }
 
-module.exports = { getAIResponse, getChatCompletion, getThreadMetadata };
+/**
+ * Get count of active users with threads
+ * Returns the number of users currently in the thread management system
+ */
+async function getActiveUsersCount() {
+  try {
+    const UserThread = require('../models/UserThread');
+    const count = await UserThread.countDocuments();
+    return count;
+  } catch (error) {
+    console.error("❌ Error getting active users count:", error.message);
+    return 0;
+  }
+}
+
+module.exports = { getAIResponse, getChatCompletion, getThreadMetadata, getActiveUsersCount };
