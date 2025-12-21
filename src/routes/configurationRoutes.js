@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const configController = require('../controllers/configurationController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // All configuration routes require authentication
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 // Admin-only middleware (can be added later for specific routes)
 // For now, all authenticated agents can read configurations

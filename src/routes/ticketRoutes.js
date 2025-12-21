@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const ticketController = require('../controllers/ticketController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // All ticket routes require authentication
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 /**
  * GET /api/v2/tickets
