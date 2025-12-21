@@ -27,7 +27,9 @@
       "Bash(powershell:*)",
       "Bash(grep:*)",
       "Bash(kill:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Skill(explore-plan)",
+      "Skill(explore-plan:*)"
     ],
     "deny": [],
     "ask": []
