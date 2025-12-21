@@ -85,6 +85,7 @@
     "conversations": "Conversaciones",
     "customers": "Clientes",
     "templates": "Plantillas",
+    "tickets": "Tickets",
     "agents": "Agentes",
     "reports": "Reportes",
     "settings": "Configuración",
@@ -167,7 +168,25 @@
     "whatsappWebDesc1": "Envía y recibe mensajes en tu computadora",
     "whatsappWebDesc2": "Usa WhatsApp en hasta 4 dispositivos vinculados al mismo tiempo",
     "location": "Ubicación",
-    "aiAssistant": "Asistente IA"
+    "aiAssistant": "Asistente IA",
+    "takeOverConversation": "Tomar control de esta conversación",
+    "markResolved": "Marcar como resuelto",
+    "resolving": "Resolviendo...",
+    "closeConversation": "Cerrar conversación",
+    "closing": "Cerrando...",
+    "reopenConversation": "Reabrir conversación",
+    "reopening": "Reabriendo...",
+    "conversationClosed": "Conversación cerrada",
+    "gotIt": "Entendido",
+    "whatsappWebDescription": "Envía y recibe mensajes directamente desde tu computadora",
+    "filterByStatus": "Filtrar por estado"
+  },
+  "status": {
+    "open": "Abierto",
+    "assigned": "Asignado",
+    "waiting": "Esperando",
+    "resolved": "Resuelto",
+    "closed": "Cerrado"
   },
   "customers": {
     "title": "Clientes",
@@ -557,6 +576,7 @@
       "lastName": "Apellido",
       "email": "Correo Electrónico",
       "phoneNumber": "Número de Teléfono",
+      "phoneNumberHelp": "Requerido para notificaciones de WhatsApp (ej: 529991234567)",
       "password": "Contraseña",
       "confirmPassword": "Confirmar Contraseña",
       "role": "Rol",

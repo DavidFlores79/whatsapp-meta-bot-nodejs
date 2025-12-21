@@ -3,8 +3,22 @@ const TicketCounter = require('../models/TicketCounter');
 const Customer = require('../models/Customer');
 const configService = require('./configurationService');
 const { io } = require('../models/server');
+const mongoose = require('mongoose');
 
 class TicketService {
+    /**
+     * Helper to find a ticket by either MongoDB _id or human-readable ticketId
+     */
+    async findTicketByAnyId(id) {
+        // Try to find by MongoDB _id first if it's a valid ObjectId
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            const ticket = await Ticket.findById(id);
+            if (ticket) return ticket;
+        }
+        // Fall back to ticketId (human-readable ID)
+        return await Ticket.findOne({ ticketId: id });
+    }
+
     /**
      * Generate ticket ID based on configuration
      */
@@ -126,14 +140,29 @@ class TicketService {
 
     /**
      * Get ticket by ID with populated references
+     * Supports both MongoDB _id and human-readable ticketId
      */
-    async getTicketById(ticketId) {
-        const ticket = await Ticket.findOne({ ticketId })
-            .populate('customerId', 'firstName lastName phoneNumber email')
-            .populate('conversationId')
-            .populate('assignedAgent', 'firstName lastName email')
-            .populate('escalatedTo', 'firstName lastName email')
-            .populate('notes.agent', 'firstName lastName');
+    async getTicketById(id) {
+        // Try to find by MongoDB _id first if it's a valid ObjectId
+        let ticket = null;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            ticket = await Ticket.findById(id)
+                .populate('customerId', 'firstName lastName phoneNumber email')
+                .populate('conversationId')
+                .populate('assignedAgent', 'firstName lastName email')
+                .populate('escalatedTo', 'firstName lastName email')
+                .populate('notes.agent', 'firstName lastName');
+        }
+        
+        // If not found by _id, try ticketId (human-readable ID)
+        if (!ticket) {
+            ticket = await Ticket.findOne({ ticketId: id })
+                .populate('customerId', 'firstName lastName phoneNumber email')
+                .populate('conversationId')
+                .populate('assignedAgent', 'firstName lastName email')
+                .populate('escalatedTo', 'firstName lastName email')
+                .populate('notes.agent', 'firstName lastName');
+        }
 
         return ticket;
     }
@@ -242,7 +271,7 @@ class TicketService {
      * Update ticket status with history
      */
     async updateTicketStatus(ticketId, newStatus, agentId, reason = null) {
-        const ticket = await Ticket.findOne({ ticketId });
+        const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
         }
@@ -283,20 +312,22 @@ class TicketService {
      * Assign ticket to agent
      */
     async assignTicket(ticketId, agentId) {
-        const ticket = await Ticket.findOneAndUpdate(
-            { ticketId },
+        // First find the ticket to get the correct query
+        const existingTicket = await this.findTicketByAnyId(ticketId);
+        if (!existingTicket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        const ticket = await Ticket.findByIdAndUpdate(
+            existingTicket._id,
             { assignedAgent: agentId },
             { new: true }
         ).populate('assignedAgent', 'firstName lastName email');
 
-        if (!ticket) {
-            throw new Error('Ticket no encontrado');
-        }
-
         // Emit Socket.io event
         if (io) {
             io.emit('ticket_assigned', {
-                ticketId,
+                ticketId: ticket.ticketId,
                 agentId,
                 ticket
             });
@@ -309,7 +340,7 @@ class TicketService {
      * Add note to ticket
      */
     async addNote(ticketId, content, agentId, isInternal = true) {
-        const ticket = await Ticket.findOne({ ticketId });
+        const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
         }
@@ -339,7 +370,7 @@ class TicketService {
      * Resolve ticket
      */
     async resolveTicket(ticketId, resolution, agentId) {
-        const ticket = await Ticket.findOne({ ticketId });
+        const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
         }
@@ -376,7 +407,7 @@ class TicketService {
      * Escalate ticket
      */
     async escalateTicket(ticketId, toAgentId, reason) {
-        const ticket = await Ticket.findOne({ ticketId });
+        const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
         }
@@ -412,20 +443,22 @@ class TicketService {
             }
         }
 
-        const ticket = await Ticket.findOneAndUpdate(
-            { ticketId },
+        // Find ticket by either ID type
+        const existingTicket = await this.findTicketByAnyId(ticketId);
+        if (!existingTicket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        const ticket = await Ticket.findByIdAndUpdate(
+            existingTicket._id,
             updates,
             { new: true }
         ).populate(['customerId', 'conversationId', 'assignedAgent']);
 
-        if (!ticket) {
-            throw new Error('Ticket no encontrado');
-        }
-
         // Emit Socket.io event
         if (io) {
             io.emit('ticket_updated', {
-                ticketId,
+                ticketId: ticket.ticketId,
                 updates,
                 ticket
             });

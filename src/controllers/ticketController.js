@@ -1,4 +1,5 @@
 const ticketService = require('../services/ticketService');
+const Customer = require('../models/Customer');
 
 /**
  * Ticket Controller
@@ -71,12 +72,32 @@ async function getTicket(req, res) {
  */
 async function createTicket(req, res) {
     try {
-        const { subject, description, category, priority, customerId, conversationId, tags } = req.body;
+        const { subject, description, category, priority, customerId, customerPhone, conversationId, tags } = req.body;
 
-        if (!subject || !description || !category || !customerId) {
+        // Resolve customerId from customerPhone if not provided
+        let resolvedCustomerId = customerId;
+        
+        if (!resolvedCustomerId && customerPhone) {
+            // Try to find customer by phone number
+            const customer = await Customer.findOne({ phoneNumber: customerPhone });
+            if (customer) {
+                resolvedCustomerId = customer._id;
+            } else {
+                // Create a new customer with the phone number
+                const newCustomer = new Customer({
+                    phoneNumber: customerPhone,
+                    firstName: 'Customer',
+                    lastName: ''
+                });
+                await newCustomer.save();
+                resolvedCustomerId = newCustomer._id;
+            }
+        }
+
+        if (!subject || !description || !category || !resolvedCustomerId) {
             return res.status(400).json({
                 success: false,
-                error: 'Faltan campos requeridos: subject, description, category, customerId'
+                error: 'Faltan campos requeridos: subject, description, category, customerId o customerPhone'
             });
         }
 
@@ -87,7 +108,7 @@ async function createTicket(req, res) {
             description,
             category,
             priority,
-            customerId,
+            customerId: resolvedCustomerId,
             conversationId,
             tags
         }, agentId);

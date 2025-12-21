@@ -175,7 +175,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.tickets = response.tickets;
           this.totalTickets = response.total;
-          this.totalPages = response.totalPages;
+          this.totalPages = response.pages || response.totalPages || 0;
           this.loading = false;
           this.cdr.detectChanges();
         },

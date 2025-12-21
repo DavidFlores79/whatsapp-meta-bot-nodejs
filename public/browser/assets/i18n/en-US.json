@@ -60,6 +60,7 @@
     "conversations": "Conversations",
     "customers": "Customers",
     "templates": "Templates",
+    "tickets": "Tickets",
     "agents": "Agents",
     "reports": "Reports",
     "settings": "Settings",
@@ -135,7 +136,25 @@
     "whatsappWebDesc1": "Send and receive messages on your computer",
     "whatsappWebDesc2": "Use WhatsApp on up to 4 linked devices at the same time",
     "location": "Location",
-    "aiAssistant": "AI Assistant"
+    "aiAssistant": "AI Assistant",
+    "takeOverConversation": "Take over this conversation",
+    "markResolved": "Mark Resolved",
+    "resolving": "Resolving...",
+    "closeConversation": "Close Conversation",
+    "closing": "Closing...",
+    "reopenConversation": "Reopen Conversation",
+    "reopening": "Reopening...",
+    "conversationClosed": "Conversation Closed",
+    "gotIt": "Got it",
+    "whatsappWebDescription": "Send and receive messages right from your computer",
+    "filterByStatus": "Filter by status"
+  },
+  "status": {
+    "open": "Open",
+    "assigned": "Assigned",
+    "waiting": "Waiting",
+    "resolved": "Resolved",
+    "closed": "Closed"
   },
   "customers": {
     "title": "Customers",
@@ -522,6 +541,7 @@
       "lastName": "Last Name",
       "email": "Email Address",
       "phoneNumber": "Phone Number",
+      "phoneNumberHelp": "Required for WhatsApp notifications (e.g., 529991234567)",
       "password": "Password",
       "confirmPassword": "Confirm Password",
       "role": "Role",

@@ -154,8 +154,9 @@ export interface PaginatedTickets {
   tickets: Ticket[];
   total: number;
   page: number;
-  limit: number;
-  totalPages: number;
+  limit?: number;
+  pages?: number;
+  totalPages?: number; // Alias for pages - used by frontend cache
 }
 
 @Injectable({
@@ -375,9 +376,10 @@ export class TicketService {
       }
     }
 
-    return this.http.get<PaginatedTickets>(this.apiUrl, { params }).pipe(
-      tap(response => {
-        this.ticketsSubject.next(response.tickets);
+    return this.http.get<{ success: boolean; data: PaginatedTickets }>(this.apiUrl, { params }).pipe(
+      map(response => response.data),
+      tap(data => {
+        this.ticketsSubject.next(data.tickets);
         this.lastFetchTime = Date.now();
         this.loadingSubject.next(false);
       })
@@ -388,7 +390,8 @@ export class TicketService {
    * Get ticket by ID
    */
   getTicketById(ticketId: string): Observable<Ticket> {
-    return this.http.get<Ticket>(`${this.apiUrl}/${ticketId}`).pipe(
+    return this.http.get<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}`).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.selectedTicketSubject.next(ticket);
       })
@@ -400,7 +403,8 @@ export class TicketService {
    */
   createTicket(ticketData: Partial<Ticket>): Observable<Ticket> {
     this.loadingSubject.next(true);
-    return this.http.post<Ticket>(this.apiUrl, ticketData).pipe(
+    return this.http.post<{ success: boolean; data: Ticket }>(`${this.apiUrl}`, ticketData).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketCreated(ticket);
         this.loadingSubject.next(false);
@@ -414,7 +418,8 @@ export class TicketService {
    */
   updateTicket(ticketId: string, updates: Partial<Ticket>): Observable<Ticket> {
     this.loadingSubject.next(true);
-    return this.http.put<Ticket>(`${this.apiUrl}/${ticketId}`, updates).pipe(
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}`, updates).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.loadingSubject.next(false);
@@ -427,7 +432,8 @@ export class TicketService {
    * Update ticket status
    */
   updateTicketStatus(ticketId: string, newStatus: string, reason?: string): Observable<Ticket> {
-    return this.http.put<Ticket>(`${this.apiUrl}/${ticketId}/status`, { status: newStatus, reason }).pipe(
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/status`, { status: newStatus, reason }).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.toastService.success(`Ticket status updated to ${newStatus}`);
@@ -439,7 +445,8 @@ export class TicketService {
    * Assign ticket to agent
    */
   assignTicket(ticketId: string, agentId: string): Observable<Ticket> {
-    return this.http.put<Ticket>(`${this.apiUrl}/${ticketId}/assign`, { agentId }).pipe(
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/assign`, { agentId }).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.toastService.success('Ticket assigned successfully');
@@ -451,7 +458,8 @@ export class TicketService {
    * Add note to ticket
    */
   addNote(ticketId: string, content: string, isInternal: boolean): Observable<Ticket> {
-    return this.http.post<Ticket>(`${this.apiUrl}/${ticketId}/notes`, { content, isInternal }).pipe(
+    return this.http.post<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/notes`, { content, isInternal }).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.toastService.success('Note added successfully');
@@ -463,7 +471,8 @@ export class TicketService {
    * Resolve ticket
    */
   resolveTicket(ticketId: string, resolutionSummary: string): Observable<Ticket> {
-    return this.http.put<Ticket>(`${this.apiUrl}/${ticketId}/resolve`, { resolution: resolutionSummary }).pipe(
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/resolve`, { resolution: resolutionSummary }).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.toastService.success(`Ticket ${ticket.ticketId} resolved successfully`);
@@ -475,10 +484,11 @@ export class TicketService {
    * Escalate ticket
    */
   escalateTicket(ticketId: string, escalateToAgentId: string, reason: string): Observable<Ticket> {
-    return this.http.put<Ticket>(`${this.apiUrl}/${ticketId}/escalate`, {
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/escalate`, {
       escalatedTo: escalateToAgentId,
       escalationReason: reason
     }).pipe(
+      map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
         this.toastService.warning(`Ticket ${ticket.ticketId} escalated`);
@@ -504,7 +514,8 @@ export class TicketService {
    * Get ticket statistics
    */
   getStatistics(): Observable<TicketStatistics> {
-    return this.http.get<TicketStatistics>(`${this.apiUrl}/statistics`).pipe(
+    return this.http.get<{ success: boolean; data: TicketStatistics }>(`${this.apiUrl}/statistics`).pipe(
+      map(response => response.data),
       tap(stats => {
         this.statisticsSubject.next(stats);
       })
