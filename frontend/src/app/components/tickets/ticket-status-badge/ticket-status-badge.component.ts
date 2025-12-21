@@ -25,26 +25,26 @@ export class TicketStatusBadgeComponent {
 
   getStatusClass(): string {
     const statusMap: { [key: string]: string } = {
-      'new': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      'open': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-      'in_progress': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-      'pending_customer': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-      'waiting_internal': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-      'resolved': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-      'closed': 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
+      'new': 'bg-gray-700 text-gray-300',
+      'open': 'bg-blue-900/50 text-blue-400',
+      'in_progress': 'bg-yellow-900/50 text-yellow-400',
+      'pending_customer': 'bg-purple-900/50 text-purple-400',
+      'waiting_internal': 'bg-orange-900/50 text-orange-400',
+      'resolved': 'bg-green-900/50 text-green-400',
+      'closed': 'bg-gray-600 text-gray-400'
     };
     return statusMap[this.status] || statusMap['new'];
   }
 
   getDotClass(): string {
     const dotMap: { [key: string]: string } = {
-      'new': 'bg-gray-500',
-      'open': 'bg-blue-500',
-      'in_progress': 'bg-yellow-500 animate-pulse',
-      'pending_customer': 'bg-purple-500',
-      'waiting_internal': 'bg-orange-500',
-      'resolved': 'bg-green-500',
-      'closed': 'bg-gray-400'
+      'new': 'bg-gray-400',
+      'open': 'bg-blue-400',
+      'in_progress': 'bg-yellow-400 animate-pulse',
+      'pending_customer': 'bg-purple-400',
+      'waiting_internal': 'bg-orange-400',
+      'resolved': 'bg-green-400',
+      'closed': 'bg-gray-500'
     };
     return dotMap[this.status] || dotMap['new'];
   }

@@ -13,121 +13,134 @@ import { ToastService } from '../../../services/toast';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="ticket-form-container p-6 max-w-4xl mx-auto">
-      <div class="bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Ticket</h1>
+    <div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full overflow-auto custom-scrollbar">
+      <div class="p-4 md:p-6 max-w-4xl mx-auto w-full">
+        <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6">
+          <h1 class="text-xl md:text-2xl font-semibold text-gray-100 mb-6">Create New Ticket</h1>
 
-        <!-- Customer Info Banner -->
-        <div *ngIf="customer" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-              {{ getCustomerInitial() }}
+          <!-- Customer Info Banner -->
+          <div *ngIf="customer" class="mb-6 p-4 bg-whatsapp-dark rounded-lg border border-gray-600">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-whatsapp-green rounded-full flex items-center justify-center text-white font-bold">
+                {{ getCustomerInitial() }}
+              </div>
+              <div>
+                <div class="font-semibold text-gray-100">{{ getCustomerName() }}</div>
+                <div class="text-sm text-gray-400">{{ customer.phoneNumber }}</div>
+              </div>
             </div>
-            <div>
-              <div class="font-semibold text-blue-900">{{ getCustomerName() }}</div>
-              <div class="text-sm text-blue-700">{{ customer.phoneNumber }}</div>
+          </div>
+
+          <!-- Loading Context Indicator -->
+          <div *ngIf="loadingContext" class="mb-4 p-3 bg-whatsapp-dark rounded-lg border border-gray-600 flex items-center gap-2">
+            <div class="animate-spin w-4 h-4 border-2 border-whatsapp-green border-t-transparent rounded-full"></div>
+            <span class="text-gray-400">Loading conversation context...</span>
+          </div>
+
+          <form (ngSubmit)="onSubmit()" #ticketForm="ngForm">
+            <!-- Subject -->
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">Subject *</label>
+              <input
+                type="text"
+                [(ngModel)]="formData.subject"
+                name="subject"
+                required
+                maxlength="200"
+                class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none"
+                placeholder="Brief summary of the issue">
             </div>
-          </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">Description *</label>
+              <textarea
+                [(ngModel)]="formData.description"
+                name="description"
+                required
+                rows="6"
+                class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none"
+                placeholder="Detailed description of the issue"></textarea>
+              <p *ngIf="conversationId" class="text-xs text-gray-500 mt-1">
+                Pre-filled from conversation. Edit as needed.
+              </p>
+            </div>
+
+            <!-- Category -->
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">Category *</label>
+              <select
+                [(ngModel)]="formData.category"
+                name="category"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none">
+                <option value="">Select a category</option>
+                <option *ngFor="let category of availableCategories" [value]="category.id">
+                  {{ category.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Priority -->
+            <div class="mb-4">
+              <label class="block text-xs text-gray-400 mb-2">Priority *</label>
+              <select
+                [(ngModel)]="formData.priority"
+                name="priority"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+
+            <!-- Customer Phone (hidden if we already have customer) -->
+            <div class="mb-6" *ngIf="!customer">
+              <label class="block text-xs text-gray-400 mb-2">Customer Phone *</label>
+              <input
+                type="tel"
+                [(ngModel)]="formData.customerPhone"
+                name="customerPhone"
+                required
+                class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none"
+                placeholder="Customer phone number">
+              <p class="text-xs text-gray-500 mt-1">Enter the customer's phone number</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+              <button
+                type="submit"
+                [disabled]="!ticketForm.valid || submitting || loadingContext"
+                class="px-6 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                {{ submitting ? 'Creating...' : 'Create Ticket' }}
+              </button>
+              <button
+                type="button"
+                (click)="cancel()"
+                class="px-6 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-whatsapp-dark hover:border-whatsapp-green transition-colors">
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
-
-        <!-- Loading Context Indicator -->
-        <div *ngIf="loadingContext" class="mb-4 p-3 bg-gray-100 rounded-lg flex items-center gap-2">
-          <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          <span class="text-gray-600">Loading conversation context...</span>
-        </div>
-
-        <form (ngSubmit)="onSubmit()" #ticketForm="ngForm">
-          <!-- Subject -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
-            <input
-              type="text"
-              [(ngModel)]="formData.subject"
-              name="subject"
-              required
-              maxlength="200"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Brief summary of the issue">
-          </div>
-
-          <!-- Description -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
-            <textarea
-              [(ngModel)]="formData.description"
-              name="description"
-              required
-              rows="6"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Detailed description of the issue"></textarea>
-            <p *ngIf="conversationId" class="text-xs text-gray-500 mt-1">
-              Pre-filled from conversation. Edit as needed.
-            </p>
-          </div>
-
-          <!-- Category -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-            <select
-              [(ngModel)]="formData.category"
-              name="category"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option value="">Select a category</option>
-              <option *ngFor="let category of availableCategories" [value]="category.id">
-                {{ category.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Priority -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
-            <select
-              [(ngModel)]="formData.priority"
-              name="priority"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </div>
-
-          <!-- Customer Phone (hidden if we already have customer) -->
-          <div class="mb-6" *ngIf="!customer">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Customer Phone *</label>
-            <input
-              type="tel"
-              [(ngModel)]="formData.customerPhone"
-              name="customerPhone"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Customer phone number">
-            <p class="text-sm text-gray-500 mt-1">Enter the customer's phone number</p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex gap-4">
-            <button
-              type="submit"
-              [disabled]="!ticketForm.valid || submitting || loadingContext"
-              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-              {{ submitting ? 'Creating...' : 'Create Ticket' }}
-            </button>
-            <button
-              type="button"
-              (click)="cancel()"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              Cancel
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #111b21;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 3px;
+    }
+  `]
 })
 export class TicketFormComponent implements OnInit {
   availableCategories: TicketCategory[] = [];

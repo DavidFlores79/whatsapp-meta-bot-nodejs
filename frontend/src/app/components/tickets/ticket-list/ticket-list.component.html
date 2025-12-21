@@ -1,87 +1,96 @@
-<div class="ticket-list-container p-6 bg-gray-50 min-h-screen">
-  <!-- Header -->
-  <div class="mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-3xl font-bold text-gray-900">Tickets</h1>
+<div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full max-w-full overflow-hidden">
+  <!-- Header with Stats -->
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 flex-none w-full max-w-full overflow-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div>
+        <h1 class="text-xl md:text-2xl font-semibold text-gray-100">Tickets</h1>
+        <p class="text-sm text-gray-400 mt-1 hidden sm:block">Manage and track support tickets</p>
+      </div>
       <button
         (click)="createTicket()"
-        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+        class="bg-whatsapp-green hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm md:text-base">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        Create Ticket
+        <span>Create Ticket</span>
       </button>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-sm text-gray-600">Total</div>
-        <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 w-full max-w-full">
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">Total</div>
+        <div class="text-xl md:text-2xl font-bold text-gray-100">{{ stats.total }}</div>
       </div>
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-sm text-gray-600">New</div>
-        <div class="text-2xl font-bold text-gray-500">{{ stats.new }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">New</div>
+        <div class="text-xl md:text-2xl font-bold text-gray-400">{{ stats.new }}</div>
       </div>
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-sm text-gray-600">In Progress</div>
-        <div class="text-2xl font-bold text-yellow-600">{{ stats.inProgress }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">In Progress</div>
+        <div class="text-xl md:text-2xl font-bold text-yellow-400">{{ stats.inProgress }}</div>
       </div>
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-sm text-gray-600">Resolved</div>
-        <div class="text-2xl font-bold text-green-600">{{ stats.resolved }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">Resolved</div>
+        <div class="text-xl md:text-2xl font-bold text-green-400">{{ stats.resolved }}</div>
       </div>
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-sm text-gray-600">Escalated</div>
-        <div class="text-2xl font-bold text-red-600">{{ stats.escalated }}</div>
+      <div class="bg-whatsapp-dark p-2 md:p-3 rounded-lg border border-gray-700 col-span-2 md:col-span-1">
+        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1 truncate">Escalated</div>
+        <div class="text-xl md:text-2xl font-bold text-red-400">{{ stats.escalated }}</div>
       </div>
     </div>
   </div>
 
   <!-- Search and Filters -->
-  <div class="bg-white rounded-lg shadow mb-6 p-4">
-    <div class="flex flex-col md:flex-row gap-4 mb-4">
+  <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-3 flex-none w-full max-w-full overflow-hidden">
+    <div class="flex flex-col md:flex-row gap-2 md:gap-3 mb-3">
       <!-- Search -->
-      <div class="flex-1">
+      <div class="flex-1 relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
         <input
           type="text"
           [value]="searchTerm"
           (input)="onSearchInput($event)"
           placeholder="Search tickets by ID, subject, or description..."
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          class="w-full bg-whatsapp-dark text-gray-100 pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
       </div>
 
       <!-- Toggle Filters Button -->
       <button
         (click)="showFilters = !showFilters"
-        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+        class="bg-whatsapp-dark text-gray-100 px-3 md:px-4 py-2 rounded-lg border border-gray-600 hover:border-whatsapp-green transition-colors flex items-center justify-center gap-2 text-sm md:text-base flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
         </svg>
         Filters
+        <svg class="w-4 h-4" [class.rotate-180]="showFilters" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
       </button>
 
       <!-- Clear Filters -->
       <button
         *ngIf="selectedStatuses.length > 0 || selectedCategories.length > 0 || selectedPriorities.length > 0 || selectedAgent || showEscalated"
         (click)="clearFilters()"
-        class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+        class="px-4 py-2 text-red-400 hover:bg-red-900/30 rounded-lg transition-colors flex-shrink-0">
         Clear All
       </button>
     </div>
 
     <!-- Advanced Filters -->
-    <div *ngIf="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+    <div *ngIf="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-3 border-t border-gray-700">
       <!-- Status Filter -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+        <label class="block text-xs text-gray-400 mb-2">Status</label>
         <div class="space-y-2">
           <label *ngFor="let status of availableStatuses" class="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               [checked]="isStatusSelected(status)"
               (change)="toggleStatus(status)"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+              class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
             <app-ticket-status-badge [status]="status" />
           </label>
         </div>
@@ -89,29 +98,29 @@
 
       <!-- Category Filter -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-        <div class="space-y-2 max-h-48 overflow-y-auto">
+        <label class="block text-xs text-gray-400 mb-2">Category</label>
+        <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
           <label *ngFor="let category of availableCategories" class="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               [checked]="isCategorySelected(category.id)"
               (change)="toggleCategory(category.id)"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-            <span class="text-sm text-gray-700">{{ category.label }}</span>
+              class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
+            <span class="text-sm text-gray-300">{{ category.label }}</span>
           </label>
         </div>
       </div>
 
       <!-- Priority Filter -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+        <label class="block text-xs text-gray-400 mb-2">Priority</label>
         <div class="space-y-2">
           <label *ngFor="let priority of availablePriorities" class="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               [checked]="isPrioritySelected(priority)"
               (change)="togglePriority(priority)"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+              class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
             <span class="text-sm capitalize" [ngClass]="getPriorityColorClass(priority)">{{ priority }}</span>
           </label>
         </div>
@@ -119,11 +128,11 @@
 
       <!-- Agent Filter -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Assigned Agent</label>
+        <label class="block text-xs text-gray-400 mb-2">Assigned Agent</label>
         <select
           [(ngModel)]="selectedAgent"
           (change)="filterByAgent()"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          class="w-full bg-whatsapp-dark text-gray-100 px-3 py-2 rounded-lg border border-gray-600 focus:border-whatsapp-green focus:outline-none">
           <option value="">All Agents</option>
           <option *ngFor="let agent of availableAgents" [value]="agent._id">
             {{ agent.firstName }} {{ agent.lastName }}
@@ -136,81 +145,83 @@
             type="checkbox"
             [(ngModel)]="showEscalated"
             (change)="toggleEscalated()"
-            class="rounded border-gray-300 text-red-600 focus:ring-red-500">
-          <span class="text-sm text-gray-700">Show only escalated</span>
+            class="rounded border-gray-600 bg-whatsapp-dark text-red-500 focus:ring-red-500">
+          <span class="text-sm text-gray-300">Show only escalated</span>
         </label>
       </div>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="bg-white rounded-lg shadow p-12 text-center">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    <p class="mt-4 text-gray-600">Loading tickets...</p>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-    <div class="flex items-center gap-2 text-red-800">
-      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-      </svg>
-      {{ error }}
+  <!-- Main Content Area -->
+  <div class="flex-1 overflow-auto custom-scrollbar p-4 md:px-6">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="bg-whatsapp-gray rounded-lg border border-gray-700 p-12 text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green"></div>
+      <p class="mt-4 text-gray-400">Loading tickets...</p>
     </div>
-  </div>
 
-  <!-- Tickets Table -->
-  <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow overflow-hidden">
-    <!-- Empty State -->
-    <div *ngIf="tickets.length === 0" class="p-12 text-center">
-      <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-      </svg>
-      <h3 class="mt-4 text-lg font-medium text-gray-900">No tickets found</h3>
-      <p class="mt-2 text-gray-600">Try adjusting your filters or create a new ticket</p>
-      <button
-        (click)="createTicket()"
-        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-        Create Ticket
-      </button>
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="bg-red-900/30 border border-red-700 rounded-lg p-4 mb-6">
+      <div class="flex items-center gap-2 text-red-400">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        {{ error }}
+      </div>
     </div>
+
+    <!-- Tickets Table -->
+    <div *ngIf="!loading && !error" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-hidden">
+      <!-- Empty State -->
+      <div *ngIf="tickets.length === 0" class="p-12 text-center">
+        <svg class="mx-auto h-24 w-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-100">No tickets found</h3>
+        <p class="mt-2 text-gray-400">Try adjusting your filters or create a new ticket</p>
+        <button
+          (click)="createTicket()"
+          class="mt-4 px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 transition-colors">
+          Create Ticket
+        </button>
+      </div>
 
     <!-- Table -->
     <div *ngIf="tickets.length > 0" class="overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-whatsapp-dark border-b border-gray-700">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ticket ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Subject</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Priority</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Assigned To</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-whatsapp-gray divide-y divide-gray-700">
           <tr
             *ngFor="let ticket of tickets"
             (click)="viewTicket(ticket)"
-            class="hover:bg-gray-50 cursor-pointer transition-colors">
+            class="hover:bg-whatsapp-dark cursor-pointer transition-colors">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-blue-600">{{ ticket.ticketId }}</span>
-                <span *ngIf="ticket.escalated" class="text-red-500" title="Escalated">⚠</span>
+                <span class="text-sm font-medium text-whatsapp-green">{{ ticket.ticketId }}</span>
+                <span *ngIf="ticket.escalated" class="text-red-400" title="Escalated">⚠</span>
               </div>
             </td>
             <td class="px-6 py-4">
-              <div class="text-sm font-medium text-gray-900">{{ ticket.subject }}</div>
-              <div class="text-sm text-gray-500 truncate max-w-xs">{{ ticket.description }}</div>
+              <div class="text-sm font-medium text-gray-100">{{ ticket.subject }}</div>
+              <div class="text-sm text-gray-400 truncate max-w-xs">{{ ticket.description }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ ticket.customerId.firstName }} {{ ticket.customerId.lastName }}</div>
-              <div class="text-sm text-gray-500">{{ ticket.customerId.phoneNumber }}</div>
+              <div class="text-sm text-gray-100">{{ ticket.customerId.firstName }} {{ ticket.customerId.lastName }}</div>
+              <div class="text-sm text-gray-400">{{ ticket.customerId.phoneNumber }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span class="text-sm text-gray-700">{{ getCategoryById(ticket.category)?.label || ticket.category }}</span>
+              <span class="text-sm text-gray-300">{{ getCategoryById(ticket.category)?.label || ticket.category }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span [ngClass]="getPriorityColorClass(ticket.priority)" class="text-sm font-medium flex items-center gap-1">
@@ -222,14 +233,14 @@
               <app-ticket-status-badge [status]="ticket.status" [showDot]="true" />
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div *ngIf="ticket.assignedAgent" class="text-sm text-gray-900">
+              <div *ngIf="ticket.assignedAgent" class="text-sm text-gray-100">
                 {{ ticket.assignedAgent.firstName }} {{ ticket.assignedAgent.lastName }}
               </div>
-              <div *ngIf="!ticket.assignedAgent" class="text-sm text-gray-400">Unassigned</div>
+              <div *ngIf="!ticket.assignedAgent" class="text-sm text-gray-500">Unassigned</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ getTimeAgo(ticket.createdAt) }}</div>
-              <div class="text-xs text-gray-500">{{ formatDate(ticket.createdAt) }}</div>
+              <div class="text-sm text-gray-100">{{ getTimeAgo(ticket.createdAt) }}</div>
+              <div class="text-xs text-gray-400">{{ formatDate(ticket.createdAt) }}</div>
             </td>
           </tr>
         </tbody>
@@ -237,11 +248,11 @@
     </div>
 
     <!-- Pagination -->
-    <div *ngIf="tickets.length > 0" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-      <div class="text-sm text-gray-700">
-        Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
-        to <span class="font-medium">{{ Math.min(currentPage * pageSize, totalTickets) }}</span>
-        of <span class="font-medium">{{ totalTickets }}</span> tickets
+    <div *ngIf="tickets.length > 0" class="px-6 py-4 border-t border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="text-sm text-gray-400">
+        Showing <span class="font-medium text-gray-100">{{ (currentPage - 1) * pageSize + 1 }}</span>
+        to <span class="font-medium text-gray-100">{{ Math.min(currentPage * pageSize, totalTickets) }}</span>
+        of <span class="font-medium text-gray-100">{{ totalTickets }}</span> tickets
       </div>
 
       <div class="flex gap-2">
@@ -250,7 +261,7 @@
           [disabled]="currentPage === 1"
           [class.opacity-50]="currentPage === 1"
           [class.cursor-not-allowed]="currentPage === 1"
-          class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:hover:bg-white">
+          class="px-3 py-1 border border-gray-600 text-gray-300 rounded hover:bg-whatsapp-dark hover:border-whatsapp-green disabled:hover:bg-transparent disabled:hover:border-gray-600">
           Previous
         </button>
 
@@ -258,10 +269,10 @@
           <button
             *ngFor="let page of [].constructor(Math.min(totalPages, 5)); let i = index"
             (click)="goToPage(i + 1)"
-            [class.bg-blue-600]="currentPage === i + 1"
+            [class.bg-whatsapp-green]="currentPage === i + 1"
             [class.text-white]="currentPage === i + 1"
-            [class.border-blue-600]="currentPage === i + 1"
-            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
+            [class.border-whatsapp-green]="currentPage === i + 1"
+            class="px-3 py-1 border border-gray-600 text-gray-300 rounded hover:bg-whatsapp-dark hover:border-whatsapp-green">
             {{ i + 1 }}
           </button>
         </div>
@@ -271,10 +282,11 @@
           [disabled]="currentPage === totalPages"
           [class.opacity-50]="currentPage === totalPages"
           [class.cursor-not-allowed]="currentPage === totalPages"
-          class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:hover:bg-white">
+          class="px-3 py-1 border border-gray-600 text-gray-300 rounded hover:bg-whatsapp-dark hover:border-whatsapp-green disabled:hover:bg-transparent disabled:hover:border-gray-600">
           Next
         </button>
       </div>
+    </div>
     </div>
   </div>
 </div>
