@@ -29,7 +29,8 @@
       "Bash(kill:*)",
       "Bash(pkill:*)",
       "Skill(explore-plan)",
-      "Skill(explore-plan:*)"
+      "Skill(explore-plan:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
