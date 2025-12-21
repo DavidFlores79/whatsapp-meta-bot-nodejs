@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
@@ -48,6 +49,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
+    private router: Router,
     private toastService: ToastService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
@@ -379,6 +381,30 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         this.isReopeningChat = false;
         const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
         this.toastService.error(`Failed to reopen conversation: ${errorMessage}`);
+      }
+    });
+  }
+
+  /**
+   * Create ticket for current conversation
+   */
+  createTicket(chat: Chat) {
+    if (!chat.customerId) {
+      this.toastService.warning('Please save customer information first');
+      return;
+    }
+
+    // Extract customer ID
+    const customerId = typeof chat.customerId === 'string'
+      ? chat.customerId
+      : (chat.customerId as any)._id;
+
+    // Navigate to ticket creation form with conversation context
+    this.router.navigate(['/tickets/new'], {
+      queryParams: {
+        customerId,
+        customerPhone: chat.phoneNumber,
+        conversationId: chat.id
       }
     });
   }

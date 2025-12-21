@@ -182,6 +182,12 @@
                 class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
           <i class="fas fa-clock mr-2"></i> {{ 'customers.activity' | translate }}
         </button>
+        <button (click)="switchToTicketsTab()"
+                [class.text-whatsapp-green]="activeTab === 'tickets'"
+                [class.border-whatsapp-green]="activeTab === 'tickets'"
+                class="px-4 py-3 border-b-2 border-transparent hover:text-whatsapp-green transition-colors">
+          <i class="fas fa-ticket-alt mr-2"></i> Tickets ({{ customerTickets.length }})
+        </button>
       </div>
     </div>
 
@@ -315,6 +321,78 @@
             <div class="flex-1">
               <div class="text-gray-100 font-medium">{{ 'customers.profileUpdated' | translate }}</div>
               <div class="text-xs text-gray-400">{{ formatDate(customer.updatedAt) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tickets Tab -->
+      <div *ngIf="activeTab === 'tickets'">
+        <!-- Create Ticket Button -->
+        <div class="mb-4 flex justify-end">
+          <button
+            (click)="createTicketForCustomer()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Create Ticket
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loadingTickets" class="bg-whatsapp-gray rounded-lg p-12 border border-gray-700 text-center">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p class="mt-4 text-gray-400">Loading tickets...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loadingTickets && customerTickets.length === 0" class="bg-whatsapp-gray rounded-lg p-12 border border-gray-700 text-center">
+          <i class="fas fa-ticket-alt text-6xl text-gray-600 mb-4"></i>
+          <h3 class="text-lg font-medium text-gray-100 mb-2">No tickets found</h3>
+          <p class="text-gray-400 mb-4">This customer doesn't have any tickets yet</p>
+          <button
+            (click)="createTicketForCustomer()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Create First Ticket
+          </button>
+        </div>
+
+        <!-- Tickets List -->
+        <div *ngIf="!loadingTickets && customerTickets.length > 0" class="bg-whatsapp-gray rounded-lg border border-gray-700 overflow-hidden">
+          <div class="divide-y divide-gray-700">
+            <div
+              *ngFor="let ticket of customerTickets"
+              (click)="viewTicket(ticket)"
+              class="p-4 hover:bg-gray-800 cursor-pointer transition-colors">
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-sm font-medium text-blue-400">{{ ticket.ticketId }}</span>
+                    <app-ticket-status-badge [status]="ticket.status" />
+                  </div>
+                  <h4 class="text-gray-100 font-medium">{{ ticket.subject }}</h4>
+                  <p class="text-sm text-gray-400 mt-1 line-clamp-2">{{ ticket.description }}</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-600 ml-4"></i>
+              </div>
+
+              <div class="flex items-center gap-4 text-xs text-gray-500 mt-3">
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-tag"></i>
+                  {{ ticket.category }}
+                </span>
+                <span class="flex items-center gap-1 capitalize" [class.text-orange-400]="ticket.priority === 'high' || ticket.priority === 'urgent'">
+                  <i class="fas fa-flag"></i>
+                  {{ ticket.priority }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-clock"></i>
+                  {{ formatTicketDate(ticket.createdAt) }}
+                </span>
+                <span *ngIf="ticket.assignedAgent" class="flex items-center gap-1">
+                  <i class="fas fa-user"></i>
+                  {{ ticket.assignedAgent.firstName }} {{ ticket.assignedAgent.lastName }}
+                </span>
+              </div>
             </div>
           </div>
         </div>

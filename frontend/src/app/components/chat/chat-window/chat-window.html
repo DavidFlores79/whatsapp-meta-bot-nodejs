@@ -35,6 +35,12 @@
             </div>
             <div class="flex gap-4 text-gray-400">
                 <button
+                    (click)="createTicket(chat); $event.stopPropagation()"
+                    class="hover:text-gray-200"
+                    title="Create Ticket">
+                    <i class="fas fa-ticket-alt"></i>
+                </button>
+                <button
                     (click)="openTemplateSender(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
                     [title]="'chat.sendTemplateMessage' | translate">

@@ -6,11 +6,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CustomerService, Customer, CustomerDetailResponse } from '../../../services/customer';
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ToastService } from '../../../services/toast';
+import { TicketService, Ticket } from '../../../services/ticket';
+import { TicketStatusBadgeComponent } from '../../tickets/ticket-status-badge/ticket-status-badge.component';
 
 @Component({
   selector: 'app-customer-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, TicketStatusBadgeComponent],
   templateUrl: './customer-detail.html',
   styleUrls: ['./customer-detail.css']
 })
@@ -20,7 +22,7 @@ export class CustomerDetailComponent implements OnInit {
   recentConversations: any[] = [];
   loading = true;
   error: string | null = null;
-  activeTab: 'overview' | 'conversations' | 'activity' = 'overview';
+  activeTab: 'overview' | 'conversations' | 'activity' | 'tickets' = 'overview';
   isCustomerModalOpen = false;
   showDeleteConfirm = false;
   showBlockReasonModal = false;
@@ -28,11 +30,16 @@ export class CustomerDetailComponent implements OnInit {
   blockReasonInput = '';
   newTagInput = '';
 
+  // Tickets tab
+  customerTickets: Ticket[] = [];
+  loadingTickets = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private customerService: CustomerService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private ticketService: TicketService
   ) {}
 
   ngOnInit() {
@@ -259,5 +266,64 @@ export class CustomerDetailComponent implements OnInit {
 
   get Object() {
     return Object;
+  }
+
+  /**
+   * Load customer tickets when tickets tab is activated
+   */
+  loadCustomerTickets() {
+    if (!this.customer) return;
+
+    this.loadingTickets = true;
+    this.ticketService.getTicketsByCustomer(this.customer._id).subscribe({
+      next: (tickets) => {
+        this.customerTickets = tickets;
+        this.loadingTickets = false;
+      },
+      error: (err) => {
+        console.error('Error loading customer tickets:', err);
+        this.loadingTickets = false;
+        this.toastService.error('Failed to load tickets');
+      }
+    });
+  }
+
+  /**
+   * Switch to tickets tab
+   */
+  switchToTicketsTab() {
+    this.activeTab = 'tickets';
+    if (this.customerTickets.length === 0) {
+      this.loadCustomerTickets();
+    }
+  }
+
+  /**
+   * Navigate to ticket detail
+   */
+  viewTicket(ticket: Ticket) {
+    this.router.navigate(['/tickets', ticket._id]);
+  }
+
+  /**
+   * Create new ticket for this customer
+   */
+  createTicketForCustomer() {
+    if (!this.customer) return;
+    this.router.navigate(['/tickets/new'], {
+      queryParams: {
+        customerId: this.customer._id,
+        customerPhone: this.customer.phoneNumber
+      }
+    });
+  }
+
+  /**
+   * Format date for display
+   */
+  formatTicketDate(date: Date): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 }
