@@ -500,14 +500,18 @@ export class TicketService {
    * Get tickets by customer
    */
   getTicketsByCustomer(customerId: string): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`/api/v2/customers/${customerId}/tickets`);
+    return this.http.get<{ success: boolean; data: { tickets: Ticket[] } }>(`/api/v2/customers/${customerId}/tickets`).pipe(
+      map(response => response.data.tickets || [])
+    );
   }
 
   /**
    * Get tickets by conversation
    */
   getTicketsByConversation(conversationId: string): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`/api/v2/conversations/${conversationId}/tickets`);
+    return this.http.get<{ success: boolean; data: Ticket[] }>(`/api/v2/conversations/${conversationId}/tickets`).pipe(
+      map(response => response.data)
+    );
   }
 
   /**
