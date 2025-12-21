@@ -6,6 +6,10 @@ uploads/*.jpeg
 .env
 logs.txt
 
+# Windows device files (created accidentally)
+frontend/nul
+nul
+
 # Test files
 test-customers*.xlsx
 test-customers*.csv
