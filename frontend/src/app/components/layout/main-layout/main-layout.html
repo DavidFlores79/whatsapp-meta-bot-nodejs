@@ -71,6 +71,15 @@
       </button>
 
       <button
+        (click)="navigateToTickets(); closeMobileMenu()"
+        [class.bg-whatsapp-gray]="currentView === 'tickets'"
+        [class.text-whatsapp-green]="currentView === 'tickets'"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all">
+        <i class="fas fa-ticket-alt text-xl flex-shrink-0"></i>
+        <span class="font-medium">{{ 'navigation.tickets' | translate }}</span>
+      </button>
+
+      <button
         *ngIf="currentAgent?.role === 'admin' || currentAgent?.role === 'supervisor'"
         (click)="navigateToAgents(); closeMobileMenu()"
         [class.bg-whatsapp-gray]="currentView === 'agents'"
@@ -215,6 +224,18 @@
         [title]="sidebarCollapsed ? ('navigation.templates' | translate) : ''">
         <i class="fas fa-file-alt text-xl flex-shrink-0"></i>
         <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.templates' | translate }}</span>
+      </button>
+
+      <button
+        (click)="navigateToTickets()"
+        [class.bg-whatsapp-gray]="currentView === 'tickets'"
+        [class.text-whatsapp-green]="currentView === 'tickets'"
+        [class.border-l-whatsapp-green]="currentView === 'tickets'"
+        [class.justify-center]="sidebarCollapsed"
+        class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all border-l-4 border-transparent group"
+        [title]="sidebarCollapsed ? ('navigation.tickets' | translate) : ''">
+        <i class="fas fa-ticket-alt text-xl flex-shrink-0"></i>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">{{ 'navigation.tickets' | translate }}</span>
       </button>
 
       <button
