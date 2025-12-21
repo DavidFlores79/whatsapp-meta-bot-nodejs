@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TicketService, Ticket } from '../../../services/ticket';
 import { ConfigurationService, TicketCategory } from '../../../services/configuration';
-import { CustomerService } from '../../../services/customer';
+import { CustomerService, Customer } from '../../../services/customer';
 import { ToastService } from '../../../services/toast';
 
 @Component({
@@ -15,6 +16,25 @@ import { ToastService } from '../../../services/toast';
     <div class="ticket-form-container p-6 max-w-4xl mx-auto">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Ticket</h1>
+
+        <!-- Customer Info Banner -->
+        <div *ngIf="customer" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+              {{ getCustomerInitial() }}
+            </div>
+            <div>
+              <div class="font-semibold text-blue-900">{{ getCustomerName() }}</div>
+              <div class="text-sm text-blue-700">{{ customer.phoneNumber }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Context Indicator -->
+        <div *ngIf="loadingContext" class="mb-4 p-3 bg-gray-100 rounded-lg flex items-center gap-2">
+          <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <span class="text-gray-600">Loading conversation context...</span>
+        </div>
 
         <form (ngSubmit)="onSubmit()" #ticketForm="ngForm">
           <!-- Subject -->
@@ -37,9 +57,12 @@ import { ToastService } from '../../../services/toast';
               [(ngModel)]="formData.description"
               name="description"
               required
-              rows="5"
+              rows="6"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Detailed description of the issue"></textarea>
+            <p *ngIf="conversationId" class="text-xs text-gray-500 mt-1">
+              Pre-filled from conversation. Edit as needed.
+            </p>
           </div>
 
           <!-- Category -->
@@ -72,8 +95,8 @@ import { ToastService } from '../../../services/toast';
             </select>
           </div>
 
-          <!-- Customer (simplified - search by phone) -->
-          <div class="mb-6">
+          <!-- Customer Phone (hidden if we already have customer) -->
+          <div class="mb-6" *ngIf="!customer">
             <label class="block text-sm font-medium text-gray-700 mb-2">Customer Phone *</label>
             <input
               type="tel"
@@ -89,7 +112,7 @@ import { ToastService } from '../../../services/toast';
           <div class="flex gap-4">
             <button
               type="submit"
-              [disabled]="!ticketForm.valid || submitting"
+              [disabled]="!ticketForm.valid || submitting || loadingContext"
               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {{ submitting ? 'Creating...' : 'Create Ticket' }}
             </button>
@@ -109,6 +132,13 @@ import { ToastService } from '../../../services/toast';
 export class TicketFormComponent implements OnInit {
   availableCategories: TicketCategory[] = [];
   submitting = false;
+  loadingContext = false;
+  customer: Customer | null = null;
+  conversationMessages: string[] = [];
+
+  // Query params from conversation
+  customerId: string | null = null;
+  conversationId: string | null = null;
 
   formData = {
     subject: '',
@@ -122,12 +152,92 @@ export class TicketFormComponent implements OnInit {
     private ticketService: TicketService,
     private configService: ConfigurationService,
     private customerService: CustomerService,
+    private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private toast: ToastService
   ) {}
 
   ngOnInit() {
     this.loadCategories();
+    this.loadQueryParams();
+  }
+
+  loadQueryParams() {
+    this.route.queryParams.subscribe(params => {
+      this.customerId = params['customerId'] || null;
+      this.conversationId = params['conversationId'] || null;
+      const customerPhone = params['customerPhone'] || '';
+
+      if (customerPhone) {
+        this.formData.customerPhone = customerPhone;
+      }
+
+      // Load customer details if we have customerId
+      if (this.customerId) {
+        this.loadCustomerDetails();
+      }
+
+      // Load conversation context if we have conversationId
+      if (this.conversationId) {
+        this.loadConversationContext();
+      }
+    });
+  }
+
+  loadCustomerDetails() {
+    if (!this.customerId) return;
+
+    this.customerService.getCustomer(this.customerId).subscribe({
+      next: (response) => {
+        this.customer = response.customer;
+        if (response.customer.phoneNumber) {
+          this.formData.customerPhone = response.customer.phoneNumber;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading customer:', err);
+      }
+    });
+  }
+
+  loadConversationContext() {
+    if (!this.conversationId) return;
+
+    this.loadingContext = true;
+
+    // Load messages directly from the API
+    this.http.get<any>(`/api/v2/conversations/${this.conversationId}/messages`).subscribe({
+      next: (response) => {
+        const backendMessages = response.messages || [];
+
+        // Get last 10 customer messages for context (direction: 'in' = from customer)
+        const customerMessages: string[] = backendMessages
+          .filter((m: any) => m.direction === 'in' || m.sender === 'customer')
+          .slice(-10)
+          .map((m: any) => m.content);
+
+        this.conversationMessages = customerMessages;
+
+        // Auto-suggest subject from recent messages
+        if (customerMessages.length > 0 && !this.formData.subject) {
+          const lastMessage = customerMessages[customerMessages.length - 1];
+          // Create a brief subject from the last message (first 50 chars)
+          this.formData.subject = lastMessage.substring(0, 50) + (lastMessage.length > 50 ? '...' : '');
+        }
+
+        // Pre-fill description with conversation summary
+        if (customerMessages.length > 0 && !this.formData.description) {
+          this.formData.description = 'Customer messages:\n' + customerMessages.map((m: string) => `- ${m}`).join('\n');
+        }
+
+        this.loadingContext = false;
+      },
+      error: (err) => {
+        console.error('Error loading conversation:', err);
+        this.loadingContext = false;
+      }
+    });
   }
 
   loadCategories() {
@@ -142,15 +252,16 @@ export class TicketFormComponent implements OnInit {
     this.submitting = true;
 
     try {
-      // First, find or create customer by phone
-      // This is simplified - in production, you'd have a proper customer lookup
+      // Build ticket data with conversation context
       const ticketData: any = {
         subject: this.formData.subject,
         description: this.formData.description,
         category: this.formData.category,
         priority: this.formData.priority,
-        // Note: Backend should handle customer lookup by phone
-        // For now, this is a placeholder
+        customerPhone: this.formData.customerPhone,
+        // Include IDs from conversation context
+        customerId: this.customerId || undefined,
+        conversationId: this.conversationId || undefined
       };
 
       this.ticketService.createTicket(ticketData).subscribe({
@@ -173,5 +284,19 @@ export class TicketFormComponent implements OnInit {
 
   cancel() {
     this.router.navigate(['/tickets']);
+  }
+
+  getCustomerName(): string {
+    if (!this.customer) return 'Customer';
+    const firstName = this.customer.firstName || '';
+    const lastName = this.customer.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || this.customer.phoneNumber;
+  }
+
+  getCustomerInitial(): string {
+    if (!this.customer) return 'C';
+    if (this.customer.firstName) return this.customer.firstName.charAt(0).toUpperCase();
+    return this.customer.phoneNumber?.charAt(0) || 'C';
   }
 }
