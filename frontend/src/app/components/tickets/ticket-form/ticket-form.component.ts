@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -155,7 +155,8 @@ export class TicketFormComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
-    private toast: ToastService
+    private toast: ToastService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -202,40 +203,49 @@ export class TicketFormComponent implements OnInit {
   }
 
   loadConversationContext() {
-    if (!this.conversationId) return;
+    if (!this.conversationId) {
+      this.loadingContext = false;
+      return;
+    }
 
     this.loadingContext = true;
 
     // Load messages directly from the API
     this.http.get<any>(`/api/v2/conversations/${this.conversationId}/messages`).subscribe({
       next: (response) => {
-        const backendMessages = response.messages || [];
+        try {
+          const backendMessages = response.messages || [];
 
-        // Get last 10 customer messages for context (direction: 'in' = from customer)
-        const customerMessages: string[] = backendMessages
-          .filter((m: any) => m.direction === 'in' || m.sender === 'customer')
-          .slice(-10)
-          .map((m: any) => m.content);
+          // Get last 10 customer messages for context (direction: 'in' = from customer)
+          const customerMessages: string[] = backendMessages
+            .filter((m: any) => m.direction === 'in' || m.sender === 'customer')
+            .slice(-10)
+            .map((m: any) => m.content || '');
 
-        this.conversationMessages = customerMessages;
+          this.conversationMessages = customerMessages;
 
-        // Auto-suggest subject from recent messages
-        if (customerMessages.length > 0 && !this.formData.subject) {
-          const lastMessage = customerMessages[customerMessages.length - 1];
-          // Create a brief subject from the last message (first 50 chars)
-          this.formData.subject = lastMessage.substring(0, 50) + (lastMessage.length > 50 ? '...' : '');
+          // Auto-suggest subject from recent messages
+          if (customerMessages.length > 0 && !this.formData.subject) {
+            const lastMessage = customerMessages[customerMessages.length - 1];
+            // Create a brief subject from the last message (first 50 chars)
+            this.formData.subject = lastMessage.substring(0, 50) + (lastMessage.length > 50 ? '...' : '');
+          }
+
+          // Pre-fill description with conversation summary
+          if (customerMessages.length > 0 && !this.formData.description) {
+            this.formData.description = 'Customer messages:\n' + customerMessages.map((m: string) => `- ${m}`).join('\n');
+          }
+        } catch (e) {
+          console.error('Error processing messages:', e);
+        } finally {
+          this.loadingContext = false;
+          this.cdr.detectChanges();
         }
-
-        // Pre-fill description with conversation summary
-        if (customerMessages.length > 0 && !this.formData.description) {
-          this.formData.description = 'Customer messages:\n' + customerMessages.map((m: string) => `- ${m}`).join('\n');
-        }
-
-        this.loadingContext = false;
       },
       error: (err) => {
         console.error('Error loading conversation:', err);
         this.loadingContext = false;
+        this.cdr.detectChanges();
       }
     });
   }

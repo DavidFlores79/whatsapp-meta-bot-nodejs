@@ -240,7 +240,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
   updating = false;
   addingNote = false;
   ticketId: string = '';
-  
+
   // UI state
   showResolveModal = false;
   resolutionSummary = '';
@@ -284,7 +284,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   changeStatus(newStatus: string) {
     if (!this.ticket || this.updating) return;
-    
+
     this.updating = true;
     this.ticketService.updateTicketStatus(this.ticketId, newStatus)
       .pipe(takeUntil(this.destroy$))
@@ -304,7 +304,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   resolveTicket() {
     if (!this.ticket || this.updating || !this.resolutionSummary.trim()) return;
-    
+
     this.updating = true;
     this.ticketService.resolveTicket(this.ticketId, this.resolutionSummary)
       .pipe(takeUntil(this.destroy$))
@@ -326,7 +326,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   addNote() {
     if (!this.ticket || this.addingNote || !this.newNote.trim()) return;
-    
+
     this.addingNote = true;
     this.ticketService.addNote(this.ticketId, this.newNote, this.noteIsInternal)
       .pipe(takeUntil(this.destroy$))
