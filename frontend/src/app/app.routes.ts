@@ -10,6 +10,9 @@ import { TemplateListComponent } from './components/templates/template-list/temp
 import { ReportsComponent } from './components/reports/reports';
 import { SettingsComponent } from './components/settings/settings';
 import { AgentListComponent } from './components/agents/agent-list/agent-list';
+import { TicketListComponent } from './components/tickets/ticket-list/ticket-list.component';
+import { TicketDetailComponent } from './components/tickets/ticket-detail/ticket-detail.component';
+import { TicketFormComponent } from './components/tickets/ticket-form/ticket-form.component';
 import { AuthService } from './services/auth';
 
 // Auth guard function
@@ -53,6 +56,9 @@ export const routes: Routes = [
             { path: 'customers/:id', component: CustomerDetailComponent },
             { path: 'customers/:id/edit', component: CustomerFormComponent },
             { path: 'templates', component: TemplateListComponent },
+            { path: 'tickets', component: TicketListComponent },
+            { path: 'tickets/new', component: TicketFormComponent },
+            { path: 'tickets/:id', component: TicketDetailComponent },
             { path: 'agents', component: AgentListComponent, canActivate: [adminGuard] },
             { path: 'reports', component: ReportsComponent, canActivate: [adminGuard] },
             { path: 'settings', component: SettingsComponent }
