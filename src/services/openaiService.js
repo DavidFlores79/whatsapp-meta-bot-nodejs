@@ -229,43 +229,64 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
         // Get terminology for response messages
         const terminology = await configService.getTicketTerminology();
 
-        // Find customer by phone number
-        const customer = await Customer.findOne({ phoneNumber: userId });
-        if (!customer) {
+        // Debug: Log the arguments received from OpenAI
+        console.log("📝 create_ticket_report - Raw arguments received:", JSON.stringify(args, null, 2));
+
+        // Validate required fields - handle potential field name variations
+        const subject = args.subject || args.titulo || args.asunto || args.title;
+        const description = args.description || args.descripcion || args.detalle || args.details;
+
+        if (!subject || !description) {
+          console.error("❌ create_ticket_report - Missing required fields:", { 
+            subject: !!subject, 
+            description: !!description,
+            receivedArgs: args 
+          });
           output = JSON.stringify({
             success: false,
-            error: `No se pudo crear el ${terminology.ticketSingular}. Cliente no encontrado.`
+            error: `No se pudo crear el ${terminology.ticketSingular}. Falta información requerida (asunto o descripción). Por favor proporciona más detalles sobre tu solicitud.`
           });
         } else {
-          // Find conversation ID from thread
-          const userThread = await UserThread.findOne({ userId, threadId });
-          const conversationId = userThread ? userThread.conversationId : null;
+          // Find customer by phone number
+          const customer = await Customer.findOne({ phoneNumber: userId });
+          if (!customer) {
+            output = JSON.stringify({
+              success: false,
+              error: `No se pudo crear el ${terminology.ticketSingular}. Cliente no encontrado.`
+            });
+          } else {
+            // Find conversation ID from thread
+            const userThread = await UserThread.findOne({ userId, threadId });
+            const conversationId = userThread ? userThread.conversationId : null;
 
-          // Validate and create ticket
-          const categories = await configService.getTicketCategories();
-          const validCategories = categories.map(c => c.id);
+            // Validate and create ticket
+            const categories = await configService.getTicketCategories();
+            const validCategories = categories.map(c => c.id);
 
-          // Fallback to 'other' if invalid category
-          let category = args.category || 'other';
-          if (!validCategories.includes(category)) {
-            category = 'other';
+            // Fallback to 'other' if invalid category
+            let category = args.category || args.categoria || 'other';
+            if (!validCategories.includes(category)) {
+              category = 'other';
+            }
+
+            const ticket = await ticketService.createTicketFromAI({
+              subject,
+              description,
+              category,
+              priority: args.priority || args.prioridad || 'medium',
+              location: args.location || args.ubicacion,
+              customerId: customer._id,
+              conversationId
+            });
+
+            console.log("✅ create_ticket_report - Ticket created successfully:", ticket.ticketId);
+
+            output = JSON.stringify({
+              success: true,
+              ticketId: ticket.ticketId,
+              message: `${terminology.ticketSingular} creado exitosamente con ID: ${ticket.ticketId}`
+            });
           }
-
-          const ticket = await ticketService.createTicketFromAI({
-            subject: args.subject,
-            description: args.description,
-            category,
-            priority: args.priority || 'medium',
-            location: args.location,
-            customerId: customer._id,
-            conversationId
-          });
-
-          output = JSON.stringify({
-            success: true,
-            ticketId: ticket.ticketId,
-            message: `${terminology.ticketSingular} creado exitosamente con ID: ${ticket.ticketId}`
-          });
         }
       } else if (functionName === "get_ticket_information") {
         const terminology = await configService.getTicketTerminology();
