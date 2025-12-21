@@ -212,21 +212,134 @@ async function pollRunCompletion(threadId, runId, headers) {
 }
 
 async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
+  const ticketService = require('./ticketService');
+  const configService = require('./configurationService');
+  const Customer = require('../models/Customer');
+  const UserThread = require('../models/UserThread');
+
   const toolOutputs = [];
+
   for (const call of toolCalls) {
     const functionName = call.function.name;
     const args = JSON.parse(call.function.arguments || "{}");
-    let output = JSON.stringify({ success: true }); // Default
+    let output;
 
-    // Implement tool logic here (ticket creation, etc.)
-    if (functionName === "create_ticket_report") {
-      output = JSON.stringify({ success: true, ticketId: `TICKET-${Date.now()}`, message: "Ticket created" });
-    } else if (functionName === "get_ticket_information") {
-      output = JSON.stringify({ success: true, status: "open", description: "Sample ticket info" });
+    try {
+      if (functionName === "create_ticket_report") {
+        // Get terminology for response messages
+        const terminology = await configService.getTicketTerminology();
+
+        // Find customer by phone number
+        const customer = await Customer.findOne({ phoneNumber: userId });
+        if (!customer) {
+          output = JSON.stringify({
+            success: false,
+            error: `No se pudo crear el ${terminology.ticketSingular}. Cliente no encontrado.`
+          });
+        } else {
+          // Find conversation ID from thread
+          const userThread = await UserThread.findOne({ userId, threadId });
+          const conversationId = userThread ? userThread.conversationId : null;
+
+          // Validate and create ticket
+          const categories = await configService.getTicketCategories();
+          const validCategories = categories.map(c => c.id);
+
+          // Fallback to 'other' if invalid category
+          let category = args.category || 'other';
+          if (!validCategories.includes(category)) {
+            category = 'other';
+          }
+
+          const ticket = await ticketService.createTicketFromAI({
+            subject: args.subject,
+            description: args.description,
+            category,
+            priority: args.priority || 'medium',
+            location: args.location,
+            customerId: customer._id,
+            conversationId
+          });
+
+          output = JSON.stringify({
+            success: true,
+            ticketId: ticket.ticketId,
+            message: `${terminology.ticketSingular} creado exitosamente con ID: ${ticket.ticketId}`
+          });
+        }
+      } else if (functionName === "get_ticket_information") {
+        const terminology = await configService.getTicketTerminology();
+
+        // Find customer by phone number
+        const customer = await Customer.findOne({ phoneNumber: userId });
+        if (!customer) {
+          output = JSON.stringify({
+            success: false,
+            error: `No se pudo obtener información del ${terminology.ticketSingular}. Cliente no encontrado.`
+          });
+        } else {
+          if (args.ticket_id) {
+            // Get specific ticket
+            const ticket = await ticketService.getTicketByIdForCustomer(args.ticket_id, customer._id);
+            if (ticket) {
+              output = JSON.stringify({
+                success: true,
+                ticket: {
+                  ticketId: ticket.ticketId,
+                  subject: ticket.subject,
+                  description: ticket.description,
+                  status: ticket.status,
+                  priority: ticket.priority,
+                  category: ticket.category,
+                  createdAt: ticket.createdAt,
+                  assignedAgent: ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : null
+                }
+              });
+            } else {
+              output = JSON.stringify({
+                success: false,
+                error: `${terminology.ticketSingular} no encontrado o no tienes acceso.`
+              });
+            }
+          } else if (args.lookup_recent) {
+            // Get recent tickets
+            const result = await ticketService.getTicketsByCustomer(customer._id, { limit: 5 });
+            output = JSON.stringify({
+              success: true,
+              tickets: result.tickets.map(t => ({
+                ticketId: t.ticketId,
+                subject: t.subject,
+                status: t.status,
+                priority: t.priority,
+                createdAt: t.createdAt
+              })),
+              total: result.total
+            });
+          } else {
+            output = JSON.stringify({
+              success: false,
+              error: 'Debes proporcionar un ID de ticket o solicitar tickets recientes.'
+            });
+          }
+        }
+      } else {
+        // Unknown function
+        output = JSON.stringify({
+          success: false,
+          error: 'Función no reconocida'
+        });
+      }
+    } catch (error) {
+      console.error(`Error executing tool ${functionName}:`, error);
+      output = JSON.stringify({
+        success: false,
+        error: 'Error al procesar la solicitud. Por favor intenta de nuevo.'
+      });
     }
 
     toolOutputs.push({ tool_call_id: call.id, output });
   }
+
   await axios.post(
     `${BASE_URL}/threads/${threadId}/runs/${runId}/submit_tool_outputs`,
     { tool_outputs: toolOutputs },

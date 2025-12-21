@@ -88,6 +88,78 @@ class Server {
 
   async conectarDB() {
     await dbConnection();
+    // Initialize ticket system after DB connection
+    await this.initializeTicketSystem();
+  }
+
+  async initializeTicketSystem() {
+    try {
+      const SystemSettings = require('./SystemSettings');
+      const configService = require('../services/configurationService');
+
+      console.log('🔍 Checking ticket system initialization...');
+
+      // Check if configurations exist
+      const ticketCategoriesExist = await SystemSettings.findOne({
+        key: 'ticket_categories'
+      });
+
+      if (!ticketCategoriesExist) {
+        console.log('🎫 Initializing ticket system with LUXFREE defaults...');
+
+        // Seed all default configurations
+        await SystemSettings.insertMany([
+          {
+            key: 'ticket_categories',
+            value: configService.getDefaultCategories(),
+            category: 'tickets',
+            description: 'Available ticket categories',
+            isEditable: true
+          },
+          {
+            key: 'assistant_configuration',
+            value: configService.getDefaultAssistantConfig(),
+            category: 'assistant',
+            description: 'AI assistant configuration',
+            isEditable: true
+          },
+          {
+            key: 'ticket_terminology',
+            value: configService.getDefaultTerminology(),
+            category: 'tickets',
+            description: 'Ticket system terminology',
+            isEditable: true
+          },
+          {
+            key: 'ticket_id_format',
+            value: configService.getDefaultIdFormat(),
+            category: 'tickets',
+            description: 'Ticket ID generation format',
+            isEditable: true
+          },
+          {
+            key: 'configuration_presets',
+            value: configService.getDefaultPresets(),
+            category: 'presets',
+            description: 'Industry configuration presets',
+            isEditable: true
+          },
+          {
+            key: 'assistant_instructions_template',
+            value: configService.getDefaultInstructionsTemplate(),
+            category: 'assistant',
+            description: 'AI assistant instructions template',
+            isEditable: true
+          }
+        ]);
+
+        console.log('✅ Ticket system initialized successfully');
+      } else {
+        console.log('✅ Ticket system already initialized');
+      }
+    } catch (error) {
+      console.error('❌ Error initializing ticket system:', error);
+    }
   }
 
   routes() {
@@ -98,6 +170,8 @@ class Server {
     this.app.use("/api/v2/customers", require("../routes/customerRoutes"));
     this.app.use("/api/v2/templates", require("../routes/templateRoutes"));
     this.app.use("/api/v2/crm-settings", require("../routes/crmSettingsRoutes"));
+    this.app.use("/api/v2/config", require("../routes/configurationRoutes"));
+    this.app.use("/api/v2/tickets", require("../routes/ticketRoutes"));
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));

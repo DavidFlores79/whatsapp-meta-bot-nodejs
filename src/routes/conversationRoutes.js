@@ -48,4 +48,9 @@ router.post('/:id/notes', authenticateToken, apiLimiter, conversationController.
 // =====================================
 router.get('/:id/assignment-history', authenticateToken, apiLimiter, conversationController.getAssignmentHistory);
 
+// =====================================
+// TICKETS
+// =====================================
+router.get('/:conversationId/tickets', authenticateToken, apiLimiter, require('../controllers/ticketController').getConversationTickets);
+
 module.exports = router;
