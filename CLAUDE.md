@@ -58,7 +58,8 @@ npm run deploy:prepare:unix   # Build + run Bash deployment script
 - Attaches `req.io` to all requests for Socket.io emission
 - Serves Angular static files from `frontend/dist/frontend/browser/`
 - Starts `autoTimeoutService` background process
-- **Route structure**: `/api/v2/*` (WhatsApp, agents, conversations, customers, templates) + `/health` + `/info`
+- Initializes ticket system with LUXFREE defaults on first run (`initializeTicketSystem()`)
+- **Route structure**: `/api/v2/*` (WhatsApp, agents, conversations, customers, templates, tickets, config) + `/health` + `/info`
 
 **OpenAI Thread Management** (`src/services/openaiService.js`):
 - **Dual persistence**: In-memory Map + MongoDB (UserThread model)
@@ -84,6 +85,20 @@ npm run deploy:prepare:unix   # Build + run Bash deployment script
 - **Message relay**: `agentMessageRelayService.js` sends agent messages to WhatsApp
 - **Background jobs**: Auto-timeout service runs continuously checking for stale conversations
 
+**Universal Ticket System** (`ticketService.js`, `configurationService.js`):
+- **Multi-industry support**: Same codebase serves any business via database configuration
+- **Ticket lifecycle**: new → open → in_progress → pending_customer → resolved → closed
+- **AI integration**: Assistant creates/retrieves tickets using `create_ticket_report()` and `get_ticket_information()`
+- **Configurable categories**: Stored in SystemSettings, validated dynamically (default: LUXFREE solar/lighting)
+- **Configurable terminology**: Ticket noun, verbs, customer/agent names adapt to industry
+- **Ticket ID generation**: Atomic sequential with format: `{PREFIX}-{YEAR}-{SEQUENCE}` (e.g., LUX-2025-000001)
+- **Real-time updates**: Socket.io events for ticket_created, ticket_updated, ticket_assigned, ticket_resolved
+- **Priority-based SLA**: Fields for tracking (storage only, no automated monitoring yet)
+- **Notes system**: Internal (agent-only) and external notes
+- **Status history**: Tracks all status changes with agent, timestamp, and reason
+- **Escalation**: Manual escalation flag with reason and target agent
+- **Statistics**: Aggregated metrics by status, category, priority, agent, customer
+
 ### Data Models
 
 **Core collections**:
@@ -93,11 +108,17 @@ npm run deploy:prepare:unix   # Build + run Bash deployment script
 - `Message`: Individual messages (conversationId, customerId, agentId, content, messageType)
 - `Agent`: CRM agents (email unique, role, status, permissions, assignedConversations)
 - `Template`: WhatsApp approved templates (name unique, status, category, language, components, parameters)
+- `Ticket`: Support tickets (ticketId unique, customerId, conversationId, status, priority, category, notes)
+- `TicketCounter`: Atomic sequential ID generation (year-based reset)
+- `SystemSettings`: Multi-document configuration store (key-value pairs for ticket system)
 
 **Key relationships**:
 - Customer ↔ Conversation (1:many)
 - Conversation ↔ Message (1:many)
 - Agent ↔ Conversation (many:many via assignedAgent/assignedConversations)
+- Customer ↔ Ticket (1:many)
+- Conversation ↔ Ticket (1:many)
+- Agent ↔ Ticket (1:many via assignedAgent)
 - UserThread references conversationId and customerId
 - Template usage tracked in Message.template field
 
@@ -236,7 +257,7 @@ Current implementation in `messageHandlers.js`:
 
 ## Key Services
 
-- **openaiService**: Thread management, AI responses, context cleanup
+- **openaiService**: Thread management, AI responses, context cleanup, ticket tool calls
 - **queueService**: Message batching, deduplication, routing
 - **agentAssignmentService**: Auto-assign conversations to available agents
 - **takeoverSuggestionService**: Monitors messages, suggests agent takeover
@@ -247,6 +268,8 @@ Current implementation in `messageHandlers.js`:
 - **geocodingService**: Location data processing
 - **authService**: JWT authentication, token refresh, session management
 - **whatsappService**: HTTP client for WhatsApp Cloud API
+- **ticketService**: Ticket business logic, ID generation, status workflow, Socket.io events
+- **configurationService**: Multi-industry configuration with 5-min caching
 
 ## Template Management
 
@@ -278,6 +301,132 @@ The system integrates with WhatsApp Business API to manage and send pre-approved
 - Parameters are validated before sending (all required fields must be filled)
 - Bulk sending includes 1-second delay between messages to prevent rate limiting
 - Messages saved to DB with `type: 'template'` and full template metadata
+
+## Ticket System Management
+
+### Overview
+Universal ticket system with multi-industry support. AI can create tickets via WhatsApp, agents can manage them via CRM. Configuration adapts terminology, categories, and behavior to any business type without code changes.
+
+### Backend Architecture
+- **Models**: `Ticket.js` (full schema), `TicketCounter.js` (atomic ID generation), `SystemSettings.js` (configuration store)
+- **Services**: `ticketService.js` (business logic), `configurationService.js` (multi-industry config with caching)
+- **Controllers**: `ticketController.js` (HTTP handlers), `configurationController.js` (admin settings)
+- **Routes**: `POST /api/v2/tickets`, `GET /api/v2/tickets/:id`, `PUT /api/v2/tickets/:id/status`, etc.
+
+### Configuration System
+All configurations stored in SystemSettings collection with 5-minute cache:
+
+**Ticket Categories** (key: `ticket_categories`):
+```javascript
+{
+  id: 'solar_installation',
+  label: 'Instalación Solar',
+  labelEn: 'Solar Installation',
+  icon: 'sun',
+  color: '#F59E0B',
+  description: 'Instalación de paneles solares y sistemas fotovoltaicos'
+}
+```
+
+**Assistant Configuration** (key: `assistant_configuration`):
+- assistantName, companyName, primaryServiceIssue, serviceType, ticketNoun, ticketNounPlural, language
+
+**Ticket Terminology** (key: `ticket_terminology`):
+- ticketSingular, ticketPlural, createVerb, customerNoun, agentNoun, resolveVerb
+
+**Ticket ID Format** (key: `ticket_id_format`):
+- prefix (e.g., 'LUX'), includeYear (boolean), padLength (6), separator ('-')
+- Result: LUX-2025-000001
+
+### Industry Presets
+4 built-in presets (LUXFREE, Restaurant, E-commerce, Healthcare) with one-click loading.
+Each preset includes categories, terminology, ID format, and assistant config tailored to the industry.
+
+### AI Integration (OpenAI Tool Calls)
+**create_ticket_report** - Creates ticket from customer WhatsApp message:
+- Validates category against configured categories (fallback to 'other')
+- Links to customer and conversation
+- Returns ticketId and success message using configured terminology
+
+**get_ticket_information** - Retrieves ticket info:
+- By specific ticketId or recent tickets for customer
+- Security: customers can only access their own tickets
+
+### Ticket Lifecycle
+**Statuses**: new → open → in_progress → pending_customer → waiting_internal → resolved → closed
+
+**Status History**: Every status change tracked with agent, timestamp, and reason
+
+**Priority Levels**: low, medium, high, urgent (affects SLA targets)
+
+**Notes System**: Internal (agent-only) and external notes with timestamps
+
+**Escalation**: Manual escalation flag with reason and target agent
+
+### API Endpoints
+```
+GET    /api/v2/tickets                     # List with filters (status, category, priority, search)
+GET    /api/v2/tickets/statistics          # Aggregated stats
+GET    /api/v2/tickets/:id                 # Get single ticket
+POST   /api/v2/tickets                     # Create ticket (agent)
+PUT    /api/v2/tickets/:id                 # Update ticket
+PUT    /api/v2/tickets/:id/status          # Change status
+PUT    /api/v2/tickets/:id/assign          # Assign to agent
+POST   /api/v2/tickets/:id/notes           # Add note
+PUT    /api/v2/tickets/:id/resolve         # Resolve ticket
+PUT    /api/v2/tickets/:id/escalate        # Escalate ticket
+GET    /api/v2/customers/:id/tickets       # Customer's tickets
+GET    /api/v2/conversations/:id/tickets   # Conversation's tickets
+```
+
+### Configuration API (Admin Only)
+```
+GET    /api/v2/config                      # Get all configurations
+GET    /api/v2/config/ticket-categories    # Get categories
+PUT    /api/v2/config/ticket-categories    # Update categories
+GET    /api/v2/config/assistant            # Get assistant config
+PUT    /api/v2/config/assistant            # Update assistant config
+GET    /api/v2/config/terminology          # Get terminology
+PUT    /api/v2/config/terminology          # Update terminology
+GET    /api/v2/config/ticket-id-format     # Get ID format
+PUT    /api/v2/config/ticket-id-format     # Update ID format
+GET    /api/v2/config/presets              # Get industry presets
+POST   /api/v2/config/presets/load         # Load preset
+POST   /api/v2/config/reset                # Reset to defaults (LUXFREE)
+```
+
+### Socket.io Events
+- `ticket_created` - New ticket created (by AI or agent)
+- `ticket_updated` - Ticket fields updated
+- `ticket_status_changed` - Status transition
+- `ticket_assigned` - Ticket assigned to agent
+- `ticket_note_added` - New note added
+- `ticket_resolved` - Ticket marked as resolved
+- `ticket_escalated` - Ticket escalated
+
+### Frontend Components (Pending Implementation)
+- TicketListComponent - Browse, filter, search tickets
+- TicketDetailComponent - View ticket with tabs (overview, notes, related)
+- TicketFormComponent - Create/edit ticket
+- TicketNotesComponent - Timeline of notes and activity
+- TicketStatusBadgeComponent - Visual status indicator
+- SettingsLayoutComponent - Admin settings management (categories, terminology, presets)
+
+### Default Configuration (LUXFREE)
+- **Company**: LUXFREE (solar panel and lighting installation)
+- **Categories**: Solar Installation, Light Malfunction, Maintenance, Electrical Issue, Billing, Other
+- **Terminology**: reporte/reportes (Spanish), usuario (customer), agente (agent)
+- **Ticket ID**: LUX-2025-000001
+- **Language**: Spanish (es)
+
+### Important Notes
+- Configuration changes take effect immediately (cache invalidation)
+- Ticket ID counter is atomic (no race conditions) and resets yearly
+- Categories must have: id, label, icon, color, description
+- AI validates category before creating ticket, uses fallback if invalid
+- Status transitions are tracked in statusHistory array
+- SLA fields present for future monitoring implementation
+- All ticket operations emit Socket.io events for real-time UI updates
 
 ## Frontend Integration
 
