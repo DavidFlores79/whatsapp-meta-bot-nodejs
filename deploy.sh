@@ -10,7 +10,7 @@ sudo chown -R ubuntu:ubuntu /var/www/whatsapp-meta-bot-nodejs
 
 # Pull latest changes
 echo "📥 Pulling latest changes..."
-git pull origin feature/crm-implementation
+git pull origin feat/universal-ticket-system
 
 # Restart services
 echo "♻️  Restarting services..."
