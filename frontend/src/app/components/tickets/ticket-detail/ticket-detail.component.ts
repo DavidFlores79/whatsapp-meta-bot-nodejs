@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -252,6 +252,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
   updating = false;
   addingNote = false;
   ticketId: string = '';
+  error: string | null = null;
 
   // UI state
   showResolveModal = false;
@@ -263,14 +264,23 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private ticketService: TicketService,
-    private cdr: ChangeDetectorRef,
     toast: ToastService
   ) {
     this.toast = toast;
+    console.log('[TicketDetail] Constructor called');
   }
 
   ngOnInit() {
+    console.log('[TicketDetail] ngOnInit called');
+    console.log('[TicketDetail] Route params:', this.route.snapshot.params);
     this.ticketId = this.route.snapshot.params['id'];
+    console.log('[TicketDetail] Extracted ticket ID:', this.ticketId);
+    if (!this.ticketId) {
+      console.error('[TicketDetail] No ticket ID found in route params!');
+      this.toast.error('No ticket ID provided');
+      this.router.navigate(['/tickets']);
+      return;
+    }
     this.loadTicket();
   }
 
@@ -281,17 +291,16 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   loadTicket() {
     this.loading = true;
+    this.error = null;
     console.log('[TicketDetail] Loading ticket with ID:', this.ticketId);
+
     this.ticketService.getTicketById(this.ticketId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (ticket) => {
           console.log('[TicketDetail] Ticket loaded successfully:', ticket);
-          setTimeout(() => {
-            this.ticket = ticket;
-            this.loading = false;
-            this.cdr.detectChanges();
-          }, 0);
+          this.ticket = ticket;
+          this.loading = false;
         },
         error: (err) => {
           console.error('[TicketDetail] Error loading ticket:', err);
@@ -301,11 +310,9 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
             message: err.message,
             error: err.error
           });
-          setTimeout(() => {
-            this.loading = false;
-            this.cdr.detectChanges();
-            this.toast.error('Failed to load ticket');
-          }, 0);
+          this.error = 'Failed to load ticket details';
+          this.loading = false;
+          this.toast.error('Failed to load ticket');
         }
       });
   }

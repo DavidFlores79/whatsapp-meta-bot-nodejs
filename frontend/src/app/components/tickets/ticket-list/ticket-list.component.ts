@@ -289,6 +289,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
    * Navigate to ticket detail
    */
   viewTicket(ticket: Ticket) {
+    console.log('[TicketList] viewTicket called with ticket:', ticket);
+    console.log('[TicketList] Navigating to:', ['/tickets', ticket._id]);
     this.router.navigate(['/tickets', ticket._id]);
   }
 
