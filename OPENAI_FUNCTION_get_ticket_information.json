@@ -1,0 +1,24 @@
+{
+  "name": "get_ticket_information",
+  "description": "Retrieve ticket/report information. Can search by ticket ID, phone number, or get recent tickets for the current customer. Use this when customer asks about ticket status, wants ticket details, or mentions a ticket ID.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "ticket_id": {
+        "type": "string",
+        "description": "Unique ticket identifier (e.g., 'LUX-2025-000004'). Use this when customer provides a specific ticket ID."
+      },
+      "phone_number": {
+        "type": "string",
+        "description": "Phone number of the customer who owns the ticket. Optional - if not provided, uses the current conversation's phone number. Use this when customer mentions a different phone number than they're calling from."
+      },
+      "lookup_recent": {
+        "type": "boolean",
+        "description": "Set to true to retrieve recent tickets for the customer instead of a specific ticket. Use when customer asks 'show me my tickets' or 'what tickets do I have'."
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  }
+}

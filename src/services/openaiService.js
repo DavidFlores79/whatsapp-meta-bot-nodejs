@@ -291,18 +291,40 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
       } else if (functionName === "get_ticket_information") {
         const terminology = await configService.getTicketTerminology();
 
+        // Determine which phone number to use for customer lookup
+        // If phone_number is provided in args AND different from userId, use it
+        // Otherwise use the conversation's userId (current customer)
+        const phoneToSearch = args.phone_number || userId;
+
+        console.log(`🔍 get_ticket_information - Searching with phone: ${phoneToSearch}`);
+        console.log(`   Args:`, args);
+
         // Find customer by phone number
-        const customer = await Customer.findOne({ phoneNumber: userId });
+        const customer = await Customer.findOne({ phoneNumber: phoneToSearch });
         if (!customer) {
           output = JSON.stringify({
             success: false,
-            error: `No se pudo obtener información del ${terminology.ticketSingular}. Cliente no encontrado.`
+            error: `No se pudo obtener información del ${terminology.ticketSingular}. Cliente no encontrado con el número proporcionado.`
           });
         } else {
           if (args.ticket_id) {
-            // Get specific ticket
-            const ticket = await ticketService.getTicketByIdForCustomer(args.ticket_id, customer._id);
-            if (ticket) {
+            // Get specific ticket by ID
+            // First try to find ticket by ID alone, then verify access
+            const ticket = await ticketService.getTicketById(args.ticket_id);
+
+            if (!ticket) {
+              output = JSON.stringify({
+                success: false,
+                error: `${terminology.ticketSingular} con ID "${args.ticket_id}" no encontrado.`
+              });
+            } else if (ticket.customerId.toString() !== customer._id.toString()) {
+              // Ticket exists but belongs to different customer
+              output = JSON.stringify({
+                success: false,
+                error: `No tienes acceso al ${terminology.ticketSingular} "${args.ticket_id}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
+              });
+            } else {
+              // Ticket found and customer has access
               output = JSON.stringify({
                 success: true,
                 ticket: {
@@ -315,11 +337,6 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                   createdAt: ticket.createdAt,
                   assignedAgent: ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : null
                 }
-              });
-            } else {
-              output = JSON.stringify({
-                success: false,
-                error: `${terminology.ticketSingular} no encontrado o no tienes acceso.`
               });
             }
           } else if (args.lookup_recent) {
