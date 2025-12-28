@@ -60,19 +60,30 @@ async function detectHumanHelpRequest(messageContent, recentMessages = []) {
 
         const prompt = `Analyze if the customer is requesting to speak with a human agent or expressing frustration with AI assistance.
 
+IMPORTANT: The AI assistant has these capabilities:
+- Create tickets/reports for issues
+- Retrieve ticket/report status and information
+- Answer general questions about services
+- Provide basic troubleshooting
+
 Recent conversation:
 ${context}
 
 Latest message: "${messageContent}"
 
-Consider these indicators:
-- Explicit requests for human/person/agent/supervisor
-- Expressing frustration with AI ("you don't understand", "not helpful")
-- Indicating AI is not solving their problem
-- Urgency or emergency language
-- Complaints about service
-- Saying they prefer human assistance
-- Any creative way of asking for human help
+ONLY consider it a human help request if:
+- Explicit requests for human/person/agent/supervisor ("hablar con persona", "agente real", "manager")
+- Expressing frustration with AI ("you don't understand", "not helpful", "no me entiendes")
+- Indicating AI is not solving their problem after multiple attempts
+- Urgency requiring immediate human intervention (emergencies)
+- Severe complaints about service quality
+- Explicitly saying they prefer human assistance
+
+DO NOT consider it a human help request if:
+- Asking for ticket/report status ("estado de mi ticket", "información de mi reporte")
+- Requesting ticket creation ("crear un reporte", "reportar un problema")
+- General questions the AI can answer
+- First-time requests that the AI can handle with its tools
 
 Respond with ONLY a JSON object:
 {
