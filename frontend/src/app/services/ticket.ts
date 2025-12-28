@@ -390,8 +390,16 @@ export class TicketService {
    * Get ticket by ID
    */
   getTicketById(ticketId: string): Observable<Ticket> {
+    console.log('[TicketService] Fetching ticket by ID:', ticketId);
+    console.log('[TicketService] Request URL:', `${this.apiUrl}/${ticketId}`);
     return this.http.get<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}`).pipe(
-      map(response => response.data),
+      tap(response => {
+        console.log('[TicketService] Raw response:', response);
+      }),
+      map(response => {
+        console.log('[TicketService] Mapped data:', response.data);
+        return response.data;
+      }),
       tap(ticket => {
         this.selectedTicketSubject.next(ticket);
       })
