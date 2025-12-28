@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -263,6 +263,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private ticketService: TicketService,
+    private cdr: ChangeDetectorRef,
     toast: ToastService
   ) {
     this.toast = toast;
@@ -280,6 +281,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   loadTicket() {
     this.loading = true;
+    this.cdr.detectChanges();
     console.log('[TicketDetail] Loading ticket with ID:', this.ticketId);
     this.ticketService.getTicketById(this.ticketId)
       .pipe(takeUntil(this.destroy$))
@@ -288,6 +290,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
           console.log('[TicketDetail] Ticket loaded successfully:', ticket);
           this.ticket = ticket;
           this.loading = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[TicketDetail] Error loading ticket:', err);
@@ -298,6 +301,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
             error: err.error
           });
           this.loading = false;
+          this.cdr.detectChanges();
           this.toast.error('Failed to load ticket');
         }
       });
