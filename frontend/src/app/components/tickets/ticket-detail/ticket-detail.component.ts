@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -12,236 +12,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-ticket-detail',
   standalone: true,
   imports: [CommonModule, TicketStatusBadgeComponent, FormsModule],
-  template: `
-    <div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full overflow-auto custom-scrollbar">
-      <div class="p-4 md:p-6 max-w-4xl mx-auto w-full">
-        <div *ngIf="loading" class="text-center py-12">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green"></div>
-          <p class="mt-4 text-gray-400">Loading ticket...</p>
-        </div>
-
-        <div *ngIf="!loading && ticket" class="space-y-6">
-          <!-- Header Card -->
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6">
-            <div class="flex justify-between items-start mb-4">
-              <div>
-                <div class="flex items-center gap-3 mb-2">
-                  <h1 class="text-2xl font-bold text-gray-100">{{ ticket.ticketId }}</h1>
-                  <app-ticket-status-badge [status]="ticket.status" [showDot]="true" />
-                </div>
-                <p class="text-lg text-gray-300">{{ ticket.subject }}</p>
-              </div>
-              <button
-                (click)="goBack()"
-                class="px-4 py-2 text-gray-300 hover:bg-whatsapp-dark rounded-lg transition-colors flex items-center gap-2 border border-gray-600 hover:border-whatsapp-green">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back
-              </button>
-            </div>
-
-            <!-- Meta Info -->
-            <div class="flex flex-wrap gap-3 mb-6">
-              <span class="px-3 py-1 text-sm rounded-full" [ngClass]="getPriorityClass(ticket.priority)">
-                {{ ticket.priority | titlecase }} Priority
-              </span>
-              <span class="px-3 py-1 text-sm rounded-full bg-gray-700 text-gray-300">
-                {{ ticket.category }}
-              </span>
-              <span *ngIf="ticket.escalated" class="px-3 py-1 text-sm rounded-full bg-red-900/50 text-red-400">
-                ⚠️ Escalated
-              </span>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2" *ngIf="ticket.status !== 'closed'">
-              <button
-                *ngIf="ticket.status === 'new'"
-                (click)="changeStatus('open')"
-                [disabled]="updating"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                Open Ticket
-              </button>
-              <button
-                *ngIf="ticket.status === 'open'"
-                (click)="changeStatus('in_progress')"
-                [disabled]="updating"
-                class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50">
-                Start Working
-              </button>
-              <button
-                *ngIf="ticket.status === 'in_progress'"
-                (click)="changeStatus('pending_customer')"
-                [disabled]="updating"
-                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
-                Waiting for Customer
-              </button>
-              <button
-                *ngIf="['open', 'in_progress', 'pending_customer'].includes(ticket.status)"
-                (click)="showResolveModal = true"
-                [disabled]="updating"
-                class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
-                Resolve
-              </button>
-              <button
-                *ngIf="ticket.status === 'resolved'"
-                (click)="changeStatus('closed')"
-                [disabled]="updating"
-                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
-                Close Ticket
-              </button>
-            </div>
-          </div>
-
-          <!-- Description Card -->
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6">
-            <h3 class="text-lg font-semibold mb-3 text-gray-100">Description</h3>
-            <p class="text-gray-300 whitespace-pre-wrap">{{ ticket.description }}</p>
-          </div>
-
-          <!-- Customer Info Card -->
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6" *ngIf="ticket.customerId">
-            <h3 class="text-lg font-semibold mb-4 text-gray-100">Customer Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span class="text-sm text-gray-400">Name:</span>
-                <p class="font-medium text-gray-100">{{ ticket.customerId?.firstName || '' }} {{ ticket.customerId?.lastName || '' }}</p>
-              </div>
-              <div>
-                <span class="text-sm text-gray-400">Phone:</span>
-                <p class="font-medium text-gray-100">{{ ticket.customerId?.phoneNumber || 'N/A' }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Agent & Timeline Card -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6" *ngIf="ticket.assignedAgent">
-              <h3 class="text-lg font-semibold mb-3 text-gray-100">Assigned Agent</h3>
-              <p class="font-medium text-gray-100">{{ ticket.assignedAgent?.firstName }} {{ ticket.assignedAgent?.lastName }}</p>
-              <p class="text-sm text-gray-400">{{ ticket.assignedAgent?.email }}</p>
-            </div>
-
-            <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6">
-              <h3 class="text-lg font-semibold mb-3 text-gray-100">Timeline</h3>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Created:</span>
-                  <span class="font-medium text-gray-100">{{ ticket.createdAt | date:'medium' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Last Updated:</span>
-                  <span class="font-medium text-gray-100">{{ ticket.updatedAt | date:'medium' }}</span>
-                </div>
-                <div class="flex justify-between" *ngIf="ticket.resolvedAt">
-                  <span class="text-gray-400">Resolved:</span>
-                  <span class="font-medium text-gray-100">{{ ticket.resolvedAt | date:'medium' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Resolution Card -->
-          <div class="bg-whatsapp-gray rounded-lg border border-green-700 p-6" *ngIf="ticket.resolution">
-            <h3 class="text-lg font-semibold mb-3 text-green-400">Resolution</h3>
-            <p class="text-gray-300 whitespace-pre-wrap">{{ ticket.resolution.summary }}</p>
-            <p class="text-sm text-gray-400 mt-2" *ngIf="ticket.resolution.resolvedBy">
-              Resolved by {{ ticket.resolution.resolvedBy?.firstName }} {{ ticket.resolution.resolvedBy?.lastName }}
-            </p>
-          </div>
-
-          <!-- Notes Section -->
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6" *ngIf="ticket.notes && ticket.notes.length > 0">
-            <h3 class="text-lg font-semibold mb-4 text-gray-100">Notes</h3>
-            <div class="space-y-3">
-              <div *ngFor="let note of ticket.notes" class="p-3 rounded-lg" [ngClass]="note.isInternal ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-whatsapp-dark border border-gray-600'">
-                <p class="text-gray-300">{{ note.content }}</p>
-                <p class="text-xs text-gray-400 mt-1">
-                  {{ note.createdBy?.firstName }} {{ note.createdBy?.lastName }} - {{ note.timestamp | date:'short' }}
-                  <span *ngIf="note.isInternal" class="text-yellow-400">(Internal)</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Add Note Form -->
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6">
-            <h3 class="text-lg font-semibold mb-3 text-gray-100">Add Note</h3>
-            <textarea
-              [(ngModel)]="newNote"
-              rows="3"
-              placeholder="Add a note to this ticket..."
-              class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none mb-3"></textarea>
-            <div class="flex items-center gap-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" [(ngModel)]="noteIsInternal" class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
-                <span class="text-sm text-gray-300">Internal note (not visible to customer)</span>
-              </label>
-              <button
-                (click)="addNote()"
-                [disabled]="!newNote.trim() || addingNote"
-                class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                {{ addingNote ? 'Adding...' : 'Add Note' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="!loading && !ticket" class="bg-whatsapp-gray rounded-lg border border-gray-700 p-12 text-center">
-          <p class="text-gray-400">Ticket not found</p>
-          <button
-            (click)="goBack()"
-            class="mt-4 px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600">
-            Go Back
-          </button>
-        </div>
-
-        <!-- Resolve Modal -->
-        <div *ngIf="showResolveModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6 w-full max-w-lg mx-4">
-            <h3 class="text-lg font-semibold mb-4 text-gray-100">Resolve Ticket</h3>
-            <textarea
-              [(ngModel)]="resolutionSummary"
-              rows="4"
-              placeholder="Enter resolution summary..."
-              class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none mb-4"></textarea>
-            <div class="flex justify-end gap-3">
-              <button
-                (click)="showResolveModal = false"
-                class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-whatsapp-dark">
-                Cancel
-              </button>
-              <button
-                (click)="resolveTicket()"
-                [disabled]="!resolutionSummary.trim() || updating"
-                class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
-                {{ updating ? 'Resolving...' : 'Resolve Ticket' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #111b21;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #374151;
-      border-radius: 3px;
-    }
-  `]
+  templateUrl: './ticket-detail.component.html',
+  styleUrls: ['./ticket-detail.component.css']
 })
 export class TicketDetailComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -264,6 +36,8 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private ticketService: TicketService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
     toast: ToastService
   ) {
     this.toast = toast;
@@ -299,8 +73,12 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (ticket) => {
           console.log('[TicketDetail] Ticket loaded successfully:', ticket);
-          this.ticket = ticket;
-          this.loading = false;
+          // Use NgZone.run to ensure change detection triggers
+          this.ngZone.run(() => {
+            this.ticket = ticket;
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
         },
         error: (err) => {
           console.error('[TicketDetail] Error loading ticket:', err);
@@ -310,8 +88,11 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
             message: err.message,
             error: err.error
           });
-          this.error = 'Failed to load ticket details';
-          this.loading = false;
+          this.ngZone.run(() => {
+            this.error = 'Failed to load ticket details';
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
           this.toast.error('Failed to load ticket');
         }
       });

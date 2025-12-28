@@ -295,17 +295,21 @@ class TicketService {
 
         await ticket.save();
 
-        // Emit Socket.io event
+        // Populate for Socket.io event
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event with full ticket
         if (io) {
             io.emit('ticket_status_changed', {
-                ticketId,
-                oldStatus,
-                newStatus,
-                changedBy: agentId
+                ticket: populatedTicket,
+                previousStatus: oldStatus
             });
         }
 
-        return ticket;
+        return populatedTicket;
     }
 
     /**
@@ -354,16 +358,23 @@ class TicketService {
 
         await ticket.save();
 
-        // Emit Socket.io event
+        // Populate for Socket.io event
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('notes.agent', 'firstName lastName');
+
+        const newNote = populatedTicket.notes[populatedTicket.notes.length - 1];
+
+        // Emit Socket.io event with full ticket
         if (io) {
             io.emit('ticket_note_added', {
-                ticketId,
-                note: ticket.notes[ticket.notes.length - 1],
-                agentId
+                ticket: populatedTicket,
+                note: newNote
             });
         }
 
-        return ticket;
+        return populatedTicket;
     }
 
     /**
@@ -391,16 +402,21 @@ class TicketService {
 
         await ticket.save();
 
-        // Emit Socket.io event
+        // Populate for Socket.io event
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('resolution.resolvedBy', 'firstName lastName')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event with full ticket
         if (io) {
             io.emit('ticket_resolved', {
-                ticketId,
-                resolution: ticket.resolution,
-                agentId
+                ticket: populatedTicket
             });
         }
 
-        return ticket;
+        return populatedTicket;
     }
 
     /**
@@ -419,16 +435,21 @@ class TicketService {
 
         await ticket.save();
 
-        // Emit Socket.io event
+        // Populate for Socket.io event
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('escalatedTo', 'firstName lastName email')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event with full ticket
         if (io) {
             io.emit('ticket_escalated', {
-                ticketId,
-                escalatedTo: toAgentId,
-                reason
+                ticket: populatedTicket
             });
         }
 
-        return ticket;
+        return populatedTicket;
     }
 
     /**

@@ -296,6 +296,12 @@ export class TicketService {
    * Handle ticket update
    */
   private handleTicketUpdated(updatedTicket: Ticket): void {
+    // Defensive check - ensure we have a valid ticket object
+    if (!updatedTicket || !updatedTicket._id) {
+      console.warn('[TicketService] handleTicketUpdated received invalid ticket:', updatedTicket);
+      return;
+    }
+
     const currentTickets = this.ticketsSubject.value;
     const index = currentTickets.findIndex(t => t._id === updatedTicket._id);
 
