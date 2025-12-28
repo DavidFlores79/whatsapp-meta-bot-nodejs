@@ -281,16 +281,17 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   loadTicket() {
     this.loading = true;
-    this.cdr.detectChanges();
     console.log('[TicketDetail] Loading ticket with ID:', this.ticketId);
     this.ticketService.getTicketById(this.ticketId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (ticket) => {
           console.log('[TicketDetail] Ticket loaded successfully:', ticket);
-          this.ticket = ticket;
-          this.loading = false;
-          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.ticket = ticket;
+            this.loading = false;
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (err) => {
           console.error('[TicketDetail] Error loading ticket:', err);
@@ -300,9 +301,11 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
             message: err.message,
             error: err.error
           });
-          this.loading = false;
-          this.cdr.detectChanges();
-          this.toast.error('Failed to load ticket');
+          setTimeout(() => {
+            this.loading = false;
+            this.cdr.detectChanges();
+            this.toast.error('Failed to load ticket');
+          }, 0);
         }
       });
   }
