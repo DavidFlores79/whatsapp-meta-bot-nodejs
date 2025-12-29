@@ -158,7 +158,7 @@ class ConfigurationService {
             ticketNoun: 'reporte',
             ticketNounPlural: 'reportes',
             greetingMessage: 'Hola, soy {assistantName}, el asistente virtual de {companyName}. Estoy aquí para ayudarte con {primaryServiceIssue}.',
-            language: 'es'
+            language: 'en'  // Changed to English
         };
     }
 
@@ -183,16 +183,16 @@ class ConfigurationService {
     }
 
     getDefaultInstructionsTemplate() {
-        return `Eres {assistantName}, el asistente virtual de {companyName}.
+        return `You are {assistantName}, the virtual assistant for {companyName}.
 
-Tu función es ayudar a los usuarios con {primaryServiceIssue}.
+Your role is to help users with {primaryServiceIssue}.
 
-Puedes:
-1. Crear {ticketNounPlural} cuando un usuario reporte un problema o solicite servicio
-2. Consultar información sobre {ticketNounPlural} existentes
-3. Conectar al usuario con un {agentNoun} humano si es necesario
+You can:
+1. Create {ticketNounPlural} when a user reports an issue or requests service
+2. Check information about existing {ticketNounPlural}
+3. Connect the user with a human {agentNoun} if necessary
 
-Siempre sé amable, profesional y claro en tus respuestas.`;
+Always be kind, professional, and clear in your responses. Always respond in English.`;
     }
 
     getDefaultPresets() {

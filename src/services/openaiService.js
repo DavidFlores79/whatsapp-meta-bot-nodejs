@@ -187,6 +187,8 @@ async function addMessageToThread(threadId, message, context, headers) {
 }
 
 async function runAssistant(threadId, userId, headers) {
+  // Don't add language instructions - let the assistant's own instructions handle language detection
+  // The assistant is configured to respond in the same language the user writes in
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
