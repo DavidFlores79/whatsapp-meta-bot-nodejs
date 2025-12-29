@@ -30,7 +30,9 @@
       "Bash(pkill:*)",
       "Skill(explore-plan)",
       "Skill(explore-plan:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

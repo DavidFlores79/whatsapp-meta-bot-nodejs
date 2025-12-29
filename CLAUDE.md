@@ -444,12 +444,16 @@ POST   /api/v2/config/reset                # Reset to defaults (LUXFREE)
 **Root directory files** (user-facing):
 - `README.md` - Project overview and quick start
 - `CLAUDE.md` - AI assistant guidance (this file)
+
+**docs/ directory** (technical documentation):
 - `CONTRIBUTING.md` - Contribution guidelines
 - `CHANGELOG.md` - Version history
 - `DEPLOYMENT_GUIDE.md` - Deployment instructions
-
-**docs/ directory** (technical documentation):
+- `OPENAI_ASSISTANT_UPDATE_INSTRUCTIONS.md` - OpenAI Assistant configuration guide
+- `OPENAI_FUNCTION_get_ticket_information.json` - OpenAI function definition
 - API documentation, implementation guides, testing guides
 - Database schema, thread optimization details
 - Migration guides, bug fix summaries
-- Development tasks and TODO lists
+
+**tests/ directory** (test files):
+- Test scripts for various features (agent notification, assignment, etc.)
