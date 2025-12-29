@@ -317,18 +317,25 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
             const ticket = await ticketService.getTicketById(normalizedTicketId);
 
             if (!ticket) {
+              console.log(`   ❌ Ticket not found: ${normalizedTicketId}`);
               output = JSON.stringify({
                 success: false,
                 error: `${terminology.ticketSingular} con ID "${normalizedTicketId}" no encontrado.`
               });
             } else if (ticket.customerId.toString() !== customer._id.toString()) {
               // Ticket exists but belongs to different customer
+              console.log(`   ❌ Access denied - Ticket customer: ${ticket.customerId.toString()}, Current customer: ${customer._id.toString()}`);
+              console.log(`   Ticket belongs to phone: ${ticket.customerId.phoneNumber || 'unknown'}`);
+              console.log(`   Current customer phone: ${customer.phoneNumber}`);
               output = JSON.stringify({
                 success: false,
                 error: `No tienes acceso al ${terminology.ticketSingular} "${normalizedTicketId}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
               });
             } else {
               // Ticket found and customer has access
+              console.log(`   ✅ Access granted - Customer has access to ticket ${normalizedTicketId}`);
+              console.log(`   Ticket status: ${ticket.status}, Priority: ${ticket.priority}`);
+
               // Filter notes to only include external notes (not internal agent notes)
               const externalNotes = ticket.notes
                 ? ticket.notes
@@ -339,6 +346,8 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                       agent: note.agent ? `${note.agent.firstName} ${note.agent.lastName}` : 'Agent'
                     }))
                 : [];
+
+              console.log(`   External notes count: ${externalNotes.length}`);
 
               // Translate status for better customer understanding
               const statusTranslations = {
