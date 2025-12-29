@@ -322,19 +322,24 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                 success: false,
                 error: `${terminology.ticketSingular} con ID "${normalizedTicketId}" no encontrado.`
               });
-            } else if (ticket.customerId.toString() !== customer._id.toString()) {
-              // Ticket exists but belongs to different customer
-              console.log(`   ❌ Access denied - Ticket customer: ${ticket.customerId.toString()}, Current customer: ${customer._id.toString()}`);
-              console.log(`   Ticket belongs to phone: ${ticket.customerId.phoneNumber || 'unknown'}`);
-              console.log(`   Current customer phone: ${customer.phoneNumber}`);
-              output = JSON.stringify({
-                success: false,
-                error: `No tienes acceso al ${terminology.ticketSingular} "${normalizedTicketId}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
-              });
             } else {
-              // Ticket found and customer has access
-              console.log(`   ✅ Access granted - Customer has access to ticket ${normalizedTicketId}`);
-              console.log(`   Ticket status: ${ticket.status}, Priority: ${ticket.priority}`);
+              // Extract customer ID from ticket (handle both populated and unpopulated)
+              const ticketCustomerId = (ticket.customerId._id || ticket.customerId).toString();
+              const currentCustomerId = customer._id.toString();
+
+              if (ticketCustomerId !== currentCustomerId) {
+                // Ticket exists but belongs to different customer
+                console.log(`   ❌ Access denied - Ticket customer ID: ${ticketCustomerId}, Current customer ID: ${currentCustomerId}`);
+                console.log(`   Ticket belongs to phone: ${ticket.customerId.phoneNumber || 'unknown'}`);
+                console.log(`   Current customer phone: ${customer.phoneNumber}`);
+                output = JSON.stringify({
+                  success: false,
+                  error: `No tienes acceso al ${terminology.ticketSingular} "${normalizedTicketId}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
+                });
+              } else {
+                // Ticket found and customer has access
+                console.log(`   ✅ Access granted - Customer has access to ticket ${normalizedTicketId}`);
+                console.log(`   Ticket status: ${ticket.status}, Priority: ${ticket.priority}`);
 
               // Filter notes to only include external notes (not internal agent notes)
               const externalNotes = ticket.notes
@@ -385,6 +390,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                   lastUpdate: ticket.lastActivityAt || ticket.updatedAt
                 }
               });
+              }
             }
           } else if (args.lookup_recent) {
             // Get recent tickets
