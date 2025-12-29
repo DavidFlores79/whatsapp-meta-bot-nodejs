@@ -171,7 +171,27 @@ try {
 
 1. **NO AI Attribution in Commits**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", emojis (🤖), or any AI tool references in commit messages. All commits must appear human-authored.
 
-2. **Preserve Critical Middleware**:
+2. **CRITICAL: Frontend Build Workflow** (MUST FOLLOW EVERY TIME):
+   - When modifying ANY files in `frontend/src/`:
+     ```bash
+     # Step 1: Build frontend locally
+     cd frontend && npm run build && cd ..
+     
+     # Step 2: Copy built files to public
+     cp -r frontend/dist/frontend/browser/* public/
+     
+     # Step 3: Commit ALL changes (including built files in public/)
+     git add -A
+     git commit -m "your message"
+     
+     # Step 4: Push to repository
+     git push origin feat/universal-ticket-system
+     ```
+   - **WHY**: Ubuntu server has limited resources. Frontend MUST be built locally and committed. The deploy script detects built files and skips rebuild on server.
+   - **NEVER SKIP Steps 1-2** when frontend changes are made. Built files in `public/` are essential for deployment.
+   - If only backend files (src/) changed, skip steps 1-2 and just commit/push.
+
+3. **Preserve Critical Middleware**:
    - `req.io` attachment (Socket.io)
    - Trust proxy settings (required for rate limiting behind reverse proxy)
    - CORS and security headers
