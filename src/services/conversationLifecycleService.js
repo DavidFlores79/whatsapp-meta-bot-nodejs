@@ -281,8 +281,54 @@ async function handleResolutionConfirmation(conversationId, confirmed) {
         console.log(`✅ Customer confirmed resolution for conversation ${conversationId}`);
         return { conversation, message: 'Gracias por confirmar. ¡Que tengas un excelente día!' };
     } else {
-        // Customer says not resolved - reassign to agent
-        conversation.status = 'assigned';
+        // Customer says not resolved - close current assignment and reassign
+        const wasAssigned = conversation.assignedAgent;
+        const releaseTime = new Date();
+
+        // Close current assignment history if agent was assigned
+        if (wasAssigned) {
+            const assignmentHistory = await AgentAssignmentHistory.findOne({
+                conversationId: conversation._id,
+                agentId: wasAssigned,
+                releasedAt: null
+            }).sort({ assignedAt: -1 });
+
+            if (assignmentHistory) {
+                const agentMessages = await Message.countDocuments({
+                    conversationId: conversation._id,
+                    sender: 'agent',
+                    agentId: wasAssigned,
+                    timestamp: { $gte: assignmentHistory.assignedAt }
+                });
+
+                assignmentHistory.releasedAt = releaseTime;
+                assignmentHistory.calculateDuration();
+                assignmentHistory.releaseReason = 'customer_not_resolved';
+                assignmentHistory.releaseMethod = 'customer_feedback';
+                assignmentHistory.finalStatus = 'assigned'; // Will be reassigned
+                
+                assignmentHistory.agentSummary = {
+                    messagesSent: agentMessages,
+                    issueResolved: false,
+                    resolutionNotes: 'Customer reported issue not resolved',
+                    followUpRequired: true
+                };
+
+                await assignmentHistory.save();
+                console.log(`✅ Assignment history closed for customer not-resolved: ${assignmentHistory._id}`);
+            }
+
+            // Update agent statistics
+            await Agent.findByIdAndUpdate(
+                wasAssigned,
+                { $inc: { 'statistics.activeAssignments': -1 } }
+            );
+        }
+
+        // Update conversation status
+        conversation.status = 'open'; // Set to open for auto-assignment
+        conversation.assignedAgent = null;
+        conversation.assignedAt = null;
         conversation.resolvedAt = null;
         conversation.resolvedBy = null;
         conversation.resolutionConfirmationSent = false;
@@ -310,7 +356,28 @@ async function handleResolutionConfirmation(conversationId, confirmed) {
             console.log(`⬆️ Conversation ${conversationId} escalated to urgent due to reassignments`);
         }
 
+        // Add internal note
+        if (!conversation.internalNotes) {
+            conversation.internalNotes = [];
+        }
+        conversation.internalNotes.push({
+            agent: wasAssigned,
+            content: `Customer reported issue not resolved. Conversation returned to queue.`,
+            timestamp: new Date(),
+            isVisible: false
+        });
+
         await conversation.save();
+
+        // Try to auto-assign to available agent
+        const agentAssignmentService = require('./agentAssignmentService');
+        const assignmentResult = await agentAssignmentService.autoAssignConversation(conversationId);
+
+        if (assignmentResult) {
+            console.log(`✅ Conversation ${conversationId} auto-assigned after customer not-resolved`);
+        } else {
+            console.log(`⚠️ No available agents. Conversation ${conversationId} returned to open queue`);
+        }
 
         console.log(`⚠️ Customer reported issue not resolved for conversation ${conversationId}`);
         return { conversation, message: 'Entendido. Un agente se pondrá en contacto contigo pronto.' };

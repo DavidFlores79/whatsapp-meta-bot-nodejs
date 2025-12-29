@@ -40,20 +40,25 @@ Several system-initiated actions that release agents from conversations were **n
 - Tracks if issue was resolved (`issueResolved` field)
 - Records resolution notes from the close reason
 
-### 3. ⚠️ NOT FIXED: Customer "Not Resolved" Response
+### 3. ✅ FIXED: Customer "Not Resolved" Response
 **File:** `src/services/conversationLifecycleService.js` (Line ~290)
 
-**Issue:** When a customer responds to resolution confirmation saying the issue is NOT resolved, the conversation is automatically reassigned to an agent, but this action creates NO new assignment history record.
+**Issue:** When a customer responds to resolution confirmation saying the issue is NOT resolved, the conversation was automatically reassigned to an agent, but this action created NO assignment history record.
 
 **Impact:**
 - No tracking of conversation being returned to agent queue
 - Missing data about customer dissatisfaction with initial resolution
 - Incomplete reassignment tracking
 
-**Status:** ⚠️ **Requires Design Decision**
-- Should this create a new assignment history entry?
-- Or should it just update the status without creating new history?
-- Currently only increments `conversation.reassignmentCount`
+**Fix Applied:**
+- Closes current assignment history when customer says not resolved
+- Records release reason as `'customer_not_resolved'`
+- Release method marked as `'customer_feedback'`
+- Marks `issueResolved: false` and `followUpRequired: true`
+- Automatically attempts to reassign to available agent (creates new assignment history)
+- Falls back to open queue if no agents available
+- Properly decrements agent statistics
+- Adds internal note about customer feedback
 
 ### 4. ✅ TRACKED SEPARATELY: Priority Escalations
 **File:** Multiple (priority is tracked in conversation model)
@@ -108,10 +113,16 @@ The following actions **are** properly tracked and do NOT need fixes:
    - Agent message count
 
 ### Test Case 3: Customer "Not Resolved"
-1. Resolve conversation
-2. Customer responds saying not resolved
-3. ⚠️ Currently NO new assignment history created
-4. Verify `conversation.reassignmentCount` increments
+1. Assign conversation to agent
+2. Resolve conversation
+3. Customer responds saying not resolved
+4. Verify OLD assignment history closed with:
+   - `releaseReason: 'customer_not_resolved'`
+   - `releaseMethod: 'customer_feedback'`
+   - `issueResolved: false`
+   - `followUpRequired: true`
+5. Verify NEW assignment history created (if agent available)
+6. Verify `conversation.reassignmentCount` increments
 
 ## Database Schema Reference
 
@@ -142,19 +153,6 @@ The following actions **are** properly tracked and do NOT need fixes:
 **No database migration required.** The fixes only add data to existing optional fields in the `AgentAssignmentHistory` schema.
 
 Existing assignment history records remain valid and unchanged.
-
-## Future Considerations
-
-### Recommendation: Track Customer "Not Resolved" Response
-Consider creating a new assignment history entry when customer says not resolved, to properly track:
-- When conversation was returned to agent queue
-- Customer dissatisfaction with initial resolution
-- Complete reassignment history
-
-This would require:
-1. Deciding if this should create a new assignment or just reopen existing one
-2. Updating `conversationLifecycleService.js` line ~290
-3. Creating appropriate history entry with reason `'customer_not_resolved'`
 
 ## Commit Details
 
