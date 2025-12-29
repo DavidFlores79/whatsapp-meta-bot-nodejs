@@ -143,6 +143,44 @@ Tu ticket *{{2}}* ha sido marcado como resuelto.
 
 ---
 
+### 4. Interactive Ticket Resolved (English) - MARKETING
+
+**Template Name:** `ticket_resolved_interactive_en`
+**Category:** MARKETING
+**Language:** English (en)
+
+**Note:** This template allows Quick Reply buttons but requires MARKETING category and may have sending limits based on your WhatsApp Business tier.
+
+**Header:** None
+
+**Body:**
+```
+✅ *Ticket Resolved*
+
+Hello {{1}},
+
+Your ticket *{{2}}* has been marked as resolved.
+
+📋 *Solution summary:*
+{{3}}
+
+*Resolved by:* {{4}}
+*Date:* {{5}}
+
+How do you feel about the solution?
+```
+
+**Footer:** None
+
+**Buttons (Quick Replies):**
+1. "✅ All resolved"
+2. "❌ Still have issues"
+3. "📞 Talk to agent"
+
+**Variables:** Same as above (1-6)
+
+---
+
 ## Template Approval Process
 
 1. **Submit Template:** After creating the template, click "Submit"
@@ -160,6 +198,7 @@ After templates are approved, add them to your `.env` file:
 WHATSAPP_TEMPLATE_TICKET_RESOLVED_ES=ticket_resolved_es
 WHATSAPP_TEMPLATE_TICKET_RESOLVED_EN=ticket_resolved_en
 WHATSAPP_TEMPLATE_TICKET_RESOLVED_INTERACTIVE_ES=ticket_resolved_interactive_es
+WHATSAPP_TEMPLATE_TICKET_RESOLVED_INTERACTIVE_EN=ticket_resolved_interactive_en
 ```
 
 ## Template Usage Example
