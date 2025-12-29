@@ -394,6 +394,13 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                 success: false,
                 error: `${terminology.ticketSingular} con ID "${normalizedTicketId}" no encontrado.`
               });
+            } else if (!ticket.customerId) {
+              // Ticket exists but has no customer linked (orphaned ticket)
+              console.log(`   ⚠️ Ticket ${normalizedTicketId} has no customer linked`);
+              output = JSON.stringify({
+                success: false,
+                error: `El ${terminology.ticketSingular} "${normalizedTicketId}" no tiene un cliente asociado.`
+              });
             } else {
               // Extract customer ID from ticket (handle both populated and unpopulated)
               const ticketCustomerId = (ticket.customerId._id || ticket.customerId).toString();
@@ -465,17 +472,49 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
               }
             }
           } else if (args.lookup_recent) {
-            // Get recent tickets
-            const result = await ticketService.getTicketsByCustomer(customer._id, { limit: 5 });
+            // Get recent tickets with optional filters
+            const queryOptions = { limit: args.limit || 5 };
+
+            // Support status filtering
+            if (args.status) {
+              queryOptions.status = args.status;
+            }
+
+            // Support exclude_closed filter
+            if (args.exclude_closed) {
+              queryOptions.excludeStatus = 'closed';
+            }
+
+            // Support include_notes filter
+            const includeNotes = args.include_notes || false;
+
+            const result = await ticketService.getTicketsByCustomer(customer._id, queryOptions);
+
             output = JSON.stringify({
               success: true,
-              tickets: result.tickets.map(t => ({
-                ticketId: t.ticketId,
-                subject: t.subject,
-                status: t.status,
-                priority: t.priority,
-                createdAt: t.createdAt
-              })),
+              tickets: result.tickets.map(t => {
+                const ticketData = {
+                  ticketId: t.ticketId,
+                  subject: t.subject,
+                  status: t.status,
+                  priority: t.priority,
+                  createdAt: t.createdAt,
+                  lastUpdate: t.lastActivityAt || t.updatedAt
+                };
+
+                // Include notes if requested (only external notes)
+                if (includeNotes && t.notes) {
+                  ticketData.notes = t.notes
+                    .filter(note => !note.isInternal)
+                    .map(note => ({
+                      content: note.content,
+                      timestamp: note.timestamp
+                    }));
+                  ticketData.notesCount = ticketData.notes.length;
+                }
+
+                return ticketData;
+              }),
               total: result.total
             });
           } else {

@@ -185,15 +185,19 @@ class TicketService {
      * Get tickets by customer
      */
     async getTicketsByCustomer(customerId, options = {}) {
-        const { page = 1, limit = 20, status } = options;
+        const { page = 1, limit = 20, status, excludeStatus } = options;
 
         const query = { customerId };
         if (status) {
             query.status = status;
         }
+        if (excludeStatus) {
+            query.status = { $ne: excludeStatus };
+        }
 
         const tickets = await Ticket.find(query)
             .populate('assignedAgent', 'firstName lastName')
+            .populate('notes.agent', 'firstName lastName')
             .sort({ createdAt: -1 })
             .limit(limit)
             .skip((page - 1) * limit);

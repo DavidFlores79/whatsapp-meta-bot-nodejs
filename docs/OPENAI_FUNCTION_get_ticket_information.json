@@ -1,6 +1,6 @@
 {
   "name": "get_ticket_information",
-  "description": "Retrieve ticket/report information. Can search by ticket ID, phone number, or get recent tickets for the current customer. Use this when customer asks about ticket status, wants ticket details, or mentions a ticket ID.",
+  "description": "Retrieve ticket/report information. Can search by ticket ID, phone number, or get recent tickets for the current customer. Use this when customer asks about ticket status, wants ticket details, mentions a ticket ID, or wants to see notes/updates on tickets.",
   "strict": true,
   "parameters": {
     "type": "object",
@@ -16,6 +16,22 @@
       "lookup_recent": {
         "type": "boolean",
         "description": "Set to true to retrieve recent tickets for the customer instead of a specific ticket. Use when customer asks 'show me my tickets' or 'what tickets do I have'."
+      },
+      "exclude_closed": {
+        "type": "boolean",
+        "description": "Set to true to exclude closed tickets from results. Use when customer asks for 'open tickets', 'active tickets', or 'tickets not closed'."
+      },
+      "include_notes": {
+        "type": "boolean",
+        "description": "Set to true to include external notes/updates on each ticket. Use when customer asks about notes, updates, news, or progress on their tickets."
+      },
+      "status": {
+        "type": "string",
+        "description": "Filter tickets by specific status. Valid values: 'new', 'open', 'in_progress', 'pending_customer', 'waiting_internal', 'resolved', 'closed'."
+      },
+      "limit": {
+        "type": "number",
+        "description": "Maximum number of tickets to return (default 5, max 20)."
       }
     },
     "required": [],
