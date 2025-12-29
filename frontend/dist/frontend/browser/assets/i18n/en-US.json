@@ -201,6 +201,7 @@
     "filters": "Filters",
     "selected": "Selected",
     "deactivateSelected": "Deactivate Selected",
+    "reactivateSelected": "Reactivate Selected",
     "clearSelection": "Clear Selection",
     "bulkActions": "Bulk Actions",
     "importExport": "Import/Export",
