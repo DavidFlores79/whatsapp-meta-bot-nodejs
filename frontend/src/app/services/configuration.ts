@@ -39,6 +39,12 @@ export interface TicketIdFormat {
   separator: string;
 }
 
+export interface InstructionsPreview {
+  template: string;
+  interpolated: string;
+  variables: Record<string, string>;
+}
+
 export interface IndustryPreset {
   id: string;
   name: string;
@@ -70,6 +76,7 @@ export class ConfigurationService {
   private terminologySubject = new BehaviorSubject<TicketTerminology | null>(null);
   private idFormatSubject = new BehaviorSubject<TicketIdFormat | null>(null);
   private presetsSubject = new BehaviorSubject<IndustryPreset[]>([]);
+  private instructionsTemplateSubject = new BehaviorSubject<string>('');
 
   // Observable streams
   categories$ = this.categoriesSubject.asObservable();
@@ -77,6 +84,7 @@ export class ConfigurationService {
   terminology$ = this.terminologySubject.asObservable();
   idFormat$ = this.idFormatSubject.asObservable();
   presets$ = this.presetsSubject.asObservable();
+  instructionsTemplate$ = this.instructionsTemplateSubject.asObservable();
 
   // Cache metadata
   private cacheTTL = 5 * 60 * 1000; // 5 minutes
@@ -96,6 +104,7 @@ export class ConfigurationService {
     this.getTerminology().subscribe();
     this.getTicketIdFormat().subscribe();
     this.getPresets().subscribe();
+    this.getInstructionsTemplate().subscribe();
   }
 
   /**
@@ -178,7 +187,7 @@ export class ConfigurationService {
   }
 
   updateAssistantConfiguration(config: AssistantConfiguration): Observable<ConfigurationResponse> {
-    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/assistant`, config).pipe(
+    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/assistant`, { config }).pipe(
       tap(response => {
         if (response.success) {
           this.assistantConfigSubject.next(config);
@@ -246,6 +255,47 @@ export class ConfigurationService {
           this.idFormatSubject.next(format);
           this.invalidateCache('idFormat');
         }
+      })
+    );
+  }
+
+  // ==================== Instructions Template ====================
+
+  getInstructionsTemplate(forceRefresh = false): Observable<string> {
+    if (!forceRefresh && this.isCacheValid('instructions') && this.instructionsTemplateSubject.value) {
+      return of(this.instructionsTemplateSubject.value);
+    }
+
+    return this.http.get<ConfigurationResponse>(`${this.apiUrl}/instructions-template`).pipe(
+      map(response => response.data || ''),
+      tap(template => {
+        this.instructionsTemplateSubject.next(template);
+        this.updateCacheTimestamp('instructions');
+      }),
+      catchError(error => {
+        console.error('Error fetching instructions template:', error);
+        return of('');
+      })
+    );
+  }
+
+  updateInstructionsTemplate(template: string): Observable<ConfigurationResponse> {
+    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/instructions-template`, { template }).pipe(
+      tap(response => {
+        if (response.success) {
+          this.instructionsTemplateSubject.next(template);
+          this.invalidateCache('instructions');
+        }
+      })
+    );
+  }
+
+  getInstructionsPreview(): Observable<InstructionsPreview | null> {
+    return this.http.get<ConfigurationResponse>(`${this.apiUrl}/instructions-preview`).pipe(
+      map(response => response.data as InstructionsPreview),
+      catchError(error => {
+        console.error('Error fetching instructions preview:', error);
+        return of(null);
       })
     );
   }

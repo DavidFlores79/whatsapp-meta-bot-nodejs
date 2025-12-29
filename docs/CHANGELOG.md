@@ -4,6 +4,101 @@ All notable changes, fixes, and improvements to the WhatsApp Bot project.
 
 ---
 
+## [Unreleased] - December 2025
+
+### 🎫 Universal Ticket System
+
+**Ticket Management**
+- Multi-industry ticket system with configurable categories and terminology
+- Atomic ticket ID generation with year-based reset (e.g., LUX-2025-000001)
+- Complete ticket lifecycle: new → open → in_progress → pending_customer → waiting_internal → resolved → closed
+- Priority-based workflow (low, medium, high, urgent) with SLA tracking fields
+- Internal and external notes system with timestamps
+- Manual escalation with reason tracking
+- Status history tracking with agent, timestamp, and reason
+
+**AI Integration**
+- OpenAI Assistant can create tickets via `create_ticket_report()` tool
+- OpenAI Assistant can retrieve ticket info via `get_ticket_information()` tool with advanced filtering
+- Automatic ticket category validation with fallback to 'other'
+- Configurable terminology adapts to any industry (reports, cases, incidents, etc.)
+
+**Configuration System**
+- Multi-industry preset system (LUXFREE, Restaurant, E-commerce, Healthcare)
+- Real-time configuration updates with 5-minute caching
+- Configurable ticket categories, terminology, ID format, assistant behavior
+- Admin-only configuration API endpoints
+
+**Ticket Resolution & Notifications**
+- Automatic WhatsApp notification when ticket marked as resolved
+- Auto-reopen tickets when customer responds within 48 hours
+- Resolution summary included in customer notification
+- Interactive follow-up flow for customer satisfaction
+
+**Statistics & Analytics**
+- Aggregated metrics by status, category, priority, agent, customer
+- API endpoints for ticket statistics and reporting
+
+### 📊 Assignment History Tracking
+
+**Complete Audit Trail**
+- Tracks all agent assignments and releases in `AgentAssignmentHistory` collection
+- Auto-timeout releases now tracked with reason 'auto_timeout_inactivity'
+- Conversation close events tracked with 'conversation_closed' reason
+- Customer "not resolved" responses tracked with 'customer_not_resolved' reason
+- System-initiated vs manual actions differentiated
+- Message count and resolution status tracked per assignment
+
+**Analytics Support**
+- Agent performance metrics based on assignment history
+- Follow-up tracking for incomplete resolutions
+- Resolution effectiveness monitoring
+
+### 🔔 Notification System
+
+**Template Notifications**
+- Ticket resolution notifications with agent name and resolution summary
+- Ticket reopen notifications when customer responds
+- Agent assignment notifications with company branding
+- Configurable company name in notifications via COMPANY_NAME env variable
+
+### 🐛 Bug Fixes
+
+**Ticket System**
+- Fixed null customerId handling in `get_ticket_information` tool
+- Made ticket ID search case-insensitive
+- Enabled flexible ticket search by ID or phone number
+- Improved ticket detail loading to prevent race conditions
+- Fixed ticket ownership verification for populated customerId
+
+**AI Detection**
+- Improved AI detection logic to prevent false-positive agent assignments
+- Fixed conversation status checks for proper routing
+
+**Deployment**
+- Enhanced deployment script to handle git conflicts gracefully
+- Improved frontend rebuild detection and automation
+
+**Frontend**
+- Added date separators and smart timestamps in chat interface
+- Fixed template sender button visibility (requires saved customer)
+- Improved conversation detail loading performance
+
+### ✨ UI/UX Improvements
+
+**Chat Interface**
+- Date separators for better message organization
+- Smart timestamps (relative for recent, absolute for older)
+- Template sender integration in chat header
+- System message tracking for agent releases
+
+**Customer Management**
+- Import/export customers (XLSX, XLS, CSV formats)
+- Bulk customer operations
+- Advanced filtering and search
+
+---
+
 ## [1.0.0] - December 13, 2025
 
 ### 🎉 First Official Release

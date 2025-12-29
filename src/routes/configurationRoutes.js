@@ -65,6 +65,24 @@ router.get('/ticket-id-format', configController.getTicketIdFormat);
 router.put('/ticket-id-format', configController.updateTicketIdFormat);
 
 /**
+ * GET /api/v2/config/instructions-template
+ * Get assistant instructions template
+ */
+router.get('/instructions-template', configController.getInstructionsTemplate);
+
+/**
+ * PUT /api/v2/config/instructions-template
+ * Update assistant instructions template (admin only)
+ */
+router.put('/instructions-template', configController.updateInstructionsTemplate);
+
+/**
+ * GET /api/v2/config/instructions-preview
+ * Preview interpolated instructions
+ */
+router.get('/instructions-preview', configController.previewInstructions);
+
+/**
  * GET /api/v2/config/presets
  * Get configuration presets
  */

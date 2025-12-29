@@ -447,6 +447,274 @@ interface Ticket {
 }
 ```
 
+#### GET /tickets/statistics
+```typescript
+// Response
+interface TicketStatistics {
+  byStatus: {
+    new: number;
+    open: number;
+    in_progress: number;
+    pending_customer: number;
+    waiting_internal: number;
+    resolved: number;
+    closed: number;
+  };
+  byCategory: Record<string, number>;
+  byPriority: {
+    low: number;
+    medium: number;
+    high: number;
+    urgent: number;
+  };
+  byAgent: Array<{
+    agentId: string;
+    agentName: string;
+    count: number;
+  }>;
+  averageResolutionTime: number; // in hours
+  total: number;
+}
+```
+
+#### GET /tickets/:id
+```typescript
+// Response
+interface TicketDetailResponse {
+  success: boolean;
+  ticket: Ticket;
+}
+```
+
+#### POST /tickets
+```typescript
+// Request
+interface CreateTicketRequest {
+  customerId: string;
+  conversationId?: string;
+  subject: string;
+  description: string;
+  category: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  assignedAgent?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+  attachments?: string[]; // URLs
+}
+
+// Response
+interface CreateTicketResponse {
+  success: boolean;
+  ticket: Ticket;
+}
+```
+
+#### PUT /tickets/:id/status
+```typescript
+// Request
+interface UpdateTicketStatusRequest {
+  status: 'new' | 'open' | 'in_progress' | 'pending_customer' | 'waiting_internal' | 'resolved' | 'closed';
+  reason?: string;
+  resolutionSummary?: string; // Required when status = 'resolved'
+}
+
+// Response
+interface UpdateTicketStatusResponse {
+  success: boolean;
+  ticket: Ticket;
+  notificationSent?: boolean; // True if WhatsApp notification sent to customer
+}
+```
+
+#### PUT /tickets/:id/assign
+```typescript
+// Request
+interface AssignTicketRequest {
+  agentId: string;
+  note?: string;
+}
+
+// Response
+interface AssignTicketResponse {
+  success: boolean;
+  ticket: Ticket;
+}
+```
+
+#### POST /tickets/:id/notes
+```typescript
+// Request
+interface AddTicketNoteRequest {
+  content: string;
+  isInternal: boolean; // True = agent-only, False = visible to customer
+}
+
+// Response
+interface AddTicketNoteResponse {
+  success: boolean;
+  note: {
+    _id: string;
+    agent: { _id: string; firstName: string; lastName: string };
+    content: string;
+    timestamp: string;
+    isInternal: boolean;
+  };
+}
+```
+
+#### PUT /tickets/:id/resolve
+```typescript
+// Request
+interface ResolveTicketRequest {
+  resolutionSummary: string;
+  sendNotification?: boolean; // Default: true
+}
+
+// Response
+interface ResolveTicketResponse {
+  success: boolean;
+  ticket: Ticket;
+  notificationSent: boolean;
+}
+
+// Note: Automatically sends WhatsApp notification to customer
+// Customer can respond within 48 hours to auto-reopen ticket
+```
+
+#### PUT /tickets/:id/escalate
+```typescript
+// Request
+interface EscalateTicketRequest {
+  reason: string;
+  targetAgent?: string; // Specific agent to escalate to
+}
+
+// Response
+interface EscalateTicketResponse {
+  success: boolean;
+  ticket: Ticket;
+}
+```
+
+#### GET /customers/:customerId/tickets
+```typescript
+// Query Parameters
+interface CustomerTicketsParams {
+  status?: string;
+  limit?: number;
+}
+
+// Response
+interface CustomerTicketsResponse {
+  success: boolean;
+  tickets: Ticket[];
+  total: number;
+}
+```
+
+#### GET /conversations/:conversationId/tickets
+```typescript
+// Response
+interface ConversationTicketsResponse {
+  success: boolean;
+  tickets: Ticket[];
+  total: number;
+}
+```
+
+### Configuration Endpoints (Admin Only)
+
+#### GET /config/ticket-categories
+```typescript
+// Response
+interface TicketCategoriesResponse {
+  success: boolean;
+  categories: Array<{
+    id: string;
+    label: string;
+    labelEn: string;
+    icon: string;
+    color: string;
+    description: string;
+  }>;
+}
+```
+
+#### PUT /config/ticket-categories
+```typescript
+// Request
+interface UpdateCategoriesRequest {
+  categories: Array<{
+    id: string;
+    label: string;
+    labelEn: string;
+    icon: string;
+    color: string;
+    description: string;
+  }>;
+}
+
+// Response
+interface UpdateCategoriesResponse {
+  success: boolean;
+  message: string;
+}
+```
+
+#### GET /config/assistant
+```typescript
+// Response
+interface AssistantConfigResponse {
+  success: boolean;
+  config: {
+    assistantName: string;
+    companyName: string;
+    primaryServiceIssue: string;
+    serviceType: string;
+    ticketNoun: string;
+    ticketNounPlural: string;
+    language: string;
+  };
+}
+```
+
+#### GET /config/presets
+```typescript
+// Response
+interface PresetsResponse {
+  success: boolean;
+  presets: Array<{
+    id: string;
+    name: string;
+    description: string;
+    industry: string;
+  }>;
+}
+```
+
+#### POST /config/presets/load
+```typescript
+// Request
+interface LoadPresetRequest {
+  presetId: 'luxfree' | 'restaurant' | 'ecommerce' | 'healthcare';
+}
+
+// Response
+interface LoadPresetResponse {
+  success: boolean;
+  message: string;
+  appliedConfig: {
+    categories: any[];
+    terminology: any;
+    ticketIdFormat: any;
+    assistantConfig: any;
+  };
+}
+```
+
 ### Analytics Endpoints
 
 #### GET /analytics/dashboard

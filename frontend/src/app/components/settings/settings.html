@@ -49,6 +49,16 @@
       </button>
 
       <button
+        *ngIf="isAdminOrSupervisor()"
+        (click)="switchTab('assistant')"
+        [class.active]="activeTab === 'assistant'"
+        class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+      >
+        <i class="fas fa-robot"></i>
+        <span>AI Assistant</span>
+      </button>
+
+      <button
         (click)="switchTab('account')"
         [class.active]="activeTab === 'account'"
         class="tab-button px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
@@ -614,6 +624,381 @@
           </div>
         </div>
       </div>
+
+      <!-- AI Assistant Settings -->
+      <div *ngIf="isTab('assistant')" class="space-y-6">
+        <div *ngIf="isLoadingAssistant" class="flex justify-center items-center py-12">
+          <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-whatsapp-teal mb-4"></i>
+            <p class="text-gray-400">Loading AI assistant settings...</p>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoadingAssistant" class="settings-section">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <i class="fas fa-robot mr-2"></i> AI Assistant Configuration
+          </h2>
+          <p class="text-sm text-gray-400 mb-6">
+            Configure how the AI assistant behaves when responding to customers via WhatsApp. Changes take effect immediately for new conversations.
+          </p>
+
+          <!-- Industry Presets -->
+          <div class="mb-8 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <h3 class="text-lg font-medium mb-2 text-purple-900 dark:text-purple-100">
+              <i class="fas fa-magic mr-2"></i> Quick Setup - Industry Presets
+            </h3>
+            <p class="text-sm text-purple-700 dark:text-purple-300 mb-4">
+              Select a preset to instantly configure the AI assistant for your industry. This will update all settings including categories, terminology, and AI instructions.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- LUXFREE Preset -->
+              <button
+                type="button"
+                (click)="loadPreset('luxfree')"
+                [disabled]="isLoadingPreset"
+                class="preset-card p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-amber-300 dark:border-amber-600 hover:border-amber-500 dark:hover:border-amber-400 transition-all duration-200 text-left group hover:shadow-lg"
+              >
+                <div class="flex items-center mb-2">
+                  <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-sun text-amber-600 dark:text-amber-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">LUXFREE</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Solar & Lighting</p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  Solar installations, luminarias, electrical services
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs rounded">reporte</span>
+                  <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs rounded">LUX-</span>
+                </div>
+              </button>
+
+              <!-- Restaurant Preset -->
+              <button
+                type="button"
+                (click)="loadPreset('restaurant')"
+                [disabled]="isLoadingPreset"
+                class="preset-card p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-red-300 dark:border-red-600 hover:border-red-500 dark:hover:border-red-400 transition-all duration-200 text-left group hover:shadow-lg"
+              >
+                <div class="flex items-center mb-2">
+                  <div class="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-utensils text-red-600 dark:text-red-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">Restaurant</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Food Service</p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  Orders, deliveries, food quality issues
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-xs rounded">caso</span>
+                  <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-xs rounded">FOOD-</span>
+                </div>
+              </button>
+
+              <!-- E-commerce Preset -->
+              <button
+                type="button"
+                (click)="loadPreset('ecommerce')"
+                [disabled]="isLoadingPreset"
+                class="preset-card p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200 text-left group hover:shadow-lg"
+              >
+                <div class="flex items-center mb-2">
+                  <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-shopping-cart text-blue-600 dark:text-blue-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">E-commerce</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Retail / Online Store</p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  Products, shipping, returns, payments
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs rounded">solicitud</span>
+                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs rounded">ORD-</span>
+                </div>
+              </button>
+
+              <!-- Healthcare Preset -->
+              <button
+                type="button"
+                (click)="loadPreset('healthcare')"
+                [disabled]="isLoadingPreset"
+                class="preset-card p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-green-300 dark:border-green-600 hover:border-green-500 dark:hover:border-green-400 transition-all duration-200 text-left group hover:shadow-lg"
+              >
+                <div class="flex items-center mb-2">
+                  <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-heartbeat text-green-600 dark:text-green-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">Healthcare</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Medical / Clinic</p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  Appointments, prescriptions, results
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs rounded">consulta</span>
+                  <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs rounded">MED-</span>
+                </div>
+              </button>
+            </div>
+
+            <div *ngIf="isLoadingPreset" class="mt-4 flex items-center justify-center text-purple-600 dark:text-purple-400">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              <span>Loading preset configuration...</span>
+            </div>
+          </div>
+
+          <!-- Assistant Identity -->
+          <div *ngIf="assistantConfig" class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-id-card mr-2"></i> Assistant Identity
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Define the assistant's name, company, and service context. These values are interpolated into the instructions template.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Assistant Name
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="assistantConfig.assistantName"
+                  placeholder="e.g., Lúmen"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use &#123;assistantName&#125; in template</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="assistantConfig.companyName"
+                  placeholder="e.g., LUXFREE"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use &#123;companyName&#125; in template</p>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Primary Service/Issue Type
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="assistantConfig.primaryServiceIssue"
+                  placeholder="e.g., instalaciones solares, luminarias y servicios eléctricos"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use &#123;primaryServiceIssue&#125; in template</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Service Type
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="assistantConfig.serviceType"
+                  placeholder="e.g., instalación y mantenimiento eléctrico"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use &#123;serviceType&#125; in template</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Ticket Noun (singular/plural)
+                </label>
+                <div class="flex space-x-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="assistantConfig.ticketNoun"
+                    placeholder="reporte"
+                    class="w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="assistantConfig.ticketNounPlural"
+                    placeholder="reportes"
+                    class="w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use &#123;ticketNoun&#125; and &#123;ticketNounPlural&#125;</p>
+              </div>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+              <button
+                type="button"
+                (click)="saveAssistantConfig()"
+                [disabled]="isSavingAssistant"
+                class="px-4 py-2 bg-whatsapp-teal text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50"
+              >
+                <i class="fas fa-save mr-2"></i>
+                {{ isSavingAssistant ? 'Saving...' : 'Save Identity' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Instructions Template -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-file-alt mr-2"></i> Instructions Template
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Define the base instructions that guide the AI assistant's behavior. Use variables like &#123;assistantName&#125;, &#123;companyName&#125;, &#123;ticketNounPlural&#125;, &#123;agentNoun&#125; which will be replaced with actual values.
+            </p>
+
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                Template (supports variables)
+              </label>
+              <textarea
+                [(ngModel)]="instructionsTemplate"
+                rows="12"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                placeholder="You are {assistantName}, the virtual assistant for {companyName}..."
+              ></textarea>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Available variables: &#123;assistantName&#125;, &#123;companyName&#125;, &#123;primaryServiceIssue&#125;, &#123;serviceType&#125;, &#123;ticketNoun&#125;, &#123;ticketNounPlural&#125;, &#123;agentNoun&#125;, &#123;customerNoun&#125;
+              </p>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <button
+                type="button"
+                (click)="togglePreview()"
+                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <i class="fas fa-eye mr-2"></i>
+                {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+              </button>
+              <button
+                type="button"
+                (click)="saveInstructionsTemplate()"
+                [disabled]="isSavingAssistant"
+                class="px-4 py-2 bg-whatsapp-teal text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50"
+              >
+                <i class="fas fa-save mr-2"></i>
+                {{ isSavingAssistant ? 'Saving...' : 'Save Template' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview Section -->
+          <div *ngIf="showPreview && instructionsPreview" class="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h3 class="text-lg font-medium mb-4 text-blue-900 dark:text-blue-100">
+              <i class="fas fa-search mr-2"></i> Interpolated Preview
+            </h3>
+            <p class="text-sm text-blue-700 dark:text-blue-300 mb-4">
+              This is how the instructions will look when sent to the AI (with variables replaced):
+            </p>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-300 dark:border-blue-700">
+              <pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">{{ instructionsPreview.interpolated }}</pre>
+            </div>
+
+            <div class="mt-4">
+              <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Variable Values:</h4>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <div *ngFor="let item of instructionsPreview.variables | keyvalue" class="bg-white dark:bg-gray-800 p-2 rounded">
+                  <span class="text-blue-600 dark:text-blue-400">{{'{'}}{{ item.key }}{{'}'}}</span>
+                  <span class="text-gray-600 dark:text-gray-400"> = </span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ item.value }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Box -->
+          <div class="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <h3 class="text-lg font-medium mb-2 text-yellow-900 dark:text-yellow-100">
+              <i class="fas fa-info-circle mr-2"></i> How It Works
+            </h3>
+            <ul class="text-sm text-yellow-800 dark:text-yellow-200 space-y-2">
+              <li><i class="fas fa-check mr-2"></i> <strong>Database Priority:</strong> These instructions override OpenAI Platform settings at runtime</li>
+              <li><i class="fas fa-check mr-2"></i> <strong>Immediate Effect:</strong> Changes apply to new conversations immediately</li>
+              <li><i class="fas fa-check mr-2"></i> <strong>Language Detection:</strong> The AI automatically detects and responds in the user's language</li>
+              <li><i class="fas fa-check mr-2"></i> <strong>Tool Integration:</strong> The assistant can create tickets and retrieve information using configured terminology</li>
+            </ul>
+          </div>
+
+          <!-- Reset Button -->
+          <div class="flex justify-start">
+            <button
+              type="button"
+              (click)="resetAssistantSettings()"
+              [disabled]="isSavingAssistant"
+              class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-undo mr-2"></i> Reset All to Defaults
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="cancelConfirmation()"></div>
+
+  <!-- Modal -->
+  <div class="relative bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all border border-gray-700">
+    <!-- Icon -->
+    <div class="flex justify-center mb-4">
+      <div 
+        class="w-16 h-16 rounded-full flex items-center justify-center"
+        [style.backgroundColor]="confirmModalConfig.iconBgColor"
+      >
+        <i [class]="confirmModalConfig.iconClass" [style.color]="confirmModalConfig.iconColor" class="text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h3 class="text-xl font-semibold text-center text-white mb-2">
+      {{ confirmModalConfig.title }}
+    </h3>
+
+    <!-- Message -->
+    <p class="text-center text-gray-400 mb-6">
+      {{ confirmModalConfig.message }}
+    </p>
+
+    <!-- Buttons -->
+    <div class="flex gap-3">
+      <button
+        type="button"
+        (click)="cancelConfirmation()"
+        class="flex-1 px-4 py-2.5 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmAction()"
+        [class]="'flex-1 px-4 py-2.5 rounded-lg transition-colors font-medium text-white ' + confirmModalConfig.confirmBtnClass"
+      >
+        {{ confirmModalConfig.confirmText }}
+      </button>
     </div>
   </div>
 </div>

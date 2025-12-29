@@ -297,16 +297,121 @@ async function loadPreset(req, res) {
         if (preset.config.ticket_id_format) {
             await configService.updateSetting('ticket_id_format', preset.config.ticket_id_format, agentId);
         }
+        // Load industry-specific instructions template
+        if (preset.config.assistant_instructions_template) {
+            await configService.updateSetting('assistant_instructions_template', preset.config.assistant_instructions_template, agentId);
+        }
 
         res.json({
             success: true,
-            message: `Preset "${preset.name}" cargado correctamente`
+            message: `Preset "${preset.name}" cargado correctamente - includes AI instructions for ${preset.name}`
         });
     } catch (error) {
         console.error('Error loading preset:', error);
         res.status(500).json({
             success: false,
             error: 'Error al cargar el preset'
+        });
+    }
+}
+
+/**
+ * Get assistant instructions template
+ */
+async function getInstructionsTemplate(req, res) {
+    try {
+        const template = await configService.getInstructionsTemplate();
+        res.json({
+            success: true,
+            data: template
+        });
+    } catch (error) {
+        console.error('Error getting instructions template:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener la plantilla de instrucciones'
+        });
+    }
+}
+
+/**
+ * Update assistant instructions template
+ */
+async function updateInstructionsTemplate(req, res) {
+    try {
+        const { template } = req.body;
+
+        if (!template || typeof template !== 'string') {
+            return res.status(400).json({
+                success: false,
+                error: 'La plantilla de instrucciones debe ser un texto válido'
+            });
+        }
+
+        const agentId = req.agent ? req.agent._id : null;
+        await configService.updateSetting('assistant_instructions_template', template, agentId);
+
+        // Also invalidate any cached instructions
+        configService.invalidateCache('assistant_instructions_template');
+
+        res.json({
+            success: true,
+            message: 'Plantilla de instrucciones actualizada correctamente'
+        });
+    } catch (error) {
+        console.error('Error updating instructions template:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar la plantilla de instrucciones'
+        });
+    }
+}
+
+/**
+ * Preview interpolated instructions (for testing)
+ */
+async function previewInstructions(req, res) {
+    try {
+        const [assistantConfig, terminology, instructionsTemplate] = await Promise.all([
+            configService.getAssistantConfig(),
+            configService.getTicketTerminology(),
+            configService.getInstructionsTemplate()
+        ]);
+
+        // Simple interpolation for preview (same logic as openaiService)
+        const variables = {
+            assistantName: assistantConfig.assistantName || 'Assistant',
+            companyName: assistantConfig.companyName || 'Company',
+            primaryServiceIssue: assistantConfig.primaryServiceIssue || 'issues and requests',
+            serviceType: assistantConfig.serviceType || 'service',
+            ticketNoun: assistantConfig.ticketNoun || 'ticket',
+            ticketNounPlural: assistantConfig.ticketNounPlural || 'tickets',
+            greetingMessage: assistantConfig.greetingMessage || '',
+            ticketSingular: terminology.ticketSingular || 'ticket',
+            ticketPlural: terminology.ticketPlural || 'tickets',
+            createVerb: terminology.createVerb || 'create',
+            customerNoun: terminology.customerNoun || 'customer',
+            agentNoun: terminology.agentNoun || 'agent',
+            resolveVerb: terminology.resolveVerb || 'resolve'
+        };
+
+        const interpolated = instructionsTemplate.replace(/\{(\w+)\}/g, (match, key) => {
+            return variables[key] !== undefined ? variables[key] : match;
+        });
+
+        res.json({
+            success: true,
+            data: {
+                template: instructionsTemplate,
+                interpolated: interpolated,
+                variables: variables
+            }
+        });
+    } catch (error) {
+        console.error('Error previewing instructions:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al generar vista previa de instrucciones'
         });
     }
 }
@@ -348,6 +453,9 @@ module.exports = {
     updateTerminology,
     getTicketIdFormat,
     updateTicketIdFormat,
+    getInstructionsTemplate,
+    updateInstructionsTemplate,
+    previewInstructions,
     getPresets,
     loadPreset,
     resetToDefaults

@@ -2,6 +2,7 @@ const axios = require("axios");
 const UserThread = require("../models/UserThread");
 const Message = require("../models/Message");
 const { io } = require("../models/server");
+const configurationService = require("./configurationService");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -102,6 +103,102 @@ function endUserProcessing(userId) {
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
+
+/**
+ * Interpolate template variables in instructions
+ * Replaces {variableName} with actual values from config
+ */
+function interpolateInstructions(template, assistantConfig, terminology) {
+  if (!template) return '';
+
+  const variables = {
+    // Assistant config variables
+    assistantName: assistantConfig.assistantName || 'Assistant',
+    companyName: assistantConfig.companyName || 'Company',
+    primaryServiceIssue: assistantConfig.primaryServiceIssue || 'issues and requests',
+    serviceType: assistantConfig.serviceType || 'service',
+    ticketNoun: assistantConfig.ticketNoun || 'ticket',
+    ticketNounPlural: assistantConfig.ticketNounPlural || 'tickets',
+    greetingMessage: assistantConfig.greetingMessage || '',
+
+    // Terminology variables
+    ticketSingular: terminology.ticketSingular || 'ticket',
+    ticketPlural: terminology.ticketPlural || 'tickets',
+    createVerb: terminology.createVerb || 'create',
+    customerNoun: terminology.customerNoun || 'customer',
+    agentNoun: terminology.agentNoun || 'agent',
+    resolveVerb: terminology.resolveVerb || 'resolve'
+  };
+
+  // Replace all {variableName} patterns
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    return variables[key] !== undefined ? variables[key] : match;
+  });
+}
+
+/**
+ * Build additional instructions by combining database config with runtime data
+ */
+async function buildAdditionalInstructions(userId, detectedLanguage = 'es') {
+  try {
+    // Fetch configurations from database
+    const [assistantConfig, terminology, instructionsTemplate] = await Promise.all([
+      configurationService.getAssistantConfig(),
+      configurationService.getTicketTerminology(),
+      configurationService.getInstructionsTemplate()
+    ]);
+
+    // Interpolate template with actual values
+    const baseInstructions = interpolateInstructions(instructionsTemplate, assistantConfig, terminology);
+
+    // Map language codes to full names
+    const languageNames = {
+      'en': 'English',
+      'es': 'Spanish',
+      'fr': 'French',
+      'pt': 'Portuguese',
+      'de': 'German',
+      'it': 'Italian',
+      'zh': 'Chinese',
+      'ja': 'Japanese',
+      'ko': 'Korean',
+      'ar': 'Arabic',
+      'ru': 'Russian'
+    };
+    const languageName = languageNames[detectedLanguage] || languageNames['es'];
+
+    // Combine database instructions with runtime context
+    return `${baseInstructions}
+
+---
+
+**RUNTIME CONTEXT:**
+- The user's WhatsApp phone number is: ${userId}
+- Company: ${assistantConfig.companyName || 'Company'}
+- Assistant Name: ${assistantConfig.assistantName || 'Assistant'}
+
+**CRITICAL LANGUAGE INSTRUCTION - THIS OVERRIDES ALL OTHER INSTRUCTIONS:**
+The user's message was detected as ${languageName.toUpperCase()} (${detectedLanguage}).
+You MUST respond ENTIRELY in ${languageName.toUpperCase()}.
+Do NOT respond in any other language.
+Do NOT mix languages.
+Every word of your response must be in ${languageName}.
+This is a strict requirement that cannot be ignored.`;
+
+  } catch (error) {
+    console.error('⚠️ Error building instructions from DB, using fallback:', error.message);
+    // Fallback to basic instructions if DB fails
+    const languageNames = {
+      'en': 'English', 'es': 'Spanish', 'fr': 'French', 'pt': 'Portuguese'
+    };
+    const languageName = languageNames[detectedLanguage] || 'Spanish';
+
+    return `The user's WhatsApp phone number is: ${userId}.
+
+**CRITICAL LANGUAGE INSTRUCTION:**
+You MUST respond ENTIRELY in ${languageName.toUpperCase()}.`;
+  }
+}
 
 // Clean up old messages in thread
 async function cleanupThreadMessages(threadId, headers, maxMessages = MAX_MESSAGES_PER_THREAD) {
@@ -234,36 +331,16 @@ async function addMessageToThread(threadId, message, context, headers) {
 }
 
 async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') {
-  // Map language codes to full names for clearer instructions
-  const languageNames = {
-    'en': 'English',
-    'es': 'Spanish',
-    'fr': 'French',
-    'pt': 'Portuguese',
-    'de': 'German',
-    'it': 'Italian',
-    'zh': 'Chinese',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'ar': 'Arabic',
-    'ru': 'Russian'
-  };
+  // Build instructions from database configuration + runtime context
+  const additionalInstructions = await buildAdditionalInstructions(userId, detectedLanguage);
 
-  const languageName = languageNames[detectedLanguage] || languageNames['es'];
+  console.log(`📝 Using database instructions for user ${userId} (lang: ${detectedLanguage})`);
 
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
-      additional_instructions: `The user's WhatsApp phone number is: ${userId}.
-
-**CRITICAL LANGUAGE INSTRUCTION - THIS OVERRIDES ALL OTHER INSTRUCTIONS:**
-The user's message was detected as ${languageName.toUpperCase()} (${detectedLanguage}).
-You MUST respond ENTIRELY in ${languageName.toUpperCase()}.
-Do NOT respond in any other language.
-Do NOT mix languages.
-Every word of your response must be in ${languageName}.
-This is a strict requirement that cannot be ignored.`
+      additional_instructions: additionalInstructions
     },
     { headers }
   );
