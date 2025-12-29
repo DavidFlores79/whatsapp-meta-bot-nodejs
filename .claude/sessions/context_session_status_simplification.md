@@ -7,7 +7,7 @@ Simplify the dual status system (Conversation + Ticket) following industry best 
 - **Created**: 2025-12-29
 - **Feature Branch**: `feat/status-simplification`
 - **Target Branch**: `develop`
-- **Status**: Planning Phase
+- **Status**: Plan Finalized - Ready for Implementation
 
 ---
 
@@ -88,107 +88,157 @@ Users need to mentally track both systems, leading to confusion about the actual
 
 ---
 
-## Team Selection
+## Team Selection & Expert Advice
 
 ### Selected Subagents
 
-1. **nodejs-backend-architect**
-   - API design for status synchronization endpoints
-   - Event-driven sync service architecture
-   - Database migration strategy for status enum changes
-   - Business logic for status transitions and validation
+1. **nodejs-backend-architect** - Completed
+2. **angular-frontend-developer** - Completed
 
-2. **angular-frontend-developer**
-   - Unified status display component design
-   - Real-time status update handling via Socket.io
-   - Status badge component unification
-   - UI/UX for simplified conversation list
+### Backend Architect Recommendations
+
+#### Migration Strategy
+- **MongoDB Migration Script + Application-Layer Validation**
+- Run migration BEFORE deploying code changes
+- Status mapping:
+  - `open` → `open` (unchanged)
+  - `assigned` → `active`
+  - `waiting` → `active`
+  - `resolved` → `closed`
+  - `closed` → `closed` (unchanged)
+- Includes rollback capability and audit trail
+
+#### Sync Service Design
+- **Mongoose Middleware (Event-Driven)**
+- Use `pre('save')` and `post('save')` hooks
+- Prevent infinite loops using `findByIdAndUpdate()` for syncs
+- Lock mechanism to prevent concurrent operations
+
+#### Ticket-Conversation Relationship Rules
+- If ANY ticket is `in_progress` or `open` → Conversation = `active`
+- If ALL tickets are `closed` → Conversation = `closed`
+- Closing conversation → Force close ALL linked tickets
+- Closing individual ticket → Conversation stays active (unless all closed)
+
+#### Race Condition Prevention
+- Lock mechanism tracking ongoing syncs
+- `isModified('status')` check before sync
+- `setImmediate()` for async execution
+- Frontend debouncing (500ms)
+
+#### API Changes
+- **No new endpoints needed**
+- Existing endpoints work with simplified model
+- Optional: `GET /api/v2/conversations/:id/sync-status` for debugging
+
+### Frontend Developer Recommendations
+
+#### UnifiedStatusBadgeComponent Design
+- **Primary-Secondary Badge Pattern**
+- Conversation status (large) + ticket indicator (small dot)
+- Three layouts: Compact (mobile), Inline (desktop), Stacked (detail)
+- Color scheme:
+  - Open (AI active): Blue (`#3B82F6`)
+  - Active (Agent handling): Green (`#22C55E`)
+  - Closed: Gray (`#6B7280`)
+  - Ticket indicator: Colored dot with pulse animation
+
+#### State Management
+- **Eager Loading with Selective Population**
+- Load linked ticket data with conversations (ticketId, status, priority, category)
+- BehaviorSubject-based with batched updates (300ms debounce)
+
+#### ChatListComponent Changes
+- **Remove Status Dropdown**
+- Replace with icon-based quick filters: "With Ticket", "Urgent"
+- Tabs provide sufficient filtering with 3 statuses
+
+#### Socket.io Event
+- New event: `unified_status_update`
+- Contains both conversation and ticket status
+- Batched updates in 300ms windows
 
 ---
 
-## Implementation Plan
+## Final Implementation Plan
 
-### Phase 1: Backend - Conversation Status Simplification
+### Phase 1: Backend - Migration & Schema (Day 1-2)
 
-#### 1.1 Schema Migration
-- Change Conversation status enum: `['open', 'active', 'closed']`
-  - `open`: No agent assigned, AI handling or in queue
-  - `active`: Agent assigned and working (replaces 'assigned' + 'waiting')
-  - `closed`: Conversation ended
-- Add migration script to convert existing statuses:
-  - `assigned` -> `active`
-  - `waiting` -> `active`
-  - `resolved` -> `closed`
-
-#### 1.2 New Synchronization Service
-Create `statusSyncService.js`:
+#### 1.1 Create Migration Script
 ```javascript
-// Event handlers for status synchronization
-onTicketStatusChange(ticket, newStatus) {
-  // Sync rules: ticket closed -> close linked conversations
-}
+// scripts/migrate-conversation-status.js
+const statusMapping = {
+  'open': 'open',
+  'assigned': 'active',
+  'waiting': 'active',
+  'resolved': 'closed',
+  'closed': 'closed'
+};
+```
 
-onConversationStatusChange(conversation, newStatus) {
-  // Sync rules: customer reply -> update linked ticket if pending
-}
-
-onCustomerMessage(conversation) {
-  // If linked ticket is pending_customer -> update to open
+#### 1.2 Update Conversation Model
+```javascript
+status: {
+  type: String,
+  enum: ['open', 'active', 'closed'],
+  default: 'open',
+  index: true
 }
 ```
 
 #### 1.3 Update Existing Services
-- `conversationLifecycleService.js`: Adapt to new 3-status model
-- `autoTimeoutService.js`: Update from 'assigned' -> 'active' -> 'open'
-- `ticketService.js`: Add hooks for conversation sync
+- `agentAssignmentService.js`: `'assigned'` → `'active'`
+- `autoTimeoutService.js`: `'assigned'` → `'active'`
+- `conversationLifecycleService.js`: Remove `'resolved'`, adapt to 3 statuses
+- `queueService.js`: Update status queries
 
-### Phase 2: Backend - Event Synchronization
+### Phase 2: Backend - Sync Service (Day 3-4)
 
-#### 2.1 Synchronization Rules
+#### 2.1 Create statusSyncService.js
+```javascript
+// src/services/statusSyncService.js
+class StatusSyncService {
+  syncTicketToConversation(ticket, oldStatus, newStatus)
+  syncConversationToTickets(conversation, oldStatus, newStatus)
+  handleCustomerMessage(conversation)
+}
+```
 
-| Event | Conversation Effect | Ticket Effect |
-|-------|---------------------|---------------|
-| Customer sends message | -> `open` (if closed, reopen) | If `pending_customer` -> `open` |
-| Agent takes conversation | -> `active` | (no change) |
-| Agent sends message | (no change) | (no change) |
-| Agent closes conversation | -> `closed` | (no change) |
-| Ticket resolved | (optional notify) | -> `resolved` |
-| Ticket closed | -> `closed` | -> `closed` |
-| Customer replies to resolved ticket | -> `open` | -> Reopen or create new |
+#### 2.2 Add Mongoose Middleware
+- Conversation `post('save')` hook
+- Ticket `post('save')` hook
 
-#### 2.2 Socket.io Event Extensions
-Add new events:
-- `conversation_status_synced`: When sync rule triggers status change
-- `unified_status_update`: Combined status for UI
+#### 2.3 Socket.io Events
+- `unified_status_update` event
+- Include both statuses in payload
 
-### Phase 3: Frontend - Unified Status Display
+### Phase 3: Frontend - Components (Day 5-7)
 
 #### 3.1 Create UnifiedStatusBadgeComponent
-- Single component for both conversation and ticket statuses
-- Color-coded based on combined state
-- Shows primary status with secondary indicator if ticket exists
+- Input: `conversationStatus`, `ticketStatus`, `layout`
+- Output: Visual badge with tooltip
 
-#### 3.2 Update ChatListComponent
-- Simplify status filter to: All / Open / Active / Closed
-- Add ticket indicator on conversations with linked tickets
-- Show unified status badge
+#### 3.2 Update ChatService
+- Add `linkedTicket` field to Chat interface
+- Handle `unified_status_update` event
+- Batch updates with RxJS
 
-#### 3.3 Update ChatWindowComponent
-- Add ticket status panel when conversation has linked ticket
-- Show combined status information
-- Quick actions for status transitions
+#### 3.3 Update ChatListComponent
+- Update status filter to 3 options
+- Add ticket indicator
+- Update tabs logic
 
-### Phase 4: Testing & Documentation
+### Phase 4: Testing & Documentation (Day 8-10)
 
-#### 4.1 Testing Strategy
+#### 4.1 Testing
 - Unit tests for statusSyncService
 - Integration tests for sync scenarios
-- E2E tests for UI status updates
+- E2E tests with Cypress
 
 #### 4.2 Documentation
-- Update CLAUDE.md with new status system
-- API documentation for sync endpoints
-- Migration guide for existing data
+- Update CLAUDE.md
+- API documentation
+- Migration guide
 
 ---
 
@@ -196,50 +246,47 @@ Add new events:
 
 1. **Conversation statuses reduced to 3**: open, active, closed
 2. **Ticket statuses remain unchanged**: 7 statuses for workflow tracking
-3. **Automatic synchronization**: Customer message updates both entities
-4. **Unified UI display**: Single status badge shows combined state
+3. **Automatic synchronization**: Status changes propagate correctly
+4. **Unified UI display**: Single badge shows combined state
 5. **Backward compatible**: Existing conversations migrate properly
 6. **Real-time updates**: Socket.io events propagate status changes
-
----
-
-## Clarifications & Decisions
-
-### Pending Questions for User
-
-1. **Conversation Reopen on Customer Reply**:
-   - A) Automatically reopen closed conversations when customer messages
-   - B) Create new conversation for customer messages to closed ones
-   - C) Configurable behavior in system settings
-
-2. **Ticket-Conversation Linking**:
-   - A) One conversation can have multiple tickets (current)
-   - B) One conversation = one active ticket at a time
-   - C) Keep current but show "primary" ticket in UI
-
-3. **Status Sync Direction**:
-   - A) Bidirectional sync (changes propagate both ways)
-   - B) Ticket-dominant (ticket status takes precedence)
-   - C) Conversation-dominant (conversation status takes precedence)
-
-4. **Migration Strategy**:
-   - A) Migrate all historical data
-   - B) Only migrate open/active conversations, archive rest
-   - C) Soft migration (keep old statuses, add new field)
+7. **No data loss**: All historical conversations preserved
 
 ---
 
 ## Branch Strategy
 
 - **Branch Name**: `feat/status-simplification`
-- **Base Branch**: `develop` (create if doesn't exist from `main`)
+- **Base Branch**: `develop` (create from `main` if doesn't exist)
 - **Target Branch**: `develop`
 - **Review Requirements**: 1 reviewer required
 
-### Sub-branches (if needed)
-- `feat/status-simplification-backend`: Backend changes
-- `feat/status-simplification-frontend`: Frontend changes
-- `feat/status-simplification-migration`: Data migration scripts
+### Deployment Order
+1. Run migration script on staging
+2. Deploy backend changes
+3. Deploy frontend changes
+4. Run migration script on production
+5. Monitor for 7 days
+
+---
+
+## Clarifications & Decisions
+
+### User Decisions (2025-12-29)
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| **Reopen Rule** | Auto-reopen conversation | Best for continuity, customer doesn't lose context |
+| **Ticket Sync** | Force close all tickets | Parent-child hierarchy, clean state |
+| **Migration** | Migrate all data | Complete consistency across all conversations |
+| **UI Display** | Colored dot indicator | Non-intrusive but informative |
+
+### Final Sync Rules Based on Decisions
+
+1. **Customer messages closed conversation** → Auto-reopen to `open` status
+2. **Closing conversation** → Force close ALL linked tickets (set to `closed`)
+3. **Ticket status change** → Does NOT affect conversation status (one-way sync)
+4. **UI** → Show colored dot for tickets (priority-based color)
 
 ---
 
@@ -250,4 +297,19 @@ Add new events:
 - Current architecture documented
 - Team selected: nodejs-backend-architect, angular-frontend-developer
 - Initial plan drafted
-- Awaiting user clarification on 4 decision points
+
+### Iteration 2 (2025-12-29)
+- Expert advice received from both subagents
+- Plan refined with concrete recommendations
+- Migration strategy finalized
+- Sync rules defined
+- UI patterns selected
+
+### Iteration 3 (2025-12-29) - FINAL
+- User clarifications received:
+  - Auto-reopen closed conversations on customer message
+  - Force close all tickets when conversation closes
+  - Migrate all historical data
+  - Show colored dot indicator for tickets in UI
+- Plan finalized and ready for implementation
+- All decision points resolved

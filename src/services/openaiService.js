@@ -4,6 +4,53 @@ const Message = require("../models/Message");
 const { io } = require("../models/server");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// ============================================
+// LANGUAGE DETECTION (using GPT-4o-mini)
+// ============================================
+/**
+ * Detect language of text using GPT-4o-mini
+ * Returns ISO 639-1 language code (e.g., 'en', 'es', 'fr', 'pt')
+ */
+async function detectLanguage(text) {
+  if (!text || text.trim().length < 2) return 'es'; // Default to Spanish for empty/short text
+
+  try {
+    const response = await axios.post(
+      `https://api.openai.com/v1/chat/completions`,
+      {
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a language detector. Respond with ONLY the ISO 639-1 two-letter language code (e.g., en, es, fr, pt, de, it, zh, ja, ko, ar, ru). No explanation, just the code.'
+          },
+          {
+            role: 'user',
+            content: `Detect the language: "${text}"`
+          }
+        ],
+        temperature: 0,
+        max_tokens: 5
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000 // 5 second timeout for fast response
+      }
+    );
+
+    const detectedLang = response.data.choices[0].message.content.trim().toLowerCase().substring(0, 2);
+    console.log(`🌐 Language detected: "${detectedLang}" for message: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`);
+    return detectedLang;
+
+  } catch (error) {
+    console.error('⚠️ Language detection error, defaulting to Spanish:', error.message);
+    return 'es'; // Default to Spanish on error
+  }
+}
 const OPENAI_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 const BASE_URL = "https://api.openai.com/v1";
 
@@ -186,14 +233,37 @@ async function addMessageToThread(threadId, message, context, headers) {
   if (!messageAdded) throw new Error("Failed to add message after retries");
 }
 
-async function runAssistant(threadId, userId, headers) {
+async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') {
+  // Map language codes to full names for clearer instructions
+  const languageNames = {
+    'en': 'English',
+    'es': 'Spanish',
+    'fr': 'French',
+    'pt': 'Portuguese',
+    'de': 'German',
+    'it': 'Italian',
+    'zh': 'Chinese',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'ar': 'Arabic',
+    'ru': 'Russian'
+  };
+
+  const languageName = languageNames[detectedLanguage] || languageNames['es'];
+
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
       additional_instructions: `The user's WhatsApp phone number is: ${userId}.
 
-LANGUAGE RULE: Detect the language of the user's LAST message and respond in that SAME language. If they write in English, respond in English. If they write in Spanish, respond in Spanish.`
+**CRITICAL LANGUAGE INSTRUCTION - THIS OVERRIDES ALL OTHER INSTRUCTIONS:**
+The user's message was detected as ${languageName.toUpperCase()} (${detectedLanguage}).
+You MUST respond ENTIRELY in ${languageName.toUpperCase()}.
+Do NOT respond in any other language.
+Do NOT mix languages.
+Every word of your response must be in ${languageName}.
+This is a strict requirement that cannot be ignored.`
     },
     { headers }
   );
@@ -615,10 +685,13 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
       io.emit('ai_typing_start', { conversationId, userId });
     }
 
+    // Detect language from user's message BEFORE processing
+    const detectedLanguage = await detectLanguage(message);
+
     const threadId = await getOrCreateThread(userId, headers);
     await ensureNoActiveRun(threadId, headers);
     await addMessageToThread(threadId, message, { ...context, userId }, headers);
-    const runId = await runAssistant(threadId, userId, headers);
+    const runId = await runAssistant(threadId, userId, headers, detectedLanguage);
     await handleRunStatus(threadId, runId, headers, userId);
     const response = await getAssistantResponse(threadId, runId, userId, conversationId);
 
