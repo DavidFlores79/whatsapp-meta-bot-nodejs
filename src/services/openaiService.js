@@ -363,13 +363,16 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
       } else if (functionName === "get_ticket_information") {
         const terminology = await configService.getTicketTerminology();
 
+        // Debug: Log all arguments received from OpenAI
+        console.log(`🔍 get_ticket_information - Raw arguments:`, JSON.stringify(args, null, 2));
+
         // Determine which phone number to use for customer lookup
         // If phone_number is provided in args AND different from userId, use it
         // Otherwise use the conversation's userId (current customer)
         const phoneToSearch = args.phone_number || userId;
 
-        console.log(`🔍 get_ticket_information - Searching with phone: ${phoneToSearch}`);
-        console.log(`   Args:`, args);
+        console.log(`   Searching with phone: ${phoneToSearch}`);
+        console.log(`   Filters: ticket_id=${args.ticket_id}, lookup_recent=${args.lookup_recent}, exclude_closed=${args.exclude_closed}, include_notes=${args.include_notes}`);
 
         // Find customer by phone number
         const customer = await Customer.findOne({ phoneNumber: phoneToSearch });
@@ -490,31 +493,39 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
 
             const result = await ticketService.getTicketsByCustomer(customer._id, queryOptions);
 
+            const ticketResults = result.tickets.map(t => {
+              const ticketData = {
+                ticketId: t.ticketId,
+                subject: t.subject,
+                status: t.status,
+                priority: t.priority,
+                createdAt: t.createdAt,
+                lastUpdate: t.lastActivityAt || t.updatedAt
+              };
+
+              // Include notes if requested (only external notes)
+              if (includeNotes && t.notes) {
+                ticketData.notes = t.notes
+                  .filter(note => !note.isInternal)
+                  .map(note => ({
+                    content: note.content,
+                    timestamp: note.timestamp
+                  }));
+                ticketData.notesCount = ticketData.notes.length;
+              }
+
+              return ticketData;
+            });
+
+            console.log(`   ✅ Found ${ticketResults.length} tickets for customer`);
+            if (includeNotes) {
+              const totalNotes = ticketResults.reduce((sum, t) => sum + (t.notesCount || 0), 0);
+              console.log(`   📝 Total external notes: ${totalNotes}`);
+            }
+
             output = JSON.stringify({
               success: true,
-              tickets: result.tickets.map(t => {
-                const ticketData = {
-                  ticketId: t.ticketId,
-                  subject: t.subject,
-                  status: t.status,
-                  priority: t.priority,
-                  createdAt: t.createdAt,
-                  lastUpdate: t.lastActivityAt || t.updatedAt
-                };
-
-                // Include notes if requested (only external notes)
-                if (includeNotes && t.notes) {
-                  ticketData.notes = t.notes
-                    .filter(note => !note.isInternal)
-                    .map(note => ({
-                      content: note.content,
-                      timestamp: note.timestamp
-                    }));
-                  ticketData.notesCount = ticketData.notes.length;
-                }
-
-                return ticketData;
-              }),
+              tickets: ticketResults,
               total: result.total
             });
           } else {
