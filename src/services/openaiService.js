@@ -332,7 +332,7 @@ async function addMessageToThread(threadId, message, context, headers) {
 
 async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') {
   // Build instructions from database configuration + runtime context
-  const additionalInstructions = await buildAdditionalInstructions(userId, detectedLanguage);
+  const dynamicInstructions = await buildAdditionalInstructions(userId, detectedLanguage);
 
   console.log(`📝 Using database instructions for user ${userId} (lang: ${detectedLanguage})`);
 
@@ -340,7 +340,9 @@ async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') 
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
-      additional_instructions: additionalInstructions
+      // Use 'instructions' to OVERRIDE the assistant's base instructions
+      // instead of 'additional_instructions' which ADDS to them
+      instructions: dynamicInstructions
     },
     { headers }
   );
