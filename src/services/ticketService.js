@@ -4,6 +4,8 @@ const Customer = require('../models/Customer');
 const configService = require('./configurationService');
 const { io } = require('../models/server');
 const mongoose = require('mongoose');
+const whatsappService = require('./whatsappService');
+const { buildTextJSON } = require('../shared/whatsappModels');
 
 class TicketService {
     /**
@@ -417,7 +419,67 @@ class TicketService {
             });
         }
 
+        // Send WhatsApp notification to customer
+        await this.sendTicketResolvedNotification(populatedTicket);
+
         return populatedTicket;
+    }
+
+    /**
+     * Send WhatsApp notification when ticket is resolved
+     */
+    async sendTicketResolvedNotification(ticket) {
+        try {
+            const customer = ticket.customerId;
+            const agent = ticket.resolution?.resolvedBy;
+            const configData = await configService.getAssistantConfig();
+
+            if (!customer || !customer.phoneNumber) {
+                console.log('⚠️ Cannot send resolution notification: customer or phone number missing');
+                return;
+            }
+
+            // Format resolution date
+            const resolvedDate = new Date(ticket.resolution.resolvedAt);
+            const formattedDate = resolvedDate.toLocaleString('es-MX', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Build notification message
+            const agentName = agent ? `${agent.firstName} ${agent.lastName}` : 'Nuestro equipo';
+            const companyName = configData.companyName || process.env.COMPANY_NAME || 'LUXFREE';
+
+            const message = `✅ *Ticket Resuelto*
+
+Hola ${customer.firstName},
+
+Tu ticket *${ticket.ticketId}* ha sido marcado como resuelto.
+
+📋 *Resumen de la solución:*
+${ticket.resolution.summary}
+
+*Resuelto por:* ${agentName}
+*Fecha:* ${formattedDate}
+
+¿Tu problema está completamente resuelto?
+
+Si aún tienes algún inconveniente o necesitas ayuda adicional, puedes responder a este mensaje y tu ticket será reabierto automáticamente.
+
+Gracias por tu paciencia.
+- Equipo ${companyName}`;
+
+            const messagePayload = buildTextJSON(customer.phoneNumber, message);
+            await whatsappService.sendWhatsappResponse(messagePayload);
+
+            console.log(`📤 Ticket resolution notification sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
+        } catch (error) {
+            console.error('❌ Error sending ticket resolution notification:', error);
+            // Don't throw error - notification failure shouldn't break ticket resolution
+        }
     }
 
     /**

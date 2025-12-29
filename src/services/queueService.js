@@ -12,6 +12,7 @@ const { buildTextJSON } = require("../shared/whatsappModels");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Customer = require("../models/Customer");
+const Ticket = require("../models/Ticket");
 const { io } = require("../models/server");
 
 // Message queue configuration
@@ -90,6 +91,9 @@ async function processUserQueue(userId) {
 
     console.log(`📝 Combined message (${combinedText.length} chars):`);
     console.log(`   "${combinedText.substring(0, 100)}${combinedText.length > 100 ? '...' : ''}"`);
+
+    // CHECK FOR RECENTLY RESOLVED TICKETS - Auto-reopen if customer responds
+    await checkAndReopenResolvedTickets(conversationId, messagesToProcess[0].customerId, combinedText);
 
     // If assigned to agent, route to agent instead of AI
     if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
@@ -292,6 +296,92 @@ async function processUserQueue(userId) {
     // Clean up
     userQueues.delete(userId);
     queueTimers.delete(userId);
+  }
+}
+
+/**
+ * Check for recently resolved tickets and auto-reopen if customer responds
+ * @param {string} conversationId - Conversation ID
+ * @param {string} customerId - Customer ID
+ * @param {string} messageText - Customer's message
+ */
+async function checkAndReopenResolvedTickets(conversationId, customerId, messageText) {
+  try {
+    // Find resolved tickets from the last 48 hours
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+    const resolvedTickets = await Ticket.find({
+      conversationId: conversationId,
+      customerId: customerId,
+      status: 'resolved',
+      'resolution.resolvedAt': { $gte: twoDaysAgo }
+    })
+      .populate('customerId', 'firstName lastName phoneNumber')
+      .sort({ 'resolution.resolvedAt': -1 });
+
+    if (resolvedTickets.length === 0) {
+      return; // No recently resolved tickets
+    }
+
+    // Auto-reopen the most recent resolved ticket
+    const ticketToReopen = resolvedTickets[0];
+
+    console.log(`🔄 Auto-reopening ticket ${ticketToReopen.ticketId} - Customer responded after resolution`);
+
+    // Update ticket status to open
+    ticketToReopen.status = 'open';
+
+    // Add note about auto-reopen
+    if (!ticketToReopen.notes) {
+      ticketToReopen.notes = [];
+    }
+    ticketToReopen.notes.push({
+      content: `Ticket automáticamente reabierto. Cliente respondió: "${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}"`,
+      agent: null,
+      isInternal: true,
+      timestamp: new Date()
+    });
+
+    await ticketToReopen.save();
+
+    // Populate and emit Socket.io event
+    const populatedTicket = await Ticket.findById(ticketToReopen._id)
+      .populate('customerId', 'firstName lastName phoneNumber')
+      .populate('assignedAgent', 'firstName lastName email')
+      .populate('resolution.resolvedBy', 'firstName lastName')
+      .populate('notes.agent', 'firstName lastName');
+
+    if (io) {
+      io.emit('ticket_status_changed', {
+        ticket: populatedTicket,
+        previousStatus: 'resolved'
+      });
+    }
+
+    // Send notification to customer
+    const customer = ticketToReopen.customerId;
+    const configService = require('./configurationService');
+    const configData = await configService.getAssistantConfig();
+    const companyName = configData.companyName || process.env.COMPANY_NAME || 'LUXFREE';
+
+    const reopenMessage = `🔄 *Ticket Reabierto*
+
+Hola ${customer.firstName},
+
+Tu ticket *${ticketToReopen.ticketId}* ha sido reabierto ya que detectamos que aún necesitas ayuda.
+
+Un agente revisará tu mensaje y te responderá pronto.
+
+Gracias por tu paciencia.
+- Equipo ${companyName}`;
+
+    const messagePayload = buildTextJSON(customer.phoneNumber, reopenMessage);
+    await whatsappService.sendWhatsappResponse(messagePayload);
+
+    console.log(`✅ Ticket ${ticketToReopen.ticketId} auto-reopened and notification sent`);
+  } catch (error) {
+    console.error('❌ Error checking/reopening resolved tickets:', error);
+    // Don't throw - this shouldn't break message processing
   }
 }
 
