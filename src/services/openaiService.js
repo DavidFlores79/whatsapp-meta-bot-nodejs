@@ -186,14 +186,14 @@ async function addMessageToThread(threadId, message, context, headers) {
   if (!messageAdded) throw new Error("Failed to add message after retries");
 }
 
-async function runAssistant(threadId, userId, headers) {
-  // Don't add language instructions - let the assistant's own instructions handle language detection
-  // The assistant is configured to respond in the same language the user writes in
+async function runAssistant(threadId, userId, headers, userLanguage = 'es') {
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
-      additional_instructions: `The user's WhatsApp phone number is: ${userId}.`
+      additional_instructions: `The user's WhatsApp phone number is: ${userId}.
+
+CRITICAL: Respond in ${userLanguage === 'en' ? 'ENGLISH' : 'SPANISH'} for this message. Always match the language the user is currently using.`
     },
     { headers }
   );
@@ -595,6 +595,21 @@ Return ONLY valid JSON, nothing else.`;
 }
 
 // ============================================
+// LANGUAGE DETECTION
+// ============================================
+function detectLanguage(text) {
+  // Simple language detection based on common words
+  const englishWords = /\b(hi|hello|how|are|you|the|is|am|what|where|when|why|help|please|thank|thanks|yes|no|can|do|does|have|has|will|would|could|should|may|might|my|your|his|her|our|their|this|that|these|those|i|me|we|us)\b/i;
+  const spanishWords = /\b(hola|como|estas|que|donde|cuando|porque|por|ayuda|por favor|gracias|si|no|puede|hacer|tiene|mi|tu|su|nuestro|este|ese|estos|esos|yo|me|nosotros|nos|la|el|los|las|un|una|unos|unas)\b/i;
+  
+  const englishMatches = (text.match(englishWords) || []).length;
+  const spanishMatches = (text.match(spanishWords) || []).length;
+  
+  // If more English words detected, return 'en', otherwise default to 'es'
+  return englishMatches > spanishMatches ? 'en' : 'es';
+}
+
+// ============================================
 // MAIN FUNCTION
 // ============================================
 async function getAIResponse(message, userId, context = {}, conversationId = null) {
@@ -615,10 +630,14 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
       io.emit('ai_typing_start', { conversationId, userId });
     }
 
+    // Detect language from user's message
+    const detectedLanguage = detectLanguage(message);
+    console.log(`🌐 Detected language for "${message.substring(0, 30)}...": ${detectedLanguage}`);
+
     const threadId = await getOrCreateThread(userId, headers);
     await ensureNoActiveRun(threadId, headers);
     await addMessageToThread(threadId, message, { ...context, userId }, headers);
-    const runId = await runAssistant(threadId, userId, headers);
+    const runId = await runAssistant(threadId, userId, headers, detectedLanguage);
     await handleRunStatus(threadId, runId, headers, userId);
     const response = await getAssistantResponse(threadId, runId, userId, conversationId);
 
