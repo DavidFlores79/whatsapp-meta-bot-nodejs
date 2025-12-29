@@ -18,7 +18,7 @@ const SUGGESTION_THRESHOLDS = {
         
         // Spanish - dissatisfaction/urgency
         'mal servicio', 'pésimo servicio', 'cancelar', 'denunciar',
-        'queja', 'reclamo', 'no funciona', 'no sirve',
+        'queja', 'reclamo',
         'urgente', 'emergencia', 'inmediato',
         'frustrado', 'molesto', 'enojado',
         'ya basta', 'harto', 'cansado',
@@ -35,7 +35,7 @@ const SUGGESTION_THRESHOLDS = {
         'i want to speak', 'i need to speak', 'speak directly',
         'human help', 'human assistance',
         'bad service', 'cancel', 'complaint',
-        'not working', 'doesn\'t work', 'urgent', 'emergency',
+        'urgent', 'emergency',
         'don\'t understand', 'not helpful', 'frustrated',
         
         // Common variations
