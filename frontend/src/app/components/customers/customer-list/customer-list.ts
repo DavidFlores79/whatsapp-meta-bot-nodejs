@@ -312,6 +312,41 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
+  reactivateSelected() {
+    if (this.selectedCustomers.size === 0) return;
+
+    this.toast.info(`Reactivating ${this.selectedCustomers.size} customer(s)...`, 3000);
+
+    let completed = 0;
+    let successful = 0;
+    const total = this.selectedCustomers.size;
+
+    this.selectedCustomers.forEach(customerId => {
+      this.customerService.reactivateCustomer(customerId).subscribe({
+        next: () => {
+          completed++;
+          successful++;
+          if (completed === total) {
+            this.selectedCustomers.clear();
+            this.toast.success(`${successful} customer(s) reactivated successfully`, 3000);
+            this.loadCustomers();
+            this.loadStats();
+          }
+        },
+        error: (err) => {
+          console.error('Error reactivating customer:', err);
+          completed++;
+          if (completed === total) {
+            this.selectedCustomers.clear();
+            this.toast.warning(`${successful} of ${total} customer(s) reactivated`, 3000);
+            this.loadCustomers();
+            this.loadStats();
+          }
+        }
+      });
+    });
+  }
+
   getCustomerName(customer: Customer): string {
     return this.customerService.getCustomerDisplayName(customer);
   }

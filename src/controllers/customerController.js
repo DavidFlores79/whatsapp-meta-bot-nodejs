@@ -366,6 +366,44 @@ async function deleteCustomer(req, res) {
 }
 
 /**
+ * PATCH /api/v2/customers/:id/reactivate
+ * Reactivate a deactivated customer (change status from inactive to active)
+ */
+async function reactivateCustomer(req, res) {
+    try {
+        const { id } = req.params;
+
+        // Find customer
+        const customer = await Customer.findById(id);
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        // Check if customer is inactive
+        if (customer.status !== 'inactive') {
+            return res.status(400).json({ 
+                error: 'Customer is not inactive',
+                currentStatus: customer.status 
+            });
+        }
+
+        // Reactivate customer
+        customer.status = 'active';
+        await customer.save();
+
+        return res.json({
+            success: true,
+            message: 'Customer reactivated successfully',
+            customer
+        });
+    } catch (error) {
+        console.error('Reactivate customer error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
  * GET /api/v2/customers/:id/conversations
  * Get all conversations for a customer
  */
@@ -892,6 +930,7 @@ module.exports = {
     updateCustomerTags,
     toggleBlockCustomer,
     deleteCustomer,
+    reactivateCustomer,
     getCustomerConversations,
     getCustomerStats,
     bulkImportCustomers,

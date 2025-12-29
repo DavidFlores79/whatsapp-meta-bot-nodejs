@@ -158,11 +158,16 @@
 
     <!-- Bulk Actions Menu -->
     <div *ngIf="showBulkActions && selectedCustomers.size > 0"
-         class="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+         class="mt-3 pt-3 border-t border-gray-700 flex flex-wrap gap-2">
       <button (click)="deleteSelected()"
               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
         <i class="fas fa-trash"></i>
         <span>{{ 'customers.deactivateSelected' | translate }}</span>
+      </button>
+      <button (click)="reactivateSelected()"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-redo"></i>
+        <span>{{ 'customers.reactivateSelected' | translate }}</span>
       </button>
       <button (click)="selectedCustomers.clear()"
               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">

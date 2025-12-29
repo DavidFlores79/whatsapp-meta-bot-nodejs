@@ -196,6 +196,22 @@ export class CustomerService {
   }
 
   /**
+   * Reactivate customer (change status from inactive to active)
+   */
+  reactivateCustomer(id: string): Observable<{ success: boolean; message: string; customer: Customer }> {
+    return this.http.patch<{ success: boolean; message: string; customer: Customer }>(
+      `${this.apiUrl}/${id}/reactivate`,
+      {}
+    ).pipe(
+      tap(response => {
+        if (response.success) {
+          this.selectedCustomerSubject.next(response.customer);
+        }
+      })
+    );
+  }
+
+  /**
    * Get customer conversations
    */
   getCustomerConversations(
