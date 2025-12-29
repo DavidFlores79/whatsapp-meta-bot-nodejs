@@ -1,6 +1,16 @@
 #!/bin/bash
 # Deployment Script for AWS Ubuntu Server
 # Run this on the server after pushing changes
+#
+# OPTIMIZED WORKFLOW (Recommended for low-resource servers):
+# 1. Build frontend locally: cd frontend && npm run build
+# 2. Copy to public: cp -r frontend/dist/frontend/browser/* public/
+# 3. Commit all changes including built files: git add -A && git commit -m "..."
+# 4. Push: git push origin feat/universal-ticket-system
+# 5. Deploy on server: ./deploy.sh (just pulls and restarts, no rebuild needed)
+#
+# The script automatically detects if frontend was built locally (checks for built files in commit)
+# and skips rebuilding on the server to save resources.
 
 set -e  # Exit on error
 
@@ -32,22 +42,34 @@ if [ "$BEFORE_PULL" = "$AFTER_PULL" ]; then
 else
     echo "✅ Successfully pulled changes"
     
-    # Check if dependencies changed
-    if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "package.json\|package-lock.json"; then
-        echo "📦 Dependencies changed, reinstalling..."
+    # Check if backend dependencies changed
+    if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "^package.json\|^package-lock.json"; then
+        echo "📦 Backend dependencies changed, reinstalling..."
         npm ci --only=production
-        
-        # Check if frontend dependencies changed
-        if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "frontend/package.json"; then
-            echo "🎨 Frontend dependencies changed, rebuilding..."
-            cd frontend && npm ci && npm run build && cd ..
-        fi
     fi
     
-    # Check if frontend source files changed
-    if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "frontend/src/"; then
-        echo "🔨 Frontend source changed, rebuilding..."
-        cd frontend && npm run build && cd ..
+    # Check if frontend built files are in the commit (committed from local build)
+    if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "^public/main-.*\.js\|^public/styles-.*\.css"; then
+        echo "✅ Frontend already built locally and committed, skipping rebuild"
+    else
+        # Only rebuild if source changed but built files weren't committed
+        if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "frontend/src/"; then
+            echo "⚠️  Frontend source changed but no built files found"
+            echo "🔨 Building frontend on server (this may take time)..."
+            
+            # Check if frontend dependencies changed first
+            if git diff $BEFORE_PULL $AFTER_PULL --name-only | grep -q "frontend/package.json"; then
+                echo "📦 Installing frontend dependencies..."
+                cd frontend && npm ci && npm run build && cd ..
+            else
+                # Just build without reinstalling deps
+                cd frontend && npm run build && cd ..
+            fi
+            
+            # Copy to public folder
+            echo "📋 Copying built files to public..."
+            cp -r frontend/dist/frontend/browser/* public/
+        fi
     fi
 fi
 
