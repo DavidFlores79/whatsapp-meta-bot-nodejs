@@ -229,6 +229,8 @@ export class TicketService {
     this.socket.on('ticket_created', (data: { ticket: Ticket }) => {
       console.log('[TicketService] Ticket created:', data.ticket);
       this.handleTicketCreated(data.ticket);
+      this.playNotificationSound();
+      this.toastService.info(`New ticket created: ${data.ticket.ticketId}`);
     });
 
     this.socket.on('ticket_updated', (data: { ticket: Ticket }) => {
@@ -249,6 +251,7 @@ export class TicketService {
       // Notify if assigned to current agent
       this.authService.currentAgent$.subscribe(currentAgent => {
         if (currentAgent && data.ticket.assignedAgent?._id === currentAgent._id) {
+          this.playNotificationSound();
           this.toastService.success(`New ticket assigned: ${data.ticket.ticketId}`);
         }
       }).unsubscribe();
@@ -278,6 +281,31 @@ export class TicketService {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
+    }
+  }
+
+  /**
+   * Play notification sound for ticket events
+   */
+  private playNotificationSound(): void {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.warn('[TicketService] Could not play notification sound:', error);
     }
   }
 
