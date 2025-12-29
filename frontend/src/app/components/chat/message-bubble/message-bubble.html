@@ -90,7 +90,7 @@
                               'text-gray-200': message.sender === 'me',
                               'text-gray-400': message.sender === 'other'
                           }">
-                        {{ message.timestamp | date:'shortTime' }}
+                        {{ smartTimestamp }}
                     </span>
                     <span *ngIf="message.sender === 'me'" class="text-[10px]">
                         <!-- Pending/Sent: single check -->

@@ -57,6 +57,43 @@ export class MessageBubbleComponent {
     return text;
   }
 
+  /**
+   * Get smart timestamp format
+   * - Just time for today's messages
+   * - "Yesterday HH:MM" for yesterday
+   * - Full date for older messages
+   */
+  get smartTimestamp(): string {
+    const msgDate = new Date(this.message.timestamp);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const msgDateOnly = new Date(msgDate);
+    msgDateOnly.setHours(0, 0, 0, 0);
+
+    const timeStr = msgDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    if (msgDateOnly.getTime() === today.getTime()) {
+      // Today - just show time
+      return timeStr;
+    } else if (msgDateOnly.getTime() === yesterday.getTime()) {
+      // Yesterday - show "Yesterday"
+      return `Yesterday ${timeStr}`;
+    } else {
+      // Older - show date
+      const dateStr = msgDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      return `${dateStr} ${timeStr}`;
+    }
+  }
+
   openImage(url: string) {
     window.open(url, '_blank');
   }

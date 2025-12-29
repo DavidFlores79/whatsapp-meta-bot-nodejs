@@ -238,6 +238,7 @@
     "saveCustomer": "Guardar Cliente",
     "cancelEdit": "Cancelar",
     "deactivateSelected": "Desactivar seleccionados",
+    "reactivateSelected": "Reactivar seleccionados",
     "clearSelection": "Limpiar selección",
     "loadingCustomers": "Cargando clientes...",
     "noCustomersFound": "No se encontraron clientes",

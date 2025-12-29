@@ -109,6 +109,57 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   /**
+   * Group messages by date for date separators
+   */
+  groupMessagesByDate(messages: any[]): { date: string, dateLabel: string, messages: any[] }[] {
+    if (!messages || messages.length === 0) return [];
+
+    const groups: { [key: string]: any[] } = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    messages.forEach(msg => {
+      const msgDate = new Date(msg.timestamp);
+      msgDate.setHours(0, 0, 0, 0);
+      const dateKey = msgDate.toISOString().split('T')[0];
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(msg);
+    });
+
+    // Convert to array and add labels
+    return Object.keys(groups)
+      .sort()
+      .map(dateKey => {
+        const msgDate = new Date(dateKey);
+        let dateLabel: string;
+
+        if (msgDate.getTime() === today.getTime()) {
+          dateLabel = 'Today';
+        } else if (msgDate.getTime() === yesterday.getTime()) {
+          dateLabel = 'Yesterday';
+        } else {
+          // Format as "December 27, 2024"
+          dateLabel = msgDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        }
+
+        return {
+          date: dateKey,
+          dateLabel,
+          messages: groups[dateKey]
+        };
+      });
+  }
+
+  /**
    * Go back to conversation list (mobile)
    */
   goBack(): void {

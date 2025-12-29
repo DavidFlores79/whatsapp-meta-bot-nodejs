@@ -1,6 +1,8 @@
 const Conversation = require('../models/Conversation');
 const Agent = require('../models/Agent');
 const Customer = require('../models/Customer');
+const AgentAssignmentHistory = require('../models/AgentAssignmentHistory');
+const Message = require('../models/Message');
 const CRMSettings = require('../models/CRMSettings');
 const whatsappService = require('./whatsappService');
 const { buildInteractiveButtonJSON } = require('../shared/whatsappModels');
@@ -115,6 +117,43 @@ async function closeConversation(conversationId, agentId, reason = null, force =
         conversation.resolvedBy = agentId;
     }
 
+    const releaseTime = new Date();
+    const wasAssigned = conversation.assignedAgent;
+
+    // Update assignment history if agent was assigned
+    if (wasAssigned) {
+        const assignmentHistory = await AgentAssignmentHistory.findOne({
+            conversationId: conversation._id,
+            agentId: wasAssigned,
+            releasedAt: null
+        }).sort({ assignedAt: -1 });
+
+        if (assignmentHistory) {
+            const agentMessages = await Message.countDocuments({
+                conversationId: conversation._id,
+                sender: 'agent',
+                agentId: wasAssigned,
+                timestamp: { $gte: assignmentHistory.assignedAt }
+            });
+
+            assignmentHistory.releasedAt = releaseTime;
+            assignmentHistory.calculateDuration();
+            assignmentHistory.releaseReason = 'conversation_closed';
+            assignmentHistory.releaseMethod = force ? 'forced_close' : 'normal_close';
+            assignmentHistory.finalStatus = 'closed';
+            
+            assignmentHistory.agentSummary = {
+                messagesSent: agentMessages,
+                issueResolved: conversation.status === 'resolved',
+                resolutionNotes: reason || 'Conversation closed',
+                followUpRequired: false
+            };
+
+            await assignmentHistory.save();
+            console.log(`✅ Assignment history updated for conversation close: ${assignmentHistory._id}`);
+        }
+    }
+
     // Update to closed status
     conversation.status = 'closed';
     conversation.closedAt = new Date();
@@ -136,9 +175,9 @@ async function closeConversation(conversationId, agentId, reason = null, force =
     await conversation.save();
 
     // Update agent statistics if was assigned
-    if (conversation.assignedAgent) {
+    if (wasAssigned) {
         await Agent.findByIdAndUpdate(
-            conversation.assignedAgent,
+            wasAssigned,
             { $inc: { 'statistics.activeAssignments': -1 } }
         );
     }
