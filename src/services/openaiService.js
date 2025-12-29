@@ -284,6 +284,8 @@ async function pollRunCompletion(threadId, runId, headers) {
 }
 
 async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
+  console.log(`🔧 handleToolCalls called with ${toolCalls.length} tool call(s)`);
+
   const ticketService = require('./ticketService');
   const configService = require('./configurationService');
   const Customer = require('../models/Customer');
@@ -293,6 +295,9 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
 
   for (const call of toolCalls) {
     const functionName = call.function.name;
+    console.log(`🔧 Processing tool call: ${functionName}`);
+    console.log(`🔧 Raw arguments string: ${call.function.arguments}`);
+
     const args = JSON.parse(call.function.arguments || "{}");
     let output;
 
