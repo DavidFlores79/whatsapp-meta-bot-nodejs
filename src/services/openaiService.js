@@ -1,5 +1,4 @@
 const axios = require("axios");
-const { francAll } = require("franc-min");
 const UserThread = require("../models/UserThread");
 const Message = require("../models/Message");
 const { io } = require("../models/server");
@@ -187,18 +186,14 @@ async function addMessageToThread(threadId, message, context, headers) {
   if (!messageAdded) throw new Error("Failed to add message after retries");
 }
 
-async function runAssistant(threadId, userId, headers, userLanguage = 'es') {
-  const languageInstruction = userLanguage === 'en' 
-    ? 'MANDATORY: You MUST respond in ENGLISH for this message. The user wrote in English, so respond in English only.'
-    : 'MANDATORY: You MUST respond in SPANISH for this message. The user wrote in Spanish, so respond in Spanish only.';
-
+async function runAssistant(threadId, userId, headers) {
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
       additional_instructions: `The user's WhatsApp phone number is: ${userId}.
 
-${languageInstruction}`
+LANGUAGE RULE: Detect the language of the user's LAST message and respond in that SAME language. If they write in English, respond in English. If they write in Spanish, respond in Spanish.`
     },
     { headers }
   );
@@ -600,33 +595,6 @@ Return ONLY valid JSON, nothing else.`;
 }
 
 // ============================================
-// LANGUAGE DETECTION (using franc-min library)
-// ============================================
-function detectLanguage(text) {
-  // Use franc for accurate language detection
-  // francAll returns array of [langCode, confidence] sorted by confidence
-  const results = francAll(text, { minLength: 2, only: ['eng', 'spa'] });
-  
-  if (results.length === 0) {
-    // Fallback to Spanish if detection fails (most users are Spanish speakers)
-    return 'es';
-  }
-  
-  const topResult = results[0];
-  const detectedLang = topResult[0]; // 'eng' or 'spa'
-  const confidence = topResult[1];
-  
-  console.log(`🌐 Language detection: ${detectedLang} (confidence: ${confidence.toFixed(2)})`);
-  
-  // Map franc language codes to our codes
-  if (detectedLang === 'eng') return 'en';
-  if (detectedLang === 'spa') return 'es';
-  
-  // Default fallback
-  return 'es';
-}
-
-// ============================================
 // MAIN FUNCTION
 // ============================================
 async function getAIResponse(message, userId, context = {}, conversationId = null) {
@@ -647,14 +615,10 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
       io.emit('ai_typing_start', { conversationId, userId });
     }
 
-    // Detect language from user's message
-    const detectedLanguage = detectLanguage(message);
-    console.log(`🌐 Detected language for "${message.substring(0, 30)}...": ${detectedLanguage}`);
-
     const threadId = await getOrCreateThread(userId, headers);
     await ensureNoActiveRun(threadId, headers);
     await addMessageToThread(threadId, message, { ...context, userId }, headers);
-    const runId = await runAssistant(threadId, userId, headers, detectedLanguage);
+    const runId = await runAssistant(threadId, userId, headers);
     await handleRunStatus(threadId, runId, headers, userId);
     const response = await getAssistantResponse(threadId, runId, userId, conversationId);
 
