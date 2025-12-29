@@ -329,6 +329,35 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
               });
             } else {
               // Ticket found and customer has access
+              // Filter notes to only include external notes (not internal agent notes)
+              const externalNotes = ticket.notes
+                ? ticket.notes
+                    .filter(note => !note.isInternal)
+                    .map(note => ({
+                      content: note.content,
+                      timestamp: note.timestamp,
+                      agent: note.agent ? `${note.agent.firstName} ${note.agent.lastName}` : 'Agent'
+                    }))
+                : [];
+
+              // Translate status for better customer understanding
+              const statusTranslations = {
+                'new': 'Nuevo',
+                'open': 'Abierto',
+                'in_progress': 'En Progreso',
+                'pending_customer': 'Esperando Respuesta del Cliente',
+                'waiting_internal': 'En Proceso Interno',
+                'resolved': 'Resuelto',
+                'closed': 'Cerrado'
+              };
+
+              const priorityTranslations = {
+                'low': 'Baja',
+                'medium': 'Media',
+                'high': 'Alta',
+                'urgent': 'Urgente'
+              };
+
               output = JSON.stringify({
                 success: true,
                 ticket: {
@@ -336,10 +365,15 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                   subject: ticket.subject,
                   description: ticket.description,
                   status: ticket.status,
+                  statusText: statusTranslations[ticket.status] || ticket.status,
                   priority: ticket.priority,
+                  priorityText: priorityTranslations[ticket.priority] || ticket.priority,
                   category: ticket.category,
                   createdAt: ticket.createdAt,
-                  assignedAgent: ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : null
+                  assignedAgent: ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : null,
+                  notes: externalNotes,
+                  notesCount: externalNotes.length,
+                  lastUpdate: ticket.lastActivityAt || ticket.updatedAt
                 }
               });
             }

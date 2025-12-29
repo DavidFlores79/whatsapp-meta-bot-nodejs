@@ -105,12 +105,50 @@ The AI will receive clear error messages:
    }
    ```
 
+## Ticket Information Returned
+
+When successful, the AI receives comprehensive ticket information including:
+
+```json
+{
+  "success": true,
+  "ticket": {
+    "ticketId": "LUX-2025-000004",
+    "subject": "Light malfunction",
+    "description": "Street light not working",
+    "status": "in_progress",
+    "statusText": "En Progreso",
+    "priority": "medium",
+    "priorityText": "Media",
+    "category": "light_malfunction",
+    "createdAt": "2025-12-28T19:21:50.283Z",
+    "assignedAgent": "David Admin",
+    "notes": [
+      {
+        "content": "Se está revisando el panel. Requiere intervención del ingeniero.",
+        "timestamp": "2025-12-28T23:44:10.796Z",
+        "agent": "David Admin"
+      }
+    ],
+    "notesCount": 1,
+    "lastUpdate": "2025-12-28T23:44:10.797Z"
+  }
+}
+```
+
+**Important:**
+- `notes` array only includes **external notes** (isInternal: false) - notes meant for customers
+- **Internal agent notes** (isInternal: true) are filtered out and NOT exposed to customers
+- Status and priority are provided in both raw format and human-readable Spanish text
+- Case-insensitive ticket ID search (lux-2025-000004 = LUX-2025-000004)
+
 ## Testing
 
 After updating the OpenAI Assistant function:
 
-1. Test with ticket ID only:
+1. Test with ticket ID only (any case):
    - "dame el estatus de LUX-2025-000004"
+   - "dame el estatus de lux-2025-000004"
 
 2. Test with phone number:
    - "quiero saber del ticket del número 529991992696"
@@ -120,6 +158,12 @@ After updating the OpenAI Assistant function:
 
 4. Test access control:
    - Try to access a ticket that belongs to another customer (should get access denied message)
+
+5. Test notes display:
+   - Have an agent add an external note (isInternal: false) to a ticket
+   - Ask AI for ticket status - should include the note
+   - Have an agent add an internal note (isInternal: true)
+   - Ask AI for ticket status - internal note should NOT appear
 
 ## Deployment Checklist
 
