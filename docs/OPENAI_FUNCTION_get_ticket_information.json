@@ -6,35 +6,35 @@
     "type": "object",
     "properties": {
       "ticket_id": {
-        "type": "string",
+        "type": ["string", "null"],
         "description": "Unique ticket identifier (e.g., 'LUX-2025-000004'). Use this when customer provides a specific ticket ID."
       },
       "phone_number": {
-        "type": "string",
-        "description": "Phone number of the customer who owns the ticket. Optional - if not provided, uses the current conversation's phone number. Use this when customer mentions a different phone number than they're calling from."
+        "type": ["string", "null"],
+        "description": "Phone number of the customer who owns the ticket. Optional - if not provided, uses the current conversation's phone number."
       },
       "lookup_recent": {
-        "type": "boolean",
+        "type": ["boolean", "null"],
         "description": "Set to true to retrieve recent tickets for the customer instead of a specific ticket. Use when customer asks 'show me my tickets' or 'what tickets do I have'."
       },
       "exclude_closed": {
-        "type": "boolean",
+        "type": ["boolean", "null"],
         "description": "Set to true to exclude closed tickets from results. Use when customer asks for 'open tickets', 'active tickets', or 'tickets not closed'."
       },
       "include_notes": {
-        "type": "boolean",
+        "type": ["boolean", "null"],
         "description": "Set to true to include external notes/updates on each ticket. Use when customer asks about notes, updates, news, or progress on their tickets."
       },
       "status": {
-        "type": "string",
+        "type": ["string", "null"],
         "description": "Filter tickets by specific status. Valid values: 'new', 'open', 'in_progress', 'pending_customer', 'waiting_internal', 'resolved', 'closed'."
       },
       "limit": {
-        "type": "number",
+        "type": ["number", "null"],
         "description": "Maximum number of tickets to return (default 5, max 20)."
       }
     },
-    "required": [],
+    "required": ["ticket_id", "phone_number", "lookup_recent", "exclude_closed", "include_notes", "status", "limit"],
     "additionalProperties": false
   }
 }
