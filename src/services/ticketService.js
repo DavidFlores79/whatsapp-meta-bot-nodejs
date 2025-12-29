@@ -155,8 +155,9 @@ class TicketService {
         }
         
         // If not found by _id, try ticketId (human-readable ID)
+        // Use case-insensitive search with regex
         if (!ticket) {
-            ticket = await Ticket.findOne({ ticketId: id })
+            ticket = await Ticket.findOne({ ticketId: { $regex: new RegExp(`^${id}$`, 'i') } })
                 .populate('customerId', 'firstName lastName phoneNumber email')
                 .populate('conversationId')
                 .populate('assignedAgent', 'firstName lastName email')

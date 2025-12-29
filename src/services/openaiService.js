@@ -309,19 +309,23 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
         } else {
           if (args.ticket_id) {
             // Get specific ticket by ID
+            // Normalize ticket ID to uppercase for consistent searching
+            const normalizedTicketId = args.ticket_id.toUpperCase().trim();
+            console.log(`   Normalized ticket ID: ${args.ticket_id} → ${normalizedTicketId}`);
+
             // First try to find ticket by ID alone, then verify access
-            const ticket = await ticketService.getTicketById(args.ticket_id);
+            const ticket = await ticketService.getTicketById(normalizedTicketId);
 
             if (!ticket) {
               output = JSON.stringify({
                 success: false,
-                error: `${terminology.ticketSingular} con ID "${args.ticket_id}" no encontrado.`
+                error: `${terminology.ticketSingular} con ID "${normalizedTicketId}" no encontrado.`
               });
             } else if (ticket.customerId.toString() !== customer._id.toString()) {
               // Ticket exists but belongs to different customer
               output = JSON.stringify({
                 success: false,
-                error: `No tienes acceso al ${terminology.ticketSingular} "${args.ticket_id}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
+                error: `No tienes acceso al ${terminology.ticketSingular} "${normalizedTicketId}". Este ${terminology.ticketSingular} pertenece a otro cliente.`
               });
             } else {
               // Ticket found and customer has access
