@@ -485,7 +485,7 @@ export class TicketService {
    * Resolve ticket
    */
   resolveTicket(ticketId: string, resolutionSummary: string): Observable<Ticket> {
-    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/resolve`, { resolution: resolutionSummary }).pipe(
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/resolve`, { summary: resolutionSummary }).pipe(
       map(response => response.data),
       tap(ticket => {
         this.handleTicketUpdated(ticket);
