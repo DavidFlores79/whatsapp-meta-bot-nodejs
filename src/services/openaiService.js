@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { francAll } = require("franc-min");
 const UserThread = require("../models/UserThread");
 const Message = require("../models/Message");
 const { io } = require("../models/server");
@@ -187,13 +188,17 @@ async function addMessageToThread(threadId, message, context, headers) {
 }
 
 async function runAssistant(threadId, userId, headers, userLanguage = 'es') {
+  const languageInstruction = userLanguage === 'en' 
+    ? 'MANDATORY: You MUST respond in ENGLISH for this message. The user wrote in English, so respond in English only.'
+    : 'MANDATORY: You MUST respond in SPANISH for this message. The user wrote in Spanish, so respond in Spanish only.';
+
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
       additional_instructions: `The user's WhatsApp phone number is: ${userId}.
 
-CRITICAL: Respond in ${userLanguage === 'en' ? 'ENGLISH' : 'SPANISH'} for this message. Always match the language the user is currently using.`
+${languageInstruction}`
     },
     { headers }
   );
@@ -595,18 +600,30 @@ Return ONLY valid JSON, nothing else.`;
 }
 
 // ============================================
-// LANGUAGE DETECTION
+// LANGUAGE DETECTION (using franc-min library)
 // ============================================
 function detectLanguage(text) {
-  // Simple language detection based on common words
-  const englishWords = /\b(hi|hello|how|are|you|the|is|am|what|where|when|why|help|please|thank|thanks|yes|no|can|do|does|have|has|will|would|could|should|may|might|my|your|his|her|our|their|this|that|these|those|i|me|we|us)\b/i;
-  const spanishWords = /\b(hola|como|estas|que|donde|cuando|porque|por|ayuda|por favor|gracias|si|no|puede|hacer|tiene|mi|tu|su|nuestro|este|ese|estos|esos|yo|me|nosotros|nos|la|el|los|las|un|una|unos|unas)\b/i;
+  // Use franc for accurate language detection
+  // francAll returns array of [langCode, confidence] sorted by confidence
+  const results = francAll(text, { minLength: 2, only: ['eng', 'spa'] });
   
-  const englishMatches = (text.match(englishWords) || []).length;
-  const spanishMatches = (text.match(spanishWords) || []).length;
+  if (results.length === 0) {
+    // Fallback to Spanish if detection fails (most users are Spanish speakers)
+    return 'es';
+  }
   
-  // If more English words detected, return 'en', otherwise default to 'es'
-  return englishMatches > spanishMatches ? 'en' : 'es';
+  const topResult = results[0];
+  const detectedLang = topResult[0]; // 'eng' or 'spa'
+  const confidence = topResult[1];
+  
+  console.log(`🌐 Language detection: ${detectedLang} (confidence: ${confidence.toFixed(2)})`);
+  
+  // Map franc language codes to our codes
+  if (detectedLang === 'eng') return 'en';
+  if (detectedLang === 'spa') return 'es';
+  
+  // Default fallback
+  return 'es';
 }
 
 // ============================================
