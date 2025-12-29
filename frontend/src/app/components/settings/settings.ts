@@ -66,6 +66,7 @@ export class SettingsComponent implements OnInit {
   isSavingAssistant = false;
   isLoadingPreset = false;
   showPreview = false;
+  activePreset: string | null = null;
 
   // Confirmation Modal
   showConfirmModal = false;
@@ -355,6 +356,7 @@ export class SettingsComponent implements OnInit {
     this.configurationService.getAssistantConfiguration(true).subscribe({
       next: (config) => {
         this.assistantConfig = config;
+        this.detectActivePreset();
         console.log('[Settings] Assistant config loaded:', config);
       },
       error: (err) => {
@@ -376,6 +378,42 @@ export class SettingsComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Detect which preset is currently active based on assistant config
+   */
+  detectActivePreset() {
+    if (!this.assistantConfig) {
+      this.activePreset = null;
+      return;
+    }
+
+    const companyName = this.assistantConfig.companyName?.toLowerCase() || '';
+    const assistantName = this.assistantConfig.assistantName?.toLowerCase() || '';
+    const primaryService = this.assistantConfig.primaryServiceIssue?.toLowerCase() || '';
+
+    // Match based on company name or service type
+    if (companyName.includes('luxfree') || assistantName.includes('lúmen')) {
+      this.activePreset = 'luxfree';
+    } else if (companyName.includes('restaurante') || primaryService.includes('food') || primaryService.includes('comida')) {
+      this.activePreset = 'restaurant';
+    } else if (companyName.includes('tienda') || companyName.includes('shop') || primaryService.includes('ecommerce')) {
+      this.activePreset = 'ecommerce';
+    } else if (companyName.includes('clínica') || companyName.includes('clinic') || primaryService.includes('medical')) {
+      this.activePreset = 'healthcare';
+    } else {
+      this.activePreset = null; // Custom configuration
+    }
+
+    console.log('[Settings] Detected active preset:', this.activePreset);
+  }
+
+  /**
+   * Check if a preset is currently active
+   */
+  isPresetActive(presetId: string): boolean {
+    return this.activePreset === presetId;
   }
 
   /**
@@ -414,6 +452,7 @@ export class SettingsComponent implements OnInit {
       next: (response) => {
         this.isLoadingPreset = false;
         if (response.success) {
+          this.activePreset = presetId; // Set immediately
           this.toastService.success(`${presetName} preset loaded successfully!`);
           // Reload all assistant settings to reflect the new preset
           this.loadAssistantSettings();
