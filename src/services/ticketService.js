@@ -724,7 +724,7 @@ Gracias por tu paciencia.
     }
 
     /**
-     * Get conversation attachments for a ticket (not already attached to ticket)
+     * Get conversation attachments for a ticket (not already attached to ANY ticket)
      */
     async getConversationAttachments(ticketId) {
         const ticket = await Ticket.findOne({ $or: [{ _id: ticketId }, { ticketId }] });
@@ -741,14 +741,22 @@ Gracias por tu paciencia.
             sender: 'customer' // Only customer attachments
         }).sort({ timestamp: -1 });
 
-        // Get already attached message IDs
-        const attachedMessageIds = new Set(
-            (ticket.attachments || [])
-                .map(att => att.messageId?.toString())
-                .filter(Boolean)
-        );
+        // Get message IDs that are already attached to ANY ticket in this conversation
+        const allTickets = await Ticket.find({
+            conversationId: ticket.conversationId,
+            'attachments.0': { $exists: true }
+        }).select('attachments');
 
-        // Extract attachments that aren't already in the ticket
+        const attachedMessageIds = new Set();
+        allTickets.forEach(t => {
+            (t.attachments || []).forEach(att => {
+                if (att.messageId) {
+                    attachedMessageIds.add(att.messageId.toString());
+                }
+            });
+        });
+
+        // Extract attachments that aren't already attached to ANY ticket
         const conversationAttachments = [];
         messages.forEach(msg => {
             if (!attachedMessageIds.has(msg._id.toString())) {
@@ -785,6 +793,16 @@ Gracias por tu paciencia.
 
         if (!message || !message.attachments || message.attachments.length === 0) {
             throw new Error('Mensaje o adjunto no encontrado');
+        }
+
+        // Check if this message is already attached to ANY ticket
+        const existingTicket = await Ticket.findOne({
+            conversationId: ticket.conversationId,
+            'attachments.messageId': messageId
+        }).select('ticketId');
+
+        if (existingTicket) {
+            throw new Error(`Este adjunto ya está vinculado al ticket ${existingTicket.ticketId}`);
         }
 
         // Add all attachments from this message to the ticket
