@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Message } from '../../../services/chat';
@@ -12,11 +12,7 @@ import { Message } from '../../../services/chat';
 })
 export class MessageBubbleComponent {
   @Input() message!: Message;
-
-  // Image viewer
-  showImageViewer = false;
-  currentImageUrl = '';
-  currentImageFilename = '';
+  @Output() imageClick = new EventEmitter<{ url: string; filename: string }>();
 
   /**
    * Get message text with template parameters replaced
@@ -100,17 +96,8 @@ export class MessageBubbleComponent {
   }
 
   openImage(url: string, filename?: string) {
-    console.log('Opening image viewer:', url, filename);
-    this.currentImageUrl = url;
-    this.currentImageFilename = filename || 'Image';
-    this.showImageViewer = true;
-    console.log('Image viewer state:', this.showImageViewer);
-  }
-
-  closeImageViewer() {
-    this.showImageViewer = false;
-    this.currentImageUrl = '';
-    this.currentImageFilename = '';
+    console.log('Emitting image click:', url, filename);
+    this.imageClick.emit({ url, filename: filename || 'Image' });
   }
 
   onMapImageError(event: Event) {

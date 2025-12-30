@@ -53,6 +53,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   // Lifecycle actions loading states
   isResolvingChat = false;
   isClosingChat = false;
+
+  // Image Viewer
+  showImageViewer = false;
+  currentImageUrl = '';
+  currentImageFilename = '';
   isReopeningChat = false;
 
   constructor(
@@ -497,5 +502,23 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   onTicketCreated(ticket: any) {
     this.toastService.success(`Ticket ${ticket.ticketId} created successfully`);
     this.closeTicketCreateModal();
+  }
+
+  /**
+   * Open image viewer modal
+   */
+  openImageViewer(event: { url: string; filename: string }) {
+    this.currentImageUrl = event.url;
+    this.currentImageFilename = event.filename;
+    this.showImageViewer = true;
+  }
+
+  /**
+   * Close image viewer modal
+   */
+  closeImageViewer() {
+    this.showImageViewer = false;
+    this.currentImageUrl = '';
+    this.currentImageFilename = '';
   }
 }
