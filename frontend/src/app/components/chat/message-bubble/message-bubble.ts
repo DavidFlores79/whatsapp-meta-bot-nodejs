@@ -13,6 +13,11 @@ import { Message } from '../../../services/chat';
 export class MessageBubbleComponent {
   @Input() message!: Message;
 
+  // Image viewer
+  showImageViewer = false;
+  currentImageUrl = '';
+  currentImageFilename = '';
+
   /**
    * Get message text with template parameters replaced
    */
@@ -94,8 +99,16 @@ export class MessageBubbleComponent {
     }
   }
 
-  openImage(url: string) {
-    window.open(url, '_blank');
+  openImage(url: string, filename?: string) {
+    this.currentImageUrl = url;
+    this.currentImageFilename = filename || 'Image';
+    this.showImageViewer = true;
+  }
+
+  closeImageViewer() {
+    this.showImageViewer = false;
+    this.currentImageUrl = '';
+    this.currentImageFilename = '';
   }
 
   onMapImageError(event: Event) {
