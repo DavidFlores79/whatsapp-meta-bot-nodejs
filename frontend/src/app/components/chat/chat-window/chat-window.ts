@@ -27,6 +27,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTyping = false;
   private typingTimeout: any;
   private lastMessageCount = 0;
+  private lastChatId: string | null = null;
   private shouldScroll = false;
 
   // Customer Modal
@@ -74,9 +75,13 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     this.selectedChat$.subscribe(chat => {
       if (chat && chat.messages) {
         const newMessageCount = chat.messages.length;
-        if (newMessageCount > this.lastMessageCount) {
+        const chatChanged = chat.id !== this.lastChatId;
+        
+        // Scroll when: new chat selected OR new messages added
+        if (chatChanged || newMessageCount > this.lastMessageCount) {
           this.shouldScroll = true;
           this.lastMessageCount = newMessageCount;
+          this.lastChatId = chat.id;
         }
       }
     });
