@@ -180,6 +180,75 @@
               </div>
             </div>
           </div>
+
+          <!-- Conversation Attachments Card -->
+          <div class="bg-whatsapp-dark rounded-lg border border-blue-700 p-4" *ngIf="ticket.conversationId && (loadingConversationAttachments || conversationAttachments.length > 0)">
+            <h3 class="text-sm font-semibold mb-3 text-blue-400 uppercase tracking-wide">
+              Conversation Attachments
+              <span class="text-xs text-gray-400 ml-2">(not yet in ticket)</span>
+            </h3>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingConversationAttachments" class="text-center py-6">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+              <p class="mt-2 text-sm text-gray-400">Loading conversation attachments...</p>
+            </div>
+
+            <!-- Attachments List -->
+            <div *ngIf="!loadingConversationAttachments && conversationAttachments.length > 0" class="space-y-3">
+              <div *ngFor="let attachment of conversationAttachments" class="p-3 bg-whatsapp-gray rounded-lg border border-gray-600 hover:border-blue-600 transition-colors">
+                <div class="flex items-start gap-3 mb-2">
+                  <!-- Icon based on type -->
+                  <div class="flex-shrink-0 mt-1">
+                    <svg *ngIf="attachment.type === 'image'" class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <svg *ngIf="attachment.type === 'document'" class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <svg *ngIf="attachment.type === 'audio'" class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                    <svg *ngIf="attachment.type === 'video'" class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+
+                  <!-- Attachment details -->
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-200 truncate font-medium">{{ attachment.filename || 'Untitled' }}</p>
+                    <p class="text-xs text-gray-500 uppercase mb-1">{{ attachment.type }}</p>
+                    <p class="text-xs text-gray-400" *ngIf="attachment.timestamp">
+                      Sent {{ attachment.timestamp | date:'MMM d, h:mm a' }}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1 truncate" *ngIf="attachment.content">
+                      Message: "{{ attachment.content }}"
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex gap-2 mt-3">
+                  <a [href]="attachment.url" target="_blank" rel="noopener noreferrer"
+                     class="flex-1 px-3 py-1.5 text-xs text-center bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">
+                    View
+                  </a>
+                  <button (click)="attachToTicket(attachment.messageId)"
+                          class="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                    Attach to Ticket
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!loadingConversationAttachments && conversationAttachments.length === 0" class="text-center py-4">
+              <svg class="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <p class="text-sm text-gray-400">All conversation attachments have been added to this ticket</p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -722,6 +722,103 @@ Gracias por tu paciencia.
 
         return populatedTicket;
     }
+
+    /**
+     * Get conversation attachments for a ticket (not already attached to ticket)
+     */
+    async getConversationAttachments(ticketId) {
+        const ticket = await Ticket.findOne({ $or: [{ _id: ticketId }, { ticketId }] });
+
+        if (!ticket || !ticket.conversationId) {
+            return [];
+        }
+
+        // Get all messages from the conversation with attachments
+        const Message = require('../models/Message');
+        const messages = await Message.find({
+            conversationId: ticket.conversationId,
+            'attachments.0': { $exists: true }, // Has at least one attachment
+            sender: 'customer' // Only customer attachments
+        }).sort({ timestamp: -1 });
+
+        // Get already attached message IDs
+        const attachedMessageIds = new Set(
+            (ticket.attachments || [])
+                .map(att => att.messageId?.toString())
+                .filter(Boolean)
+        );
+
+        // Extract attachments that aren't already in the ticket
+        const conversationAttachments = [];
+        messages.forEach(msg => {
+            if (!attachedMessageIds.has(msg._id.toString())) {
+                msg.attachments.forEach(att => {
+                    conversationAttachments.push({
+                        messageId: msg._id,
+                        type: att.type,
+                        url: att.url,
+                        publicId: att.publicId,
+                        filename: att.filename,
+                        mimeType: att.mimeType,
+                        timestamp: msg.timestamp,
+                        content: msg.content
+                    });
+                });
+            }
+        });
+
+        return conversationAttachments;
+    }
+
+    /**
+     * Attach a conversation message's attachment to a ticket
+     */
+    async attachMessageToTicket(ticketId, messageId) {
+        const ticket = await Ticket.findOne({ $or: [{ _id: ticketId }, { ticketId }] });
+
+        if (!ticket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        const Message = require('../models/Message');
+        const message = await Message.findById(messageId);
+
+        if (!message || !message.attachments || message.attachments.length === 0) {
+            throw new Error('Mensaje o adjunto no encontrado');
+        }
+
+        // Add all attachments from this message to the ticket
+        const newAttachments = message.attachments.map(att => ({
+            type: att.type,
+            url: att.url,
+            publicId: att.publicId,
+            filename: att.filename,
+            mimeType: att.mimeType,
+            messageId: message._id,
+            addedAt: new Date()
+        }));
+
+        ticket.attachments = ticket.attachments || [];
+        ticket.attachments.push(...newAttachments);
+
+        await ticket.save();
+
+        // Populate and return
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('resolution.resolvedBy', 'firstName lastName')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event
+        if (io) {
+            io.emit('ticket_updated', {
+                ticket: populatedTicket
+            });
+        }
+
+        return populatedTicket;
+    }
 }
 
 module.exports = new TicketService();

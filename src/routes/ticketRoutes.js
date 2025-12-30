@@ -82,4 +82,17 @@ router.put('/:id/reopen', ticketController.reopenTicket);
  */
 router.put('/:id/escalate', ticketController.escalateTicket);
 
+/**
+ * GET /api/v2/tickets/:id/conversation-attachments
+ * Get attachments from conversation that aren't yet attached to ticket
+ */
+router.get('/:id/conversation-attachments', ticketController.getConversationAttachments);
+
+/**
+ * POST /api/v2/tickets/:id/attach-message
+ * Attach a conversation message's attachments to the ticket
+ * Body: { messageId }
+ */
+router.post('/:id/attach-message', ticketController.attachMessageToTicket);
+
 module.exports = router;

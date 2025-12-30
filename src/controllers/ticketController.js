@@ -425,6 +425,59 @@ async function getStatistics(req, res) {
     }
 }
 
+/**
+ * Get conversation attachments for a ticket
+ */
+async function getConversationAttachments(req, res) {
+    try {
+        const { id } = req.params;
+
+        const attachments = await ticketService.getConversationAttachments(id);
+
+        res.json({
+            success: true,
+            data: attachments
+        });
+    } catch (error) {
+        console.error('Error getting conversation attachments:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener adjuntos de la conversación'
+        });
+    }
+}
+
+/**
+ * Attach a conversation message to a ticket
+ */
+async function attachMessageToTicket(req, res) {
+    try {
+        const { id } = req.params;
+        const { messageId } = req.body;
+
+        if (!messageId) {
+            return res.status(400).json({
+                success: false,
+                error: 'messageId es requerido'
+            });
+        }
+
+        const ticket = await ticketService.attachMessageToTicket(id, messageId);
+
+        res.json({
+            success: true,
+            data: ticket,
+            message: 'Adjunto añadido al ticket exitosamente'
+        });
+    } catch (error) {
+        console.error('Error attaching message to ticket:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al añadir adjunto al ticket'
+        });
+    }
+}
+
 module.exports = {
     getTickets,
     getTicket,
@@ -438,5 +491,7 @@ module.exports = {
     escalateTicket,
     getCustomerTickets,
     getConversationTickets,
-    getStatistics
+    getStatistics,
+    getConversationAttachments,
+    attachMessageToTicket
 };

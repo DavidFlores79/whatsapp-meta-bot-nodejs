@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TicketService, Ticket } from '../../../services/ticket';
@@ -34,8 +35,13 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   newNote = '';
   noteIsInternal = true;
 
+  // Conversation attachments
+  conversationAttachments: any[] = [];
+  loadingConversationAttachments = false;
+
   constructor(
     private ticketService: TicketService,
+    private http: HttpClient,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
     private toast: ToastService
@@ -84,6 +90,10 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
             this.loading = false;
             this.cdr.detectChanges();
           });
+          // Load conversation attachments if ticket has a conversation
+          if (ticket.conversationId) {
+            this.loadConversationAttachments();
+          }
         },
         error: (err) => {
           console.error('[TicketModal] Error loading ticket:', err);
@@ -93,6 +103,47 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
             this.cdr.detectChanges();
           });
           this.toast.error('Failed to load ticket');
+        }
+      });
+  }
+
+  loadConversationAttachments() {
+    if (!this.ticketId) return;
+
+    this.loadingConversationAttachments = true;
+
+    this.http.get<{success: boolean, data: any[]}>(`/api/v2/tickets/${this.ticketId}/conversation-attachments`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.conversationAttachments = response.data || [];
+          this.loadingConversationAttachments = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading conversation attachments:', err);
+          this.loadingConversationAttachments = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  attachToTicket(messageId: string) {
+    if (!this.ticketId) return;
+
+    this.http.post<{success: boolean, data: Ticket}>(`/api/v2/tickets/${this.ticketId}/attach-message`, { messageId })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.ticket = response.data;
+          this.toast.success('Attachment added to ticket');
+          // Reload conversation attachments to update the list
+          this.loadConversationAttachments();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error attaching to ticket:', err);
+          this.toast.error('Failed to attach to ticket');
         }
       });
   }
