@@ -108,7 +108,7 @@ async function resumeAIForConversation(conversation, agent) {
             assignmentHistory.releasedAt = releaseTime;
             assignmentHistory.calculateDuration();
             assignmentHistory.releaseReason = 'auto_timeout_inactivity';
-            assignmentHistory.releaseMethod = 'system';
+            assignmentHistory.releaseMethod = 'timeout';
             assignmentHistory.finalStatus = 'open'; // Reopened for AI
             
             assignmentHistory.agentSummary = {
