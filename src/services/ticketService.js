@@ -735,13 +735,14 @@ Gracias por tu paciencia.
         }
 
         // Get time limit from configuration (default 48 hours)
-        const configService = require('./configurationService');
         const ticketBehavior = await configService.getTicketBehavior();
         const hoursLimit = ticketBehavior.attachmentHoursLimit || 48;
 
         // Calculate cutoff date
         const cutoffDate = new Date();
         cutoffDate.setHours(cutoffDate.getHours() - hoursLimit);
+
+        console.log(`[Ticket Attachments] Looking for messages after ${cutoffDate.toISOString()} (last ${hoursLimit} hours)`);
 
         // Get all messages from the conversation with attachments within time limit
         const Message = require('../models/Message');
@@ -751,6 +752,8 @@ Gracias por tu paciencia.
             sender: 'customer', // Only customer attachments
             timestamp: { $gte: cutoffDate } // Only recent messages
         }).sort({ timestamp: -1 });
+
+        console.log(`[Ticket Attachments] Found ${messages.length} messages with attachments in time window`);
 
         // Get message IDs that are already attached to ANY ticket in this conversation
         const allTickets = await Ticket.find({
