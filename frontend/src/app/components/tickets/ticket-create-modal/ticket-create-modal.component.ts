@@ -146,16 +146,12 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
 
           // Create a structured description with conversation context
           if (customerMessages.length > 0 && !this.formData.description) {
-            let description = '## Conversation Summary\n\n';
-
-            // Main issue (first message)
-            if (customerMessages.length > 0) {
-              description += `**Main Issue:**\n${customerMessages[0].content}\n\n`;
-            }
+            let description = 'MAIN ISSUE:\n';
+            description += customerMessages[0].content + '\n\n';
 
             // Additional details (subsequent messages if any)
             if (customerMessages.length > 1) {
-              description += '**Additional Information:**\n';
+              description += 'ADDITIONAL INFORMATION:\n';
               customerMessages.slice(1).forEach((msg: any, index: number) => {
                 description += `${index + 1}. ${msg.content}\n`;
               });
@@ -163,9 +159,9 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
             }
 
             // Add metadata
-            description += '---\n';
-            description += `*This ticket was created from conversation with ${customerMessages.length} customer message(s)*\n`;
-            description += `*Conversation ID: ${this.conversationId}*`;
+            description += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+            description += `Ticket created from conversation (${customerMessages.length} customer messages)\n`;
+            description += `Conversation ID: ${this.conversationId}`;
 
             this.formData.description = description;
           }
