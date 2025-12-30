@@ -16,9 +16,9 @@ import { ToastService } from '../../../services/toast';
 })
 export class TicketCreateModalComponent implements OnInit, OnChanges {
   @Input() show = false;
-  @Input() customerId: string | null = null;
-  @Input() conversationId: string | null = null;
-  @Input() customerPhone: string | null = null;
+  @Input() customerId?: string | null;
+  @Input() conversationId?: string | null;
+  @Input() customerPhone?: string | null;
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<Ticket>();
 

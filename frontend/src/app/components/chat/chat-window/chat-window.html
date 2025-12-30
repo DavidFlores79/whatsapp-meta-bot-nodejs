@@ -319,6 +319,16 @@
     </div>
 </div>
 
+<!-- Ticket Create Modal -->
+<app-ticket-create-modal
+    [show]="isTicketCreateModalOpen"
+    [customerId]="ticketCustomerId"
+    [conversationId]="ticketConversationId"
+    [customerPhone]="ticketCustomerPhone"
+    (close)="closeTicketCreateModal()"
+    (saved)="onTicketCreated($event)">
+</app-ticket-create-modal>
+
 <ng-template #noChat>
     <div
         class="flex flex-col items-center justify-center h-full text-gray-400 bg-whatsapp-dark border-b-[6px] border-whatsapp-green">

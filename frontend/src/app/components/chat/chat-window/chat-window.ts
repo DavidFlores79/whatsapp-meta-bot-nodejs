@@ -11,12 +11,13 @@ import { MessageInputComponent } from '../message-input/message-input';
 import { CustomerModalComponent } from '../../customers/customer-modal/customer-modal';
 import { TemplateSenderComponent } from '../../templates/template-sender/template-sender';
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge';
+import { TicketCreateModalComponent } from '../../tickets/ticket-create-modal/ticket-create-modal.component';
 import { Customer } from '../../../services/customer';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent],
+  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent, TicketCreateModalComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })
@@ -34,6 +35,12 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   // Template Sender Modal
   isTemplateSenderOpen = false;
   selectedCustomerIdForTemplate?: string;
+
+  // Ticket Create Modal
+  isTicketCreateModalOpen = false;
+  ticketCustomerId?: string | null;
+  ticketConversationId?: string | null;
+  ticketCustomerPhone?: string | null;
 
   // Takeover Summary Modal
   isSummaryModalOpen = false;
@@ -450,13 +457,28 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
       ? chat.customerId
       : (chat.customerId as any)._id;
 
-    // Navigate to ticket creation form with conversation context
-    this.router.navigate(['/tickets/new'], {
-      queryParams: {
-        customerId,
-        customerPhone: chat.phoneNumber,
-        conversationId: chat.id
-      }
-    });
+    // Open ticket creation modal with conversation context
+    this.ticketCustomerId = customerId;
+    this.ticketConversationId = chat.id;
+    this.ticketCustomerPhone = chat.phoneNumber;
+    this.isTicketCreateModalOpen = true;
+  }
+
+  /**
+   * Close ticket create modal
+   */
+  closeTicketCreateModal() {
+    this.isTicketCreateModalOpen = false;
+    this.ticketCustomerId = null;
+    this.ticketConversationId = null;
+    this.ticketCustomerPhone = null;
+  }
+
+  /**
+   * Handle ticket created
+   */
+  onTicketCreated(ticket: any) {
+    this.toastService.success(`Ticket ${ticket.ticketId} created successfully`);
+    this.closeTicketCreateModal();
   }
 }
