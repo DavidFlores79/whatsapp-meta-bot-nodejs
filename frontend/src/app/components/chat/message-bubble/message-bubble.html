@@ -123,23 +123,28 @@
     </div>
 </div>
 
-<!-- Image Viewer Modal -->
-<div *ngIf="showImageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-[100] flex items-center justify-center p-4" (click)="closeImageViewer()">
+<!-- Image Viewer Modal - Render at root level outside message container -->
+<div *ngIf="showImageViewer" 
+     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4" 
+     style="z-index: 9999;"
+     (click)="closeImageViewer()">
   <div class="relative max-w-7xl max-h-full flex flex-col">
     <!-- Close button -->
-    <button (click)="closeImageViewer()" class="absolute top-2 right-2 z-10 bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white rounded-full p-2 transition-all">
+    <button (click)="closeImageViewer()" 
+            class="absolute top-2 right-2 bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white rounded-full p-2 transition-all"
+            style="z-index: 10000;">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
-    
+
     <!-- Image container -->
     <div class="flex items-center justify-center" (click)="$event.stopPropagation()">
-      <img [src]="currentImageUrl" 
-           [alt]="currentImageFilename" 
+      <img [src]="currentImageUrl"
+           [alt]="currentImageFilename"
            class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
     </div>
-    
+
     <!-- Filename -->
     <div class="mt-4 text-center text-white bg-gray-800 bg-opacity-75 rounded-lg px-4 py-2">
       <p class="text-sm font-medium">{{ currentImageFilename }}</p>

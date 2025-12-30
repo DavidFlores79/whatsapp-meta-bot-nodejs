@@ -153,11 +153,11 @@
             <div class="space-y-2">
               <div *ngFor="let attachment of ticket.attachments" class="relative flex items-center gap-3 p-2 bg-whatsapp-gray rounded-lg hover:bg-gray-700 transition-colors group">
                 <!-- Thumbnail preview on hover (images only) -->
-                <div *ngIf="attachment.type === 'image'" 
+                <div *ngIf="attachment.type === 'image'"
                      class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
                   <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-2">
-                    <img [src]="attachment.url" 
-                         [alt]="attachment.filename" 
+                    <img [src]="attachment.url"
+                         [alt]="attachment.filename"
                          class="max-w-xs max-h-64 object-contain rounded">
                     <div class="text-xs text-gray-400 mt-1 text-center">{{ attachment.filename }}</div>
                   </div>
@@ -221,11 +221,11 @@
             <div *ngIf="!loadingConversationAttachments && conversationAttachments.length > 0" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
               <div *ngFor="let attachment of conversationAttachments" class="relative p-3 bg-whatsapp-gray rounded-lg border border-gray-600 hover:border-blue-600 transition-colors group">
                 <!-- Thumbnail preview on hover (images only) -->
-                <div *ngIf="attachment.type === 'image'" 
+                <div *ngIf="attachment.type === 'image'"
                      class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
                   <div class="bg-gray-900 border border-blue-700 rounded-lg shadow-2xl p-2">
-                    <img [src]="attachment.url" 
-                         [alt]="attachment.filename" 
+                    <img [src]="attachment.url"
+                         [alt]="attachment.filename"
                          class="max-w-sm max-h-80 object-contain rounded">
                     <div class="text-xs text-gray-400 mt-1 text-center">{{ attachment.filename }}</div>
                   </div>
@@ -384,14 +384,14 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
-    
+
     <!-- Image container -->
     <div class="flex items-center justify-center" (click)="$event.stopPropagation()">
-      <img [src]="currentImage?.url" 
-           [alt]="currentImage?.filename" 
+      <img [src]="currentImage?.url"
+           [alt]="currentImage?.filename"
            class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
     </div>
-    
+
     <!-- Filename -->
     <div class="mt-4 text-center text-white bg-gray-800 bg-opacity-75 rounded-lg px-4 py-2">
       <p class="text-sm font-medium">{{ currentImage?.filename }}</p>

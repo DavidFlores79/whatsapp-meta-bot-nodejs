@@ -26,6 +26,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
   isTyping = false;
   private typingTimeout: any;
+  private lastMessageCount = 0;
+  private shouldScroll = false;
 
   // Customer Modal
   isCustomerModalOpen = false;
@@ -63,6 +65,17 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   ngOnInit() {
+    // Track message count changes to determine when to scroll
+    this.selectedChat$.subscribe(chat => {
+      if (chat && chat.messages) {
+        const newMessageCount = chat.messages.length;
+        if (newMessageCount > this.lastMessageCount) {
+          this.shouldScroll = true;
+          this.lastMessageCount = newMessageCount;
+        }
+      }
+    });
+
     // Subscribe to typing indicators
     this.chatService.onTyping().subscribe(typingData => {
       if (!typingData) {
@@ -106,7 +119,11 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked() {
-    this.scrollToBottom();
+    // Only scroll to bottom when messages are added, not on every change
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
   }
 
   scrollToBottom(): void {
