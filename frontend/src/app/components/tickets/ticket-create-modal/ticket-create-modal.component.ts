@@ -125,14 +125,17 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
         try {
           const backendMessages = response.messages || [];
 
-          // Get all messages with metadata
+          // Get all messages with metadata (including rich content)
           const allMessages = backendMessages
             .slice(-10)
             .map((m: any) => ({
               content: m.content || '',
               direction: m.direction,
               timestamp: m.timestamp ? new Date(m.timestamp) : null,
-              isCustomer: m.direction === 'in' || m.sender === 'customer'
+              isCustomer: m.direction === 'inbound' || m.sender === 'customer',
+              type: m.type || 'text',
+              location: m.location,
+              attachments: m.attachments || []
             }));
 
           const customerMessages = allMessages.filter((m: any) => m.isCustomer);
@@ -147,13 +150,13 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
           // Create a structured description with conversation context
           if (customerMessages.length > 0 && !this.formData.description) {
             let description = 'MAIN ISSUE:\n';
-            description += customerMessages[0].content + '\n\n';
+            description += this.formatMessageContent(customerMessages[0]) + '\n\n';
 
             // Additional details (subsequent messages if any)
             if (customerMessages.length > 1) {
               description += 'ADDITIONAL INFORMATION:\n';
               customerMessages.slice(1).forEach((msg: any, index: number) => {
-                description += `${index + 1}. ${msg.content}\n`;
+                description += `${index + 1}. ${this.formatMessageContent(msg)}\n`;
               });
               description += '\n';
             }
@@ -255,5 +258,41 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
     if (!this.customer) return 'C';
     if (this.customer.firstName) return this.customer.firstName.charAt(0).toUpperCase();
     return this.customer.phoneNumber?.charAt(0) || 'C';
+  }
+
+  /**
+   * Format message content with rich context (images, locations, etc.)
+   */
+  private formatMessageContent(msg: any): string {
+    let formatted = msg.content;
+
+    // Add message type indicator
+    if (msg.type !== 'text') {
+      formatted = `[${msg.type.toUpperCase()}] ${formatted}`;
+    }
+
+    // Add location information
+    if (msg.location && (msg.location.latitude || msg.location.address)) {
+      formatted += '\n   📍 Location:';
+      if (msg.location.name) {
+        formatted += ` ${msg.location.name}`;
+      }
+      if (msg.location.address) {
+        formatted += ` - ${msg.location.address}`;
+      }
+      if (msg.location.latitude && msg.location.longitude) {
+        formatted += `\n   Coordinates: ${msg.location.latitude}, ${msg.location.longitude}`;
+        formatted += `\n   Map: https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}`;
+      }
+    }
+
+    // Add attachment information
+    if (msg.attachments && msg.attachments.length > 0) {
+      msg.attachments.forEach((att: any) => {
+        formatted += `\n   📎 ${att.type.toUpperCase()}: ${att.url || att.filename || 'Attachment'}`;
+      });
+    }
+
+    return formatted;
   }
 }
