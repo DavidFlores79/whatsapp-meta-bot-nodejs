@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 import { AuthService, Agent } from './auth';
@@ -79,8 +79,12 @@ export class ChatService {
   private conversationSummarySubject = new BehaviorSubject<any>(null);
 
   chats$ = this.chatsSubject.asObservable();
-  selectedChat$ = this.selectedChatIdSubject.asObservable().pipe(
-    map(chatId => this.mockChats.find(c => c.id === chatId) || null)
+  // Use combineLatest to emit when EITHER chatId changes OR chats array updates (e.g., messages loaded)
+  selectedChat$ = combineLatest([
+    this.selectedChatIdSubject.asObservable(),
+    this.chatsSubject.asObservable()
+  ]).pipe(
+    map(([chatId, chats]) => chats.find(c => c.id === chatId) || null)
   );
 
   // Observable for conversation summaries (when auto-assigned or manually taken over)

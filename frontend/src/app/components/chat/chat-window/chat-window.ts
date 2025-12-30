@@ -24,11 +24,13 @@ import { Customer } from '../../../services/customer';
 export class ChatWindowComponent implements OnInit, AfterViewChecked {
   selectedChat$: Observable<Chat | null>;
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  @ViewChild('scrollAnchor') private scrollAnchor!: ElementRef;
   isTyping = false;
   private typingTimeout: any;
   private lastMessageCount = 0;
   private lastChatId: string | null = null;
   private shouldScroll = false;
+  private scrollAttempts = 0;
 
   // Customer Modal
   isCustomerModalOpen = false;
@@ -73,15 +75,28 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   ngOnInit() {
     // Track message count changes to determine when to scroll
     this.selectedChat$.subscribe(chat => {
-      if (chat && chat.messages) {
-        const newMessageCount = chat.messages.length;
+      if (chat) {
         const chatChanged = chat.id !== this.lastChatId;
-        
-        // Scroll when: new chat selected OR new messages added
-        if (chatChanged || newMessageCount > this.lastMessageCount) {
-          this.shouldScroll = true;
-          this.lastMessageCount = newMessageCount;
+        const currentMessageCount = chat.messages?.length || 0;
+
+        if (chatChanged) {
+          // Chat switched - reset tracking
           this.lastChatId = chat.id;
+          this.lastMessageCount = 0; // Reset to 0 so we scroll when messages load
+
+          // If messages are already loaded (cached), scroll immediately
+          if (currentMessageCount > 0) {
+            this.lastMessageCount = currentMessageCount;
+            this.shouldScroll = true;
+            this.forceScrollToBottom();
+          }
+          // Otherwise, wait for messages to load (handled by the else-if below)
+        } else if (currentMessageCount > this.lastMessageCount) {
+          // Messages loaded for current chat OR new messages added - scroll to bottom
+          this.shouldScroll = true;
+          this.lastMessageCount = currentMessageCount;
+          // Force scroll when messages first load for a newly selected chat
+          this.forceScrollToBottom();
         }
       }
     });
@@ -138,8 +153,43 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
 
   scrollToBottom(): void {
     try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-    } catch (err) { }
+      // Multiple attempts to ensure scroll works
+      const scroll = () => {
+        if (this.scrollAnchor?.nativeElement) {
+          // Method 1: Use scrollIntoView on anchor element at bottom
+          this.scrollAnchor.nativeElement.scrollIntoView({ behavior: 'auto', block: 'end' });
+        } else if (this.scrollContainer?.nativeElement) {
+          // Method 2: Fallback to scrollTop
+          const element = this.scrollContainer.nativeElement;
+          element.scrollTop = element.scrollHeight;
+        }
+      };
+
+      // Immediate scroll
+      scroll();
+
+      // Delayed scroll to ensure DOM is rendered
+      setTimeout(scroll, 50);
+      setTimeout(scroll, 150);
+    } catch (err) {
+      console.error('Scroll error:', err);
+    }
+  }
+
+  /**
+   * Force scroll to bottom with multiple delayed attempts
+   * Used when switching chats or loading messages for the first time
+   */
+  forceScrollToBottom(): void {
+    // Use requestAnimationFrame to wait for DOM render
+    requestAnimationFrame(() => {
+      this.scrollToBottom();
+      // Additional delayed scrolls to ensure DOM is fully rendered with all messages
+      setTimeout(() => this.scrollToBottom(), 50);
+      setTimeout(() => this.scrollToBottom(), 100);
+      setTimeout(() => this.scrollToBottom(), 200);
+      setTimeout(() => this.scrollToBottom(), 400);
+    });
   }
 
   /**
