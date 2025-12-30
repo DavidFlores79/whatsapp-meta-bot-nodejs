@@ -28,6 +28,8 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
   customer: Customer | null = null;
   conversationMessages: string[] = [];
   availableCategories: TicketCategory[] = [];
+  conversationAttachments: any[] = [];
+  conversationLocation: any = null;
 
   formData = {
     subject: '',
@@ -86,6 +88,8 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
     };
     this.customer = null;
     this.conversationMessages = [];
+    this.conversationAttachments = [];
+    this.conversationLocation = null;
     this.loading = false;
   }
 
@@ -140,6 +144,33 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
 
           const customerMessages = allMessages.filter((m: any) => m.isCustomer);
           this.conversationMessages = customerMessages.map((m: any) => m.content);
+
+          // Extract all attachments from customer messages
+          this.conversationAttachments = [];
+          customerMessages.forEach((msg: any) => {
+            if (msg.attachments && msg.attachments.length > 0) {
+              msg.attachments.forEach((att: any) => {
+                this.conversationAttachments.push({
+                  type: att.type,
+                  url: att.url,
+                  publicId: att.publicId,
+                  filename: att.filename,
+                  mimeType: att.mimeType
+                });
+              });
+            }
+          });
+
+          // Extract location from first message with location data
+          const messageWithLocation = customerMessages.find((m: any) => m.location && (m.location.latitude || m.location.address));
+          if (messageWithLocation) {
+            this.conversationLocation = {
+              latitude: messageWithLocation.location.latitude,
+              longitude: messageWithLocation.location.longitude,
+              address: messageWithLocation.location.address,
+              formattedAddress: messageWithLocation.location.name || messageWithLocation.location.address
+            };
+          }
 
           // Auto-suggest subject from the first customer message (usually the main issue)
           if (customerMessages.length > 0 && !this.formData.subject) {
@@ -220,7 +251,9 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
       priority: this.formData.priority,
       customerPhone: this.formData.customerPhone,
       customerId: this.customerId || undefined,
-      conversationId: this.conversationId || undefined
+      conversationId: this.conversationId || undefined,
+      attachments: this.conversationAttachments.length > 0 ? this.conversationAttachments : undefined,
+      location: this.conversationLocation || undefined
     };
 
     this.ticketService.createTicket(ticketData).subscribe({

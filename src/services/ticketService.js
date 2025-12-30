@@ -96,7 +96,7 @@ class TicketService {
      * Create ticket from agent (manual creation)
      */
     async createTicketFromAgent(data, agentId) {
-        const { subject, description, category, priority, customerId, conversationId, tags } = data;
+        const { subject, description, category, priority, customerId, conversationId, tags, attachments, location } = data;
 
         // Validate category
         const isValidCategory = await this.validateCategory(category);
@@ -118,7 +118,9 @@ class TicketService {
             priority: priority || 'medium',
             status: 'open',
             assignedAgent: agentId,
-            tags
+            tags,
+            attachments: attachments || [],
+            location: location || undefined
         });
 
         await ticket.save();

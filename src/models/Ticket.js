@@ -101,6 +101,26 @@ const ticketSchema = new mongoose.Schema({
         }
     },
 
+    // Attachments from conversation (images, documents, etc.)
+    attachments: [{
+        type: {
+            type: String,
+            enum: ['image', 'document', 'audio', 'video']
+        },
+        url: String,
+        publicId: String,
+        filename: String,
+        mimeType: String,
+        messageId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Message'
+        },
+        addedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
     // Resolution information
     resolution: {
         summary: String,
