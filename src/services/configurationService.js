@@ -35,6 +35,13 @@ class ConfigurationService {
     }
 
     /**
+     * Get ticket behavior configuration (reopen window, etc.)
+     */
+    async getTicketBehavior() {
+        return this.getSetting('ticket_behavior', this.getDefaultTicketBehavior());
+    }
+
+    /**
      * Get assistant instructions template
      */
     async getInstructionsTemplate() {
@@ -179,6 +186,19 @@ class ConfigurationService {
             includeYear: true,
             padLength: 6,
             separator: '-'
+        };
+    }
+
+    getDefaultTicketBehavior() {
+        return {
+            // Auto-reopen window in hours (72 hours = 3 days)
+            autoReopenWindowHours: 72,
+            // Whether to allow reopening closed tickets
+            allowReopenClosed: false,
+            // Whether to allow reopening escalated tickets
+            allowReopenEscalated: false,
+            // Maximum number of times a ticket can be reopened
+            maxReopenCount: 3
         };
     }
 

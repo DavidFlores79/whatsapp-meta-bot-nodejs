@@ -411,37 +411,60 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
               error: `No se pudo crear el ${terminology.ticketSingular}. Cliente no encontrado.`
             });
           } else {
-            // Find conversation ID from thread
-            const userThread = await UserThread.findOne({ userId, threadId });
-            const conversationId = userThread ? userThread.conversationId : null;
+            // Check if customer has a recently resolved ticket that should be reopened instead
+            const recentResolvedTicket = await ticketService.findRecentResolvedTicket(customer._id);
 
-            // Validate and create ticket
-            const categories = await configService.getTicketCategories();
-            const validCategories = categories.map(c => c.id);
+            if (recentResolvedTicket) {
+              // Reopen the existing ticket instead of creating a new one
+              console.log(`🔄 Found recent resolved ticket ${recentResolvedTicket.ticketId}, reopening instead of creating new ticket`);
 
-            // Fallback to 'other' if invalid category
-            let category = args.category || args.categoria || 'other';
-            if (!validCategories.includes(category)) {
-              category = 'other';
+              const reopenedTicket = await ticketService.reopenTicket(
+                recentResolvedTicket.ticketId,
+                `Customer reported: ${subject}. ${description}`
+              );
+
+              output = JSON.stringify({
+                success: true,
+                ticketId: reopenedTicket.ticketId,
+                message: `Tu ${terminology.ticketSingular} anterior ${reopenedTicket.ticketId} ha sido reabierto. Continuaremos ayudándote con este caso.`,
+                reopened: true,
+                reopenCount: reopenedTicket.reopenCount
+              });
+            } else {
+              // No recent resolved ticket, create a new one
+              // Find conversation ID from thread
+              const userThread = await UserThread.findOne({ userId, threadId });
+              const conversationId = userThread ? userThread.conversationId : null;
+
+              // Validate and create ticket
+              const categories = await configService.getTicketCategories();
+              const validCategories = categories.map(c => c.id);
+
+              // Fallback to 'other' if invalid category
+              let category = args.category || args.categoria || 'other';
+              if (!validCategories.includes(category)) {
+                category = 'other';
+              }
+
+              const ticket = await ticketService.createTicketFromAI({
+                subject,
+                description,
+                category,
+                priority: args.priority || args.prioridad || 'medium',
+                location: args.location || args.ubicacion,
+                customerId: customer._id,
+                conversationId
+              });
+
+              console.log("✅ create_ticket_report - Ticket created successfully:", ticket.ticketId);
+
+              output = JSON.stringify({
+                success: true,
+                ticketId: ticket.ticketId,
+                message: `${terminology.ticketSingular} creado exitosamente con ID: ${ticket.ticketId}`,
+                reopened: false
+              });
             }
-
-            const ticket = await ticketService.createTicketFromAI({
-              subject,
-              description,
-              category,
-              priority: args.priority || args.prioridad || 'medium',
-              location: args.location || args.ubicacion,
-              customerId: customer._id,
-              conversationId
-            });
-
-            console.log("✅ create_ticket_report - Ticket created successfully:", ticket.ticketId);
-
-            output = JSON.stringify({
-              success: true,
-              ticketId: ticket.ticketId,
-              message: `${terminology.ticketSingular} creado exitosamente con ID: ${ticket.ticketId}`
-            });
           }
         }
       } else if (functionName === "get_ticket_information") {

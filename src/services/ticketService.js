@@ -153,9 +153,10 @@ class TicketService {
                 .populate('conversationId')
                 .populate('assignedAgent', 'firstName lastName email')
                 .populate('escalatedTo', 'firstName lastName email')
+                .populate('resolution.resolvedBy', 'firstName lastName email')
                 .populate('notes.agent', 'firstName lastName');
         }
-        
+
         // If not found by _id, try ticketId (human-readable ID)
         // Use case-insensitive search with regex
         if (!ticket) {
@@ -164,6 +165,7 @@ class TicketService {
                 .populate('conversationId')
                 .populate('assignedAgent', 'firstName lastName email')
                 .populate('escalatedTo', 'firstName lastName email')
+                .populate('resolution.resolvedBy', 'firstName lastName email')
                 .populate('notes.agent', 'firstName lastName');
         }
 
@@ -296,6 +298,12 @@ class TicketService {
 
         ticket.status = newStatus;
 
+        // Auto-assign ticket to agent when they start working on it
+        if (newStatus === 'in_progress' && !ticket.assignedAgent) {
+            ticket.assignedAgent = agentId;
+            console.log(`🎯 Auto-assigned ticket ${ticket.ticketId} to agent ${agentId} (started working)`);
+        }
+
         if (newStatus === 'closed') {
             ticket.closedAt = new Date();
         }
@@ -391,6 +399,12 @@ class TicketService {
         const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
+        }
+
+        // Auto-assign ticket to resolving agent if not already assigned
+        if (!ticket.assignedAgent) {
+            ticket.assignedAgent = agentId;
+            console.log(`🎯 Auto-assigned ticket ${ticket.ticketId} to agent ${agentId} (resolved by)`);
         }
 
         ticket.status = 'resolved';
@@ -603,6 +617,108 @@ Gracias por tu paciencia.
             byCategory,
             byPriority
         };
+    }
+
+    /**
+     * Check if a customer has a recently resolved ticket that can be reopened
+     * Returns the ticket if found, null otherwise
+     */
+    async findRecentResolvedTicket(customerId) {
+        const behavior = await configService.getTicketBehavior();
+        const windowHours = behavior.autoReopenWindowHours || 72;
+        const allowReopenClosed = behavior.allowReopenClosed || false;
+        const allowReopenEscalated = behavior.allowReopenEscalated || false;
+
+        // Calculate cutoff time
+        const cutoffTime = new Date();
+        cutoffTime.setHours(cutoffTime.getHours() - windowHours);
+
+        // Build query
+        const query = {
+            customerId,
+            $or: [
+                { status: 'resolved' }
+            ],
+            'resolution.resolvedAt': { $gte: cutoffTime }
+        };
+
+        // Add closed status if allowed
+        if (allowReopenClosed) {
+            query.$or.push({ status: 'closed' });
+        }
+
+        // Exclude escalated tickets unless allowed
+        if (!allowReopenEscalated) {
+            query.isEscalated = { $ne: true };
+        }
+
+        // Find most recent matching ticket
+        const ticket = await Ticket.findOne(query)
+            .sort({ 'resolution.resolvedAt': -1 })
+            .populate('assignedAgent', 'firstName lastName email');
+
+        return ticket;
+    }
+
+    /**
+     * Reopen a resolved ticket
+     */
+    async reopenTicket(ticketId, reason = 'Customer requested additional assistance') {
+        const ticket = await this.findTicketByAnyId(ticketId);
+        if (!ticket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        const behavior = await configService.getTicketBehavior();
+        const maxReopenCount = behavior.maxReopenCount || 3;
+
+        // Check if ticket can be reopened
+        if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+            throw new Error('Solo se pueden reabrir tickets resueltos o cerrados');
+        }
+
+        if (ticket.reopenCount >= maxReopenCount) {
+            throw new Error(`El ticket ha alcanzado el límite máximo de reaperturas (${maxReopenCount})`);
+        }
+
+        const oldStatus = ticket.status;
+
+        // Update ticket
+        ticket.status = 'open';
+        ticket.reopenCount = (ticket.reopenCount || 0) + 1;
+        ticket.lastReopenedAt = new Date();
+        ticket.closedAt = null; // Clear closed date
+
+        // Add to status history
+        ticket.statusHistory.push({
+            from: oldStatus,
+            to: 'open',
+            changedBy: null, // System action
+            changedAt: new Date(),
+            reason
+        });
+
+        await ticket.save();
+
+        // Populate for Socket.io event
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('resolution.resolvedBy', 'firstName lastName')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event
+        if (io) {
+            io.emit('ticket_reopened', {
+                ticket: populatedTicket,
+                previousStatus: oldStatus,
+                reopenCount: ticket.reopenCount
+            });
+        }
+
+        console.log(`🔄 Ticket ${ticket.ticketId} reopened (count: ${ticket.reopenCount})`);
+
+        return populatedTicket;
     }
 }
 

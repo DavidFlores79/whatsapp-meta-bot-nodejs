@@ -177,6 +177,13 @@ const ticketSchema = new mongoose.Schema({
         ref: 'Ticket'
     },
 
+    // Reopening tracking
+    reopenCount: {
+        type: Number,
+        default: 0
+    },
+    lastReopenedAt: Date,
+
     // Timestamps
     createdAt: {
         type: Date,

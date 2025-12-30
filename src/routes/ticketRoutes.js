@@ -69,6 +69,13 @@ router.post('/:id/notes', ticketController.addNote);
 router.put('/:id/resolve', ticketController.resolveTicket);
 
 /**
+ * PUT /api/v2/tickets/:id/reopen
+ * Reopen a resolved/closed ticket
+ * Body: { reason } (optional)
+ */
+router.put('/:id/reopen', ticketController.reopenTicket);
+
+/**
  * PUT /api/v2/tickets/:id/escalate
  * Escalate ticket
  * Body: { toAgentId, reason }

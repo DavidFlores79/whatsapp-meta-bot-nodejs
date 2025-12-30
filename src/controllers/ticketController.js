@@ -291,6 +291,30 @@ async function resolveTicket(req, res) {
 }
 
 /**
+ * Reopen ticket
+ */
+async function reopenTicket(req, res) {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        const ticket = await ticketService.reopenTicket(id, reason);
+
+        res.json({
+            success: true,
+            data: ticket,
+            message: 'Ticket reabierto exitosamente'
+        });
+    } catch (error) {
+        console.error('Error reopening ticket:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al reabrir el ticket'
+        });
+    }
+}
+
+/**
  * Escalate ticket
  */
 async function escalateTicket(req, res) {
@@ -408,6 +432,7 @@ module.exports = {
     assignTicket,
     addNote,
     resolveTicket,
+    reopenTicket,
     escalateTicket,
     getCustomerTickets,
     getConversationTickets,
