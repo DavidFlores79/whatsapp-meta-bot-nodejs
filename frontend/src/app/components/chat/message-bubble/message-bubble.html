@@ -20,7 +20,7 @@
             <img [src]="message.attachments[0].url"
                  [alt]="message.attachments[0].filename || 'Image'"
                  class="max-w-full max-h-[400px] object-contain rounded-t-lg cursor-pointer hover:opacity-90"
-                 (click)="openImage(message.attachments[0].url, message.attachments[0].filename)">
+                 (click)="openImage(message.attachments[0].url, message.attachments[0].filename); $event.stopPropagation()">
         </div>
 
         <!-- Location -->

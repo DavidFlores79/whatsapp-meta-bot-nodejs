@@ -100,9 +100,11 @@ export class MessageBubbleComponent {
   }
 
   openImage(url: string, filename?: string) {
+    console.log('Opening image viewer:', url, filename);
     this.currentImageUrl = url;
     this.currentImageFilename = filename || 'Image';
     this.showImageViewer = true;
+    console.log('Image viewer state:', this.showImageViewer);
   }
 
   closeImageViewer() {
