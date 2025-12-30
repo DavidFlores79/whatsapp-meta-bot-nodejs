@@ -124,13 +124,13 @@
 </div>
 
 <!-- Image Viewer Modal - Render at root level outside message container -->
-<div *ngIf="showImageViewer" 
-     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4" 
+<div *ngIf="showImageViewer"
+     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
      style="z-index: 9999;"
      (click)="closeImageViewer()">
   <div class="relative max-w-7xl max-h-full flex flex-col">
     <!-- Close button -->
-    <button (click)="closeImageViewer()" 
+    <button (click)="closeImageViewer()"
             class="absolute top-2 right-2 bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white rounded-full p-2 transition-all"
             style="z-index: 10000;">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
