@@ -1,0 +1,209 @@
+<div *ngIf="isOpen" class="modal-backdrop fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" (click)="onBackdropClick($event)">
+  <div class="bg-whatsapp-gray rounded-lg border border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar" (click)="$event.stopPropagation()">
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green"></div>
+      <p class="mt-4 text-gray-400">Loading ticket...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!loading && error" class="p-6">
+      <div class="bg-red-900/30 border border-red-700 rounded-lg p-4 text-center">
+        <p class="text-red-400">{{ error }}</p>
+        <button (click)="close()" class="mt-4 px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Ticket Content -->
+    <div *ngIf="!loading && ticket" class="p-6 space-y-6">
+      <!-- Header -->
+      <div class="flex justify-between items-start border-b border-gray-700 pb-4">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-2xl font-bold text-gray-100">{{ ticket.ticketId }}</h2>
+            <app-ticket-status-badge [status]="ticket.status" [showDot]="true" />
+          </div>
+          <p class="text-lg text-gray-300">{{ ticket.subject }}</p>
+        </div>
+        <button (click)="close()" class="text-gray-400 hover:text-gray-200 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Meta Info -->
+      <div class="flex flex-wrap gap-3">
+        <span class="px-3 py-1 text-sm rounded-full" [ngClass]="getPriorityClass(ticket.priority)">
+          {{ ticket.priority | titlecase }} Priority
+        </span>
+        <span class="px-3 py-1 text-sm rounded-full bg-gray-700 text-gray-300">
+          {{ ticket.category }}
+        </span>
+        <span *ngIf="ticket.escalated" class="px-3 py-1 text-sm rounded-full bg-red-900/50 text-red-400">
+          ⚠️ Escalated
+        </span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-2" *ngIf="ticket.status !== 'closed'">
+        <button
+          *ngIf="ticket.status === 'new'"
+          (click)="changeStatus('open')"
+          [disabled]="updating"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+          Open Ticket
+        </button>
+        <button
+          *ngIf="ticket.status === 'open'"
+          (click)="changeStatus('in_progress')"
+          [disabled]="updating"
+          class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50">
+          Start Working
+        </button>
+        <button
+          *ngIf="ticket.status === 'in_progress'"
+          (click)="changeStatus('pending_customer')"
+          [disabled]="updating"
+          class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+          Waiting for Customer
+        </button>
+        <button
+          *ngIf="['open', 'in_progress', 'pending_customer'].includes(ticket.status)"
+          (click)="showResolveModal = true"
+          [disabled]="updating"
+          class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
+          Resolve
+        </button>
+        <button
+          *ngIf="ticket.status === 'resolved'"
+          (click)="changeStatus('closed')"
+          [disabled]="updating"
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
+          Close Ticket
+        </button>
+      </div>
+
+      <!-- Description Card -->
+      <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-100">Description</h3>
+        <p class="text-gray-300 whitespace-pre-wrap">{{ ticket.description }}</p>
+      </div>
+
+      <!-- Customer Info Card -->
+      <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4" *ngIf="ticket.customerId">
+        <h3 class="text-lg font-semibold mb-3 text-gray-100">Customer Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <span class="text-sm text-gray-400">Name:</span>
+            <p class="font-medium text-gray-100">{{ ticket.customerId?.firstName || '' }} {{ ticket.customerId?.lastName || '' }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-400">Phone:</span>
+            <p class="font-medium text-gray-100">{{ ticket.customerId?.phoneNumber || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent & Timeline Card -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4" *ngIf="ticket.assignedAgent">
+          <h3 class="text-lg font-semibold mb-2 text-gray-100">Assigned Agent</h3>
+          <p class="font-medium text-gray-100">{{ ticket.assignedAgent?.firstName }} {{ ticket.assignedAgent?.lastName }}</p>
+          <p class="text-sm text-gray-400">{{ ticket.assignedAgent?.email }}</p>
+        </div>
+
+        <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4">
+          <h3 class="text-lg font-semibold mb-2 text-gray-100">Timeline</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Created:</span>
+              <span class="font-medium text-gray-100">{{ ticket.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Last Updated:</span>
+              <span class="font-medium text-gray-100">{{ ticket.updatedAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="ticket.resolvedAt">
+              <span class="text-gray-400">Resolved:</span>
+              <span class="font-medium text-gray-100">{{ ticket.resolvedAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resolution Card -->
+      <div class="bg-whatsapp-dark rounded-lg border border-green-700 p-4" *ngIf="ticket.resolution">
+        <h3 class="text-lg font-semibold mb-2 text-green-400">Resolution</h3>
+        <p class="text-gray-300 whitespace-pre-wrap mb-2">{{ ticket.resolution.summary }}</p>
+        <p class="text-sm text-gray-400" *ngIf="ticket.resolution.resolvedBy">
+          Resolved by {{ ticket.resolution.resolvedBy?.firstName }} {{ ticket.resolution.resolvedBy?.lastName }}
+        </p>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4" *ngIf="ticket.notes && ticket.notes.length > 0">
+        <h3 class="text-lg font-semibold mb-3 text-gray-100">Notes</h3>
+        <div class="space-y-2">
+          <div *ngFor="let note of ticket.notes" class="p-3 rounded-lg" [ngClass]="note.isInternal ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-whatsapp-gray border border-gray-600'">
+            <p class="text-gray-300">{{ note.content }}</p>
+            <p class="text-xs text-gray-400 mt-1">
+              {{ note.createdBy?.firstName }} {{ note.createdBy?.lastName }} - {{ note.timestamp | date:'short' }}
+              <span *ngIf="note.isInternal" class="text-yellow-400">(Internal)</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Note Form -->
+      <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-100">Add Note</h3>
+        <textarea
+          [(ngModel)]="newNote"
+          rows="3"
+          placeholder="Add a note to this ticket..."
+          class="w-full px-4 py-2 bg-whatsapp-gray text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none mb-3"></textarea>
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="noteIsInternal" class="rounded border-gray-600 bg-whatsapp-dark text-whatsapp-green focus:ring-whatsapp-green">
+            <span class="text-sm text-gray-300">Internal note (not visible to customer)</span>
+          </label>
+          <button
+            (click)="addNote()"
+            [disabled]="!newNote.trim() || addingNote"
+            class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ addingNote ? 'Adding...' : 'Add Note' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resolve Modal (nested modal) -->
+    <div *ngIf="showResolveModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
+      <div class="bg-whatsapp-gray rounded-lg border border-gray-700 p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4 text-gray-100">Resolve Ticket</h3>
+        <textarea
+          [(ngModel)]="resolutionSummary"
+          rows="4"
+          placeholder="Enter resolution summary..."
+          class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-whatsapp-green focus:outline-none mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button
+            (click)="showResolveModal = false"
+            class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-whatsapp-dark">
+            Cancel
+          </button>
+          <button
+            (click)="resolveTicket()"
+            [disabled]="!resolutionSummary.trim() || updating"
+            class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
+            {{ updating ? 'Resolving...' : 'Resolve Ticket' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

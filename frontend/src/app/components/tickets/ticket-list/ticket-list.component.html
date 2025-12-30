@@ -289,4 +289,12 @@
     </div>
     </div>
   </div>
+
+  <!-- Ticket Detail Modal -->
+  <app-ticket-modal
+    [isOpen]="isTicketModalOpen"
+    [ticketId]="selectedTicketId"
+    (closeModal)="closeTicketModal()"
+    (ticketUpdated)="onTicketUpdated($event)">
+  </app-ticket-modal>
 </div>

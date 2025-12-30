@@ -9,11 +9,12 @@ import { ConfigurationService, TicketCategory } from '../../../services/configur
 import { AgentService } from '../../../services/agent';
 import { ToastService } from '../../../services/toast';
 import { TicketStatusBadgeComponent } from '../ticket-status-badge/ticket-status-badge.component';
+import { TicketModalComponent } from '../ticket-modal/ticket-modal.component';
 
 @Component({
   selector: 'app-ticket-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TicketStatusBadgeComponent],
+  imports: [CommonModule, FormsModule, TicketStatusBadgeComponent, TicketModalComponent],
   templateUrl: './ticket-list.component.html',
   styleUrls: ['./ticket-list.component.css']
 })
@@ -63,6 +64,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
   // Search subject for debouncing
   private searchSubject = new Subject<string>();
+
+  // Modal state
+  isTicketModalOpen = false;
+  selectedTicketId?: string;
 
   constructor(
     private ticketService: TicketService,
@@ -286,12 +291,29 @@ export class TicketListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navigate to ticket detail
+   * Open ticket detail modal
    */
   viewTicket(ticket: Ticket) {
     console.log('[TicketList] viewTicket called with ticket:', ticket);
-    console.log('[TicketList] Navigating to:', ['/tickets', ticket._id]);
-    this.router.navigate(['/tickets', ticket._id]);
+    this.selectedTicketId = ticket._id;
+    this.isTicketModalOpen = true;
+  }
+
+  /**
+   * Close ticket modal
+   */
+  closeTicketModal() {
+    this.isTicketModalOpen = false;
+    this.selectedTicketId = undefined;
+  }
+
+  /**
+   * Handle ticket update from modal
+   */
+  onTicketUpdated(ticket: Ticket) {
+    console.log('[TicketList] Ticket updated:', ticket);
+    this.loadTickets();
+    this.loadStatistics();
   }
 
   /**
