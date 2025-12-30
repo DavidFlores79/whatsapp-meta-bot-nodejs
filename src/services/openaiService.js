@@ -432,9 +432,13 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
               });
             } else {
               // No recent resolved ticket, create a new one
-              // Find conversation ID from thread
-              const userThread = await UserThread.findOne({ userId, threadId });
-              const conversationId = userThread ? userThread.conversationId : null;
+              // Find the active conversation for this customer
+              const activeConversation = await Conversation.findOne({ 
+                customerId: customer._id,
+                status: { $in: ['open', 'assigned', 'waiting'] }
+              }).sort({ updatedAt: -1 });
+              
+              const conversationId = activeConversation ? activeConversation._id : null;
 
               // Validate and create ticket
               const categories = await configService.getTicketCategories();

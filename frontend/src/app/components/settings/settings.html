@@ -374,6 +374,56 @@
             </div>
           </div>
 
+          <!-- Ticket Behavior Settings -->
+          <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              <i class="fas fa-ticket-alt mr-2"></i> Ticket Behavior
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Configure ticket attachment and reopening behavior.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  <i class="fas fa-image mr-1"></i> Attachment Time Limit (hours)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="ticketBehavior.attachmentHoursLimit"
+                  min="1"
+                  max="168"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  How many hours back to look for customer attachments when creating a ticket. Default: 48 hours
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                <div class="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Tip:</strong> When a ticket is created, the system will automatically attach images and files that the customer sent within this time window. This prevents old attachments from being included in new tickets.
+                </div>
+              </div>
+            </div>
+
+            <!-- Save Button for Ticket Behavior -->
+            <div class="mt-4 flex justify-end">
+              <button
+                type="button"
+                (click)="saveTicketBehavior()"
+                [disabled]="isSavingTicketBehavior"
+                class="px-6 py-2 bg-whatsapp-teal text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-save mr-2"></i>
+                {{ isSavingTicketBehavior ? 'Saving...' : 'Save Ticket Behavior' }}
+              </button>
+            </div>
+          </div>
+
           <!-- SLA Targets -->
           <div class="mb-8 p-4 bg-gray-50 dark:bg-whatsapp-dark rounded-lg border border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">

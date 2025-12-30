@@ -5,7 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
 import { CRMSettingsService, CRMSettings } from '../../services/crm-settings';
-import { ConfigurationService, AssistantConfiguration, InstructionsPreview } from '../../services/configuration';
+import { ConfigurationService, AssistantConfiguration, InstructionsPreview, TicketBehavior } from '../../services/configuration';
 import { AVAILABLE_LANGUAGES, LANGUAGE_STORAGE_KEY } from '../../config/translation.config';
 
 interface Language {
@@ -57,6 +57,10 @@ export class SettingsComponent implements OnInit {
   crmSettings: CRMSettings | null = null;
   isSavingCRM = false;
   isLoadingCRM = false;
+
+  // Ticket Behavior Settings
+  ticketBehavior: TicketBehavior = { attachmentHoursLimit: 48 };
+  isSavingTicketBehavior = false;
 
   // AI Assistant Settings
   assistantConfig: AssistantConfiguration | null = null;
@@ -114,6 +118,7 @@ export class SettingsComponent implements OnInit {
     // Load CRM settings when switching to CRM tab
     if (tab === 'crm' && !this.crmSettings && !this.isLoadingCRM) {
       this.loadCRMSettings();
+      this.loadTicketBehavior();
     }
 
     // Load AI Assistant settings when switching to assistant tab
@@ -340,6 +345,52 @@ export class SettingsComponent implements OnInit {
         this.isSavingCRM = false;
         console.error('[Settings] Error resetting CRM settings:', err);
         this.toastService.error('Failed to reset CRM settings');
+      }
+    });
+  }
+
+  /**
+   * Load ticket behavior settings from backend
+   */
+  loadTicketBehavior() {
+    this.configurationService.getTicketBehavior().subscribe({
+      next: (behavior) => {
+        this.ticketBehavior = behavior;
+        console.log('[Settings] Ticket behavior loaded:', behavior);
+      },
+      error: (err) => {
+        console.error('[Settings] Error loading ticket behavior:', err);
+        this.toastService.error('Failed to load ticket behavior settings');
+      }
+    });
+  }
+
+  /**
+   * Save ticket behavior settings to backend
+   */
+  saveTicketBehavior() {
+    if (!this.ticketBehavior) {
+      this.toastService.error('No ticket behavior settings to save');
+      return;
+    }
+
+    // Validate
+    if (this.ticketBehavior.attachmentHoursLimit < 1 || this.ticketBehavior.attachmentHoursLimit > 168) {
+      this.toastService.error('Attachment time limit must be between 1 and 168 hours');
+      return;
+    }
+
+    this.isSavingTicketBehavior = true;
+    this.configurationService.updateTicketBehavior(this.ticketBehavior).subscribe({
+      next: (response) => {
+        this.isSavingTicketBehavior = false;
+        this.toastService.success(response.message || 'Ticket behavior settings saved successfully');
+        console.log('[Settings] Ticket behavior saved');
+      },
+      error: (err) => {
+        this.isSavingTicketBehavior = false;
+        console.error('[Settings] Error saving ticket behavior:', err);
+        this.toastService.error('Failed to save ticket behavior settings');
       }
     });
   }

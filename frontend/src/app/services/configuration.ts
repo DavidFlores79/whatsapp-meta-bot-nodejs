@@ -39,6 +39,13 @@ export interface TicketIdFormat {
   separator: string;
 }
 
+export interface TicketBehavior {
+  attachmentHoursLimit: number;
+  autoCloseHours?: number;
+  allowReopening?: boolean;
+  reopenWindowHours?: number;
+}
+
 export interface InstructionsPreview {
   template: string;
   interpolated: string;
@@ -353,6 +360,22 @@ export class ConfigurationService {
       syncInstructions,
       syncTools
     });
+  }
+
+  // ==================== Ticket Behavior ====================
+
+  getTicketBehavior(): Observable<TicketBehavior> {
+    return this.http.get<ConfigurationResponse>(`${this.apiUrl}/ticket-behavior`).pipe(
+      map(response => response.data || { attachmentHoursLimit: 48 }),
+      catchError(error => {
+        console.error('Error fetching ticket behavior:', error);
+        return of({ attachmentHoursLimit: 48 });
+      })
+    );
+  }
+
+  updateTicketBehavior(behavior: TicketBehavior): Observable<ConfigurationResponse> {
+    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/ticket-behavior`, behavior);
   }
 
   // ==================== Helper Methods ====================
