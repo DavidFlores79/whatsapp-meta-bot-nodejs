@@ -725,6 +725,7 @@ Gracias por tu paciencia.
 
     /**
      * Get conversation attachments for a ticket (not already attached to ANY ticket)
+     * Filtered by time range based on configuration (default: 48 hours)
      */
     async getConversationAttachments(ticketId) {
         const ticket = await Ticket.findOne({ $or: [{ _id: ticketId }, { ticketId }] });
@@ -733,12 +734,22 @@ Gracias por tu paciencia.
             return [];
         }
 
-        // Get all messages from the conversation with attachments
+        // Get time limit from configuration (default 48 hours)
+        const configService = require('./configurationService');
+        const ticketBehavior = await configService.getTicketBehavior();
+        const hoursLimit = ticketBehavior.attachmentHoursLimit || 48;
+
+        // Calculate cutoff date
+        const cutoffDate = new Date();
+        cutoffDate.setHours(cutoffDate.getHours() - hoursLimit);
+
+        // Get all messages from the conversation with attachments within time limit
         const Message = require('../models/Message');
         const messages = await Message.find({
             conversationId: ticket.conversationId,
             'attachments.0': { $exists: true }, // Has at least one attachment
-            sender: 'customer' // Only customer attachments
+            sender: 'customer', // Only customer attachments
+            timestamp: { $gte: cutoffDate } // Only recent messages
         }).sort({ timestamp: -1 });
 
         // Get message IDs that are already attached to ANY ticket in this conversation

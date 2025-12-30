@@ -198,7 +198,9 @@ class ConfigurationService {
             // Whether to allow reopening escalated tickets
             allowReopenEscalated: false,
             // Maximum number of times a ticket can be reopened
-            maxReopenCount: 3
+            maxReopenCount: 3,
+            // Time limit for showing conversation attachments (in hours)
+            attachmentHoursLimit: 48
         };
     }
 

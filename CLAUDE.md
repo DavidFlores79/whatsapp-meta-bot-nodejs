@@ -358,6 +358,13 @@ All configurations stored in SystemSettings collection with 5-minute cache:
 - prefix (e.g., 'LUX'), includeYear (boolean), padLength (6), separator ('-')
 - Result: LUX-2025-000001
 
+**Ticket Behavior** (key: `ticket_behavior`):
+- autoReopenWindowHours: Time window to allow auto-reopening (default: 72 hours)
+- allowReopenClosed: Whether to allow reopening closed tickets (default: false)
+- allowReopenEscalated: Whether to allow reopening escalated tickets (default: false)
+- maxReopenCount: Maximum reopens allowed (default: 3)
+- attachmentHoursLimit: Time limit for showing conversation attachments in hours (default: 48)
+
 ### Industry Presets
 4 built-in presets (LUXFREE, Restaurant, E-commerce, Healthcare) with one-click loading.
 Each preset includes categories, terminology, ID format, and assistant config tailored to the industry.
