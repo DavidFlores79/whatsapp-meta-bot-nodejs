@@ -131,19 +131,32 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   attachToTicket(messageId: string) {
     if (!this.ticketId) return;
 
+    // Find the attachment and mark it as attaching
+    const attachment = this.conversationAttachments.find(att => att.messageId === messageId);
+    if (attachment) {
+      attachment.attaching = true;
+      this.cdr.detectChanges();
+    }
+
     this.http.post<{success: boolean, data: Ticket}>(`/api/v2/tickets/${this.ticketId}/attach-message`, { messageId })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.ticket = response.data;
           this.toast.success('Attachment added to ticket');
-          // Reload conversation attachments to update the list
+          // Reload conversation attachments to update the list (removes the attached one)
           this.loadConversationAttachments();
+          this.ticketUpdated.emit(response.data);
           this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Error attaching to ticket:', err);
           this.toast.error('Failed to attach to ticket');
+          // Reset attaching state on error
+          if (attachment) {
+            attachment.attaching = false;
+            this.cdr.detectChanges();
+          }
         }
       });
   }
