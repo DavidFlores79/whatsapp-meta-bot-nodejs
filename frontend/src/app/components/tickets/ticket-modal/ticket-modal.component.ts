@@ -161,6 +161,41 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
       });
   }
 
+  removeAttachment(attachmentId: string | undefined) {
+    if (!this.ticketId || !this.ticket || !this.ticket.attachments || !attachmentId) return;
+
+    // Find the attachment and mark it as removing
+    const attachment = this.ticket.attachments.find(att => att._id === attachmentId);
+    if (attachment) {
+      attachment.removing = true;
+      this.cdr.detectChanges();
+    }
+
+    this.http.delete<{success: boolean, data: Ticket}>(`/api/v2/tickets/${this.ticketId}/remove-attachment`, {
+      body: { attachmentId }
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.ticket = response.data;
+          this.toast.success('Attachment removed from ticket');
+          // Reload conversation attachments to show the now-available attachment
+          this.loadConversationAttachments();
+          this.ticketUpdated.emit(response.data);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error removing attachment:', err);
+          this.toast.error(err.error?.error || 'Failed to remove attachment');
+          // Reset removing state on error
+          if (attachment) {
+            attachment.removing = false;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+  }
+
   changeStatus(newStatus: string) {
     if (!this.ticket || this.updating || !this.ticketId) return;
 

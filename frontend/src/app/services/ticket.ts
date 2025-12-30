@@ -80,10 +80,12 @@ export interface Ticket {
   };
 
   attachments?: Array<{
+    _id?: string;
     type: string;
     url: string;
     filename?: string;
     uploadedAt: Date;
+    removing?: boolean;
   }>;
 
   tags?: string[];

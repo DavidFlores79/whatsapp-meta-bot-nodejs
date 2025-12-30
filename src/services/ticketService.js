@@ -837,6 +837,50 @@ Gracias por tu paciencia.
 
         return populatedTicket;
     }
+
+    /**
+     * Remove an attachment from a ticket
+     */
+    async removeAttachmentFromTicket(ticketId, attachmentId) {
+        const ticket = await Ticket.findOne({ $or: [{ _id: ticketId }, { ticketId }] });
+
+        if (!ticket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        if (!ticket.attachments || ticket.attachments.length === 0) {
+            throw new Error('El ticket no tiene adjuntos');
+        }
+
+        // Find the attachment to remove
+        const attachmentIndex = ticket.attachments.findIndex(
+            att => att._id.toString() === attachmentId
+        );
+
+        if (attachmentIndex === -1) {
+            throw new Error('Adjunto no encontrado en el ticket');
+        }
+
+        // Remove the attachment
+        ticket.attachments.splice(attachmentIndex, 1);
+        await ticket.save();
+
+        // Populate and return
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('customerId', 'firstName lastName phoneNumber')
+            .populate('assignedAgent', 'firstName lastName email')
+            .populate('resolution.resolvedBy', 'firstName lastName')
+            .populate('notes.agent', 'firstName lastName');
+
+        // Emit Socket.io event
+        if (io) {
+            io.emit('ticket_updated', {
+                ticket: populatedTicket
+            });
+        }
+
+        return populatedTicket;
+    }
 }
 
 module.exports = new TicketService();

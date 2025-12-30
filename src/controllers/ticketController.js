@@ -478,6 +478,37 @@ async function attachMessageToTicket(req, res) {
     }
 }
 
+/**
+ * Remove an attachment from a ticket
+ */
+async function removeAttachmentFromTicket(req, res) {
+    try {
+        const { id } = req.params;
+        const { attachmentId } = req.body;
+
+        if (!attachmentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'attachmentId es requerido'
+            });
+        }
+
+        const ticket = await ticketService.removeAttachmentFromTicket(id, attachmentId);
+
+        res.json({
+            success: true,
+            data: ticket,
+            message: 'Adjunto eliminado del ticket exitosamente'
+        });
+    } catch (error) {
+        console.error('Error removing attachment from ticket:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al eliminar adjunto del ticket'
+        });
+    }
+}
+
 module.exports = {
     getTickets,
     getTicket,
@@ -493,5 +524,6 @@ module.exports = {
     getConversationTickets,
     getStatistics,
     getConversationAttachments,
-    attachMessageToTicket
+    attachMessageToTicket,
+    removeAttachmentFromTicket
 };

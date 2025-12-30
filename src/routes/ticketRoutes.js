@@ -95,4 +95,11 @@ router.get('/:id/conversation-attachments', ticketController.getConversationAtta
  */
 router.post('/:id/attach-message', ticketController.attachMessageToTicket);
 
+/**
+ * DELETE /api/v2/tickets/:id/remove-attachment
+ * Remove an attachment from the ticket
+ * Body: { attachmentId }
+ */
+router.delete('/:id/remove-attachment', ticketController.removeAttachmentFromTicket);
+
 module.exports = router;

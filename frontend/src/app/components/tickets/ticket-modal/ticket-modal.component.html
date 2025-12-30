@@ -172,11 +172,18 @@
                   <p class="text-sm text-gray-200 truncate">{{ attachment.filename || 'Untitled' }}</p>
                   <p class="text-xs text-gray-500 uppercase">{{ attachment.type }}</p>
                 </div>
-                <!-- View button -->
-                <a [href]="attachment.url" target="_blank" rel="noopener noreferrer"
-                   class="flex-shrink-0 px-3 py-1 text-xs bg-whatsapp-green text-white rounded hover:bg-green-600 transition-colors">
-                  View
-                </a>
+                <!-- Action buttons -->
+                <div class="flex gap-2 flex-shrink-0">
+                  <a [href]="attachment.url" target="_blank" rel="noopener noreferrer"
+                     class="px-3 py-1 text-xs bg-whatsapp-green text-white rounded hover:bg-green-600 transition-colors">
+                    View
+                  </a>
+                  <button (click)="removeAttachment(attachment._id)"
+                          [disabled]="attachment.removing"
+                          class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    {{ attachment.removing ? 'Removing...' : 'Remove' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
