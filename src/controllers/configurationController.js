@@ -210,6 +210,25 @@ async function getTicketIdFormat(req, res) {
 }
 
 /**
+ * Get ticket behavior configuration
+ */
+async function getTicketBehavior(req, res) {
+    try {
+        const behavior = await configService.getTicketBehavior();
+        res.json({
+            success: true,
+            data: behavior
+        });
+    } catch (error) {
+        console.error('Error getting ticket behavior:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener la configuración de comportamiento'
+        });
+    }
+}
+
+/**
  * Update ticket ID format
  */
 async function updateTicketIdFormat(req, res) {
@@ -235,6 +254,36 @@ async function updateTicketIdFormat(req, res) {
         res.status(500).json({
             success: false,
             error: 'Error al actualizar el formato de ID'
+        });
+    }
+}
+
+/**
+ * Update ticket behavior configuration
+ */
+async function updateTicketBehavior(req, res) {
+    try {
+        const { behavior } = req.body;
+
+        if (!behavior || typeof behavior !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'Configuración de comportamiento inválida'
+            });
+        }
+
+        const agentId = req.agent ? req.agent._id : null;
+        await configService.updateSetting('ticket_behavior', behavior, agentId);
+
+        res.json({
+            success: true,
+            message: 'Configuración de comportamiento actualizada correctamente'
+        });
+    } catch (error) {
+        console.error('Error updating ticket behavior:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar la configuración de comportamiento'
         });
     }
 }
@@ -453,6 +502,8 @@ module.exports = {
     updateTerminology,
     getTicketIdFormat,
     updateTicketIdFormat,
+    getTicketBehavior,
+    updateTicketBehavior,
     getInstructionsTemplate,
     updateInstructionsTemplate,
     previewInstructions,

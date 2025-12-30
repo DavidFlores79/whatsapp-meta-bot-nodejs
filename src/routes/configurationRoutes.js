@@ -65,6 +65,18 @@ router.get('/ticket-id-format', configController.getTicketIdFormat);
 router.put('/ticket-id-format', configController.updateTicketIdFormat);
 
 /**
+ * GET /api/v2/config/ticket-behavior
+ * Get ticket behavior configuration
+ */
+router.get('/ticket-behavior', configController.getTicketBehavior);
+
+/**
+ * PUT /api/v2/config/ticket-behavior
+ * Update ticket behavior configuration (admin only)
+ */
+router.put('/ticket-behavior', configController.updateTicketBehavior);
+
+/**
  * GET /api/v2/config/instructions-template
  * Get assistant instructions template
  */
