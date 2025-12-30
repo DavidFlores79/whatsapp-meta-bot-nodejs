@@ -39,6 +39,10 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   conversationAttachments: any[] = [];
   loadingConversationAttachments = false;
 
+  // Image viewer
+  showImageViewer = false;
+  currentImage: { url: string; filename: string } | null = null;
+
   constructor(
     private ticketService: TicketService,
     private http: HttpClient,
@@ -62,6 +66,16 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  openImageViewer(url: string, filename: string) {
+    this.currentImage = { url, filename };
+    this.showImageViewer = true;
+  }
+
+  closeImageViewer() {
+    this.showImageViewer = false;
+    this.currentImage = null;
   }
 
   initializeTicket() {

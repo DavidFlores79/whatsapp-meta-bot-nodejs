@@ -184,7 +184,13 @@
                 </div>
                 <!-- Action buttons -->
                 <div class="flex gap-2 flex-shrink-0">
-                  <a [href]="attachment.url" target="_blank" rel="noopener noreferrer"
+                  <button *ngIf="attachment.type === 'image'"
+                          (click)="openImageViewer(attachment.url, attachment.filename || 'Untitled')"
+                          class="px-3 py-1 text-xs bg-whatsapp-green text-white rounded hover:bg-green-600 transition-colors">
+                    View
+                  </button>
+                  <a *ngIf="attachment.type !== 'image'"
+                     [href]="attachment.url" target="_blank" rel="noopener noreferrer"
                      class="px-3 py-1 text-xs bg-whatsapp-green text-white rounded hover:bg-green-600 transition-colors">
                     View
                   </a>
@@ -266,7 +272,13 @@
 
                 <!-- Action buttons -->
                 <div class="flex gap-2 mt-3">
-                  <a [href]="attachment.url" target="_blank" rel="noopener noreferrer"
+                  <button *ngIf="attachment.type === 'image'"
+                          (click)="openImageViewer(attachment.url, attachment.filename || 'Untitled')"
+                          class="flex-1 px-3 py-1.5 text-xs text-center bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">
+                    View
+                  </button>
+                  <a *ngIf="attachment.type !== 'image'"
+                     [href]="attachment.url" target="_blank" rel="noopener noreferrer"
                      class="flex-1 px-3 py-1.5 text-xs text-center bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">
                     View
                   </a>
@@ -359,6 +371,30 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Viewer Modal -->
+<div *ngIf="showImageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-[100] flex items-center justify-center p-4" (click)="closeImageViewer()">
+  <div class="relative max-w-7xl max-h-full flex flex-col">
+    <!-- Close button -->
+    <button (click)="closeImageViewer()" class="absolute top-2 right-2 z-10 bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white rounded-full p-2 transition-all">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+    
+    <!-- Image container -->
+    <div class="flex items-center justify-center" (click)="$event.stopPropagation()">
+      <img [src]="currentImage?.url" 
+           [alt]="currentImage?.filename" 
+           class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
+    </div>
+    
+    <!-- Filename -->
+    <div class="mt-4 text-center text-white bg-gray-800 bg-opacity-75 rounded-lg px-4 py-2">
+      <p class="text-sm font-medium">{{ currentImage?.filename }}</p>
     </div>
   </div>
 </div>
