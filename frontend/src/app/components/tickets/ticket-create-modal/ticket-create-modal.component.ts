@@ -125,20 +125,49 @@ export class TicketCreateModalComponent implements OnInit, OnChanges {
         try {
           const backendMessages = response.messages || [];
 
-          const customerMessages: string[] = backendMessages
-            .filter((m: any) => m.direction === 'in' || m.sender === 'customer')
+          // Get all messages with metadata
+          const allMessages = backendMessages
             .slice(-10)
-            .map((m: any) => m.content || '');
+            .map((m: any) => ({
+              content: m.content || '',
+              direction: m.direction,
+              timestamp: m.timestamp ? new Date(m.timestamp) : null,
+              isCustomer: m.direction === 'in' || m.sender === 'customer'
+            }));
 
-          this.conversationMessages = customerMessages;
+          const customerMessages = allMessages.filter((m: any) => m.isCustomer);
+          this.conversationMessages = customerMessages.map((m: any) => m.content);
 
+          // Auto-suggest subject from the first customer message (usually the main issue)
           if (customerMessages.length > 0 && !this.formData.subject) {
-            const lastMessage = customerMessages[customerMessages.length - 1];
-            this.formData.subject = lastMessage.substring(0, 50) + (lastMessage.length > 50 ? '...' : '');
+            const firstMessage = customerMessages[0].content;
+            this.formData.subject = firstMessage.substring(0, 50) + (firstMessage.length > 50 ? '...' : '');
           }
 
+          // Create a structured description with conversation context
           if (customerMessages.length > 0 && !this.formData.description) {
-            this.formData.description = 'Customer messages:\n' + customerMessages.map((m: string) => `- ${m}`).join('\n');
+            let description = '## Conversation Summary\n\n';
+
+            // Main issue (first message)
+            if (customerMessages.length > 0) {
+              description += `**Main Issue:**\n${customerMessages[0].content}\n\n`;
+            }
+
+            // Additional details (subsequent messages if any)
+            if (customerMessages.length > 1) {
+              description += '**Additional Information:**\n';
+              customerMessages.slice(1).forEach((msg: any, index: number) => {
+                description += `${index + 1}. ${msg.content}\n`;
+              });
+              description += '\n';
+            }
+
+            // Add metadata
+            description += '---\n';
+            description += `*This ticket was created from conversation with ${customerMessages.length} customer message(s)*\n`;
+            description += `*Conversation ID: ${this.conversationId}*`;
+
+            this.formData.description = description;
           }
         } catch (e) {
           console.error('Error processing messages:', e);
