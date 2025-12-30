@@ -10,11 +10,12 @@ import { AgentService } from '../../../services/agent';
 import { ToastService } from '../../../services/toast';
 import { TicketStatusBadgeComponent } from '../ticket-status-badge/ticket-status-badge.component';
 import { TicketModalComponent } from '../ticket-modal/ticket-modal.component';
+import { TicketCreateModalComponent } from '../ticket-create-modal/ticket-create-modal.component';
 
 @Component({
   selector: 'app-ticket-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TicketStatusBadgeComponent, TicketModalComponent],
+  imports: [CommonModule, FormsModule, TicketStatusBadgeComponent, TicketModalComponent, TicketCreateModalComponent],
   templateUrl: './ticket-list.component.html',
   styleUrls: ['./ticket-list.component.css']
 })
@@ -68,6 +69,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
   // Modal state
   isTicketModalOpen = false;
   selectedTicketId?: string;
+  showCreateTicketModal = false;
 
   constructor(
     private ticketService: TicketService,
@@ -317,10 +319,30 @@ export class TicketListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navigate to create ticket
+   * Open create ticket modal
    */
   createTicket() {
-    this.router.navigate(['/tickets/new']);
+    this.showCreateTicketModal = true;
+  }
+
+  /**
+   * Close create ticket modal
+   */
+  closeCreateTicketModal() {
+    this.showCreateTicketModal = false;
+  }
+
+  /**
+   * Handle ticket creation
+   */
+  onTicketCreated(ticket: Ticket) {
+    console.log('[TicketList] Ticket created:', ticket);
+    this.showCreateTicketModal = false;
+    this.loadTickets();
+    this.loadStatistics();
+    // Open the newly created ticket in detail modal
+    this.selectedTicketId = ticket._id;
+    this.isTicketModalOpen = true;
   }
 
   /**

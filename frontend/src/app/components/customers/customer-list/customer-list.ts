@@ -171,7 +171,8 @@ export class CustomerListComponent implements OnInit {
   }
 
   createCustomer() {
-    this.router.navigate(['/customers/new']);
+    this.selectedCustomerId = undefined;
+    this.isCustomerModalOpen = true;
   }
 
   toggleSelectCustomer(customerId: string) {

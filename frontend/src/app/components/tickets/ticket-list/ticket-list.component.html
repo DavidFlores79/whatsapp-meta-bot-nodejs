@@ -297,4 +297,11 @@
     (closeModal)="closeTicketModal()"
     (ticketUpdated)="onTicketUpdated($event)">
   </app-ticket-modal>
+
+  <!-- Ticket Create Modal -->
+  <app-ticket-create-modal
+    [show]="showCreateTicketModal"
+    (close)="closeCreateTicketModal()"
+    (saved)="onTicketCreated($event)">
+  </app-ticket-create-modal>
 </div>

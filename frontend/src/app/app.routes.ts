@@ -5,13 +5,11 @@ import { MainLayoutComponent } from './components/layout/main-layout/main-layout
 import { LoginComponent } from './components/auth/login/login';
 import { CustomerListComponent } from './components/customers/customer-list/customer-list';
 import { CustomerDetailComponent } from './components/customers/customer-detail/customer-detail';
-import { CustomerFormComponent } from './components/customers/customer-form/customer-form';
 import { TemplateListComponent } from './components/templates/template-list/template-list';
 import { ReportsComponent } from './components/reports/reports';
 import { SettingsComponent } from './components/settings/settings';
 import { AgentListComponent } from './components/agents/agent-list/agent-list';
 import { TicketListComponent } from './components/tickets/ticket-list/ticket-list.component';
-import { TicketFormComponent } from './components/tickets/ticket-form/ticket-form.component';
 import { AuthService } from './services/auth';
 
 // Auth guard function
@@ -51,12 +49,9 @@ export const routes: Routes = [
         canActivate: [authGuard],
         children: [
             { path: 'customers', component: CustomerListComponent },
-            { path: 'customers/new', component: CustomerFormComponent },
             { path: 'customers/:id', component: CustomerDetailComponent },
-            { path: 'customers/:id/edit', component: CustomerFormComponent },
             { path: 'templates', component: TemplateListComponent },
             { path: 'tickets', component: TicketListComponent },
-            { path: 'tickets/new', component: TicketFormComponent },
             { path: 'agents', component: AgentListComponent, canActivate: [adminGuard] },
             { path: 'reports', component: ReportsComponent, canActivate: [adminGuard] },
             { path: 'settings', component: SettingsComponent }
