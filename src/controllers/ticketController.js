@@ -72,11 +72,11 @@ async function getTicket(req, res) {
  */
 async function createTicket(req, res) {
     try {
-        const { subject, description, category, priority, customerId, customerPhone, conversationId, tags } = req.body;
+        const { subject, description, category, priority, customerId, customerPhone, conversationId, tags, attachments, location } = req.body;
 
         // Resolve customerId from customerPhone if not provided
         let resolvedCustomerId = customerId;
-        
+
         if (!resolvedCustomerId && customerPhone) {
             // Try to find customer by phone number
             const customer = await Customer.findOne({ phoneNumber: customerPhone });
@@ -110,7 +110,9 @@ async function createTicket(req, res) {
             priority,
             customerId: resolvedCustomerId,
             conversationId,
-            tags
+            tags,
+            attachments,
+            location
         }, agentId);
 
         res.status(201).json({
