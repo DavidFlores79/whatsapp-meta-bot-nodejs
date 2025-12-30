@@ -151,7 +151,17 @@
           <div class="bg-whatsapp-dark rounded-lg border border-gray-700 p-4" *ngIf="ticket.attachments && ticket.attachments.length > 0">
             <h3 class="text-sm font-semibold mb-3 text-gray-400 uppercase tracking-wide">Attachments ({{ ticket.attachments.length }})</h3>
             <div class="space-y-2">
-              <div *ngFor="let attachment of ticket.attachments" class="flex items-center gap-3 p-2 bg-whatsapp-gray rounded-lg hover:bg-gray-700 transition-colors">
+              <div *ngFor="let attachment of ticket.attachments" class="relative flex items-center gap-3 p-2 bg-whatsapp-gray rounded-lg hover:bg-gray-700 transition-colors group">
+                <!-- Thumbnail preview on hover (images only) -->
+                <div *ngIf="attachment.type === 'image'" 
+                     class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
+                  <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-2">
+                    <img [src]="attachment.url" 
+                         [alt]="attachment.filename" 
+                         class="max-w-xs max-h-64 object-contain rounded">
+                    <div class="text-xs text-gray-400 mt-1 text-center">{{ attachment.filename }}</div>
+                  </div>
+                </div>
                 <!-- Icon based on type -->
                 <div class="flex-shrink-0">
                   <svg *ngIf="attachment.type === 'image'" class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +213,17 @@
 
             <!-- Attachments List with max height and scroll -->
             <div *ngIf="!loadingConversationAttachments && conversationAttachments.length > 0" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-              <div *ngFor="let attachment of conversationAttachments" class="p-3 bg-whatsapp-gray rounded-lg border border-gray-600 hover:border-blue-600 transition-colors">
+              <div *ngFor="let attachment of conversationAttachments" class="relative p-3 bg-whatsapp-gray rounded-lg border border-gray-600 hover:border-blue-600 transition-colors group">
+                <!-- Thumbnail preview on hover (images only) -->
+                <div *ngIf="attachment.type === 'image'" 
+                     class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
+                  <div class="bg-gray-900 border border-blue-700 rounded-lg shadow-2xl p-2">
+                    <img [src]="attachment.url" 
+                         [alt]="attachment.filename" 
+                         class="max-w-sm max-h-80 object-contain rounded">
+                    <div class="text-xs text-gray-400 mt-1 text-center">{{ attachment.filename }}</div>
+                  </div>
+                </div>
                 <div class="flex items-start gap-3 mb-2">
                   <!-- Image preview or icon based on type -->
                   <div class="flex-shrink-0">
