@@ -5,7 +5,6 @@ const configService = require('./configurationService');
 const { io } = require('../models/server');
 const mongoose = require('mongoose');
 const whatsappService = require('./whatsappService');
-const { buildTextJSON } = require('../shared/whatsappModels');
 
 class TicketService {
     /**
@@ -447,6 +446,7 @@ class TicketService {
 
     /**
      * Send WhatsApp notification when ticket is resolved
+     * Uses WhatsApp template to bypass 24-hour messaging window
      */
     async sendTicketResolvedNotification(ticket) {
         try {
@@ -469,33 +469,37 @@ class TicketService {
                 minute: '2-digit'
             });
 
-            // Build notification message
+            // Build template parameters
+            const customerName = customer.firstName || 'Cliente';
             const agentName = agent ? `${agent.firstName} ${agent.lastName}` : 'Nuestro equipo';
             const companyName = configData.companyName || process.env.COMPANY_NAME || 'LUXFREE';
 
-            const message = `✅ *Ticket Resuelto*
+            // Template parameters (6 parameters for ticket_resolved template)
+            const parameters = [
+                { type: 'text', text: customerName },           // {{1}} - Customer name
+                { type: 'text', text: ticket.ticketId },        // {{2}} - Ticket ID
+                { type: 'text', text: ticket.resolution.summary }, // {{3}} - Solution summary
+                { type: 'text', text: agentName },              // {{4}} - Resolved by
+                { type: 'text', text: formattedDate },          // {{5}} - Date
+                { type: 'text', text: companyName }             // {{6}} - Company name
+            ];
 
-Hola ${customer.firstName},
+            // Use Spanish template (ticket_resolved_es)
+            const templateName = 'ticket_resolved_es';
+            const languageCode = 'en'; // Note: Template is in Spanish but marked as 'en' in database
 
-Tu ticket *${ticket.ticketId}* ha sido marcado como resuelto.
+            // Build template message using buildTemplateJSON
+            const { buildTemplateJSON } = require('../shared/whatsappModels');
+            const messagePayload = buildTemplateJSON(
+                customer.phoneNumber,
+                templateName,
+                parameters,
+                languageCode
+            );
 
-📋 *Resumen de la solución:*
-${ticket.resolution.summary}
-
-*Resuelto por:* ${agentName}
-*Fecha:* ${formattedDate}
-
-¿Tu problema está completamente resuelto?
-
-Si aún tienes algún inconveniente o necesitas ayuda adicional, puedes responder a este mensaje y tu ticket será reabierto automáticamente.
-
-Gracias por tu paciencia.
-- Equipo ${companyName}`;
-
-            const messagePayload = buildTextJSON(customer.phoneNumber, message);
             await whatsappService.sendWhatsappResponse(messagePayload);
 
-            console.log(`📤 Ticket resolution notification sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
+            console.log(`📤 Ticket resolution template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
         } catch (error) {
             console.error('❌ Error sending ticket resolution notification:', error);
             // Don't throw error - notification failure shouldn't break ticket resolution
