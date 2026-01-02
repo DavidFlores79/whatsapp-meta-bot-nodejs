@@ -23,11 +23,15 @@ const ticketCounterSchema = new mongoose.Schema({
 // Static method to get next ticket number (atomic operation)
 ticketCounterSchema.statics.getNextSequence = async function() {
     const currentYear = new Date().getFullYear();
+    const counterId = `ticket_counter_${currentYear}`;
 
     const counter = await this.findOneAndUpdate(
-        { _id: 'ticket_counter', year: currentYear },
-        { $inc: { sequence: 1 } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { _id: counterId },
+        {
+            $inc: { sequence: 1 },
+            $setOnInsert: { year: currentYear }
+        },
+        { upsert: true, new: true }
     );
 
     return {
