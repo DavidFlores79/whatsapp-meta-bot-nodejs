@@ -66,6 +66,9 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(agent => {
         this.currentAgent = agent;
+        console.log('[TicketDetail] Current agent loaded:', {
+          agent: agent ? { role: agent.role, email: agent.email } : null
+        });
       });
 
     this.loadTicket();
@@ -198,13 +201,27 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
   }
 
   canReopenTicket(): boolean {
-    if (!this.currentAgent || !this.ticket) return false;
+    if (!this.currentAgent || !this.ticket) {
+      console.log('[TicketDetail] canReopenTicket - missing data:', {
+        hasCurrentAgent: !!this.currentAgent,
+        hasTicket: !!this.ticket
+      });
+      return false;
+    }
 
     // Only admin and supervisor can reopen tickets
     const canReopen = this.currentAgent.role === 'admin' || this.currentAgent.role === 'supervisor';
 
     // Ticket must be resolved or closed to reopen
     const isReopenable = this.ticket.status === 'resolved' || this.ticket.status === 'closed';
+
+    console.log('[TicketDetail] canReopenTicket check:', {
+      currentAgentRole: this.currentAgent.role,
+      ticketStatus: this.ticket.status,
+      canReopen,
+      isReopenable,
+      result: canReopen && isReopenable
+    });
 
     return canReopen && isReopenable;
   }
