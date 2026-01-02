@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 const ticketCounterSchema = new mongoose.Schema({
     _id: {
         type: String,
-        default: 'ticket_counter'
+        required: true
+        // Format: 'ticket_counter_{year}' (e.g., 'ticket_counter_2025')
     },
     year: {
         type: Number,
