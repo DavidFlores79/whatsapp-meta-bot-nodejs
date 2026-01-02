@@ -375,7 +375,7 @@ export class ConfigurationService {
   }
 
   updateTicketBehavior(behavior: TicketBehavior): Observable<ConfigurationResponse> {
-    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/ticket-behavior`, behavior);
+    return this.http.put<ConfigurationResponse>(`${this.apiUrl}/ticket-behavior`, { behavior });
   }
 
   // ==================== Helper Methods ====================
