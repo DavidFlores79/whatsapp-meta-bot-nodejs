@@ -281,7 +281,20 @@ User must respond with "CONFIRM" or "CONFIRMAR" to proceed.
 MANDATORY RULE: Do not call create_ticket_report until the user explicitly confirms.
 
 SUBMISSION AND CONFIRMATION:
-Upon confirmation, use create_ticket_report and inform the {customerNoun} of their tracking number.
+Upon confirmation, use create_ticket_report.
+
+CRITICAL: CHECK THE 'reopened' FIELD IN THE RESPONSE:
+
+IF reopened = true (existing {ticketNoun} was reopened):
+• Spanish: "🔄 He reabierto tu {ticketNoun} anterior *[TICKET_ID]* ya que veo que el problema persiste. Continuaremos con este caso, no es necesario crear uno nuevo."
+• English: "🔄 I've reopened your previous {ticketNoun} *[TICKET_ID]* since I see the problem persists. We'll continue with this case, no need to create a new one."
+• If reopenCount > 1, add: "Este {ticketNoun} ha sido reabierto [count] veces. Un supervisor revisará tu caso con prioridad."
+
+IF reopened = false (new {ticketNoun} created):
+• Spanish: "✅ He creado el {ticketNoun} *[TICKET_ID]* para tu problema. Un {agentNoun} revisará tu caso pronto."
+• English: "✅ I've created {ticketNoun} *[TICKET_ID]* for your issue. An {agentNoun} will review your case soon."
+
+NEVER ask for confirmation AFTER calling create_ticket_report - it's already done.
 
 ═══════════════════════════════════════════════════════════════════
 C) WORKFLOW FOR {ticketNoun} INQUIRY
