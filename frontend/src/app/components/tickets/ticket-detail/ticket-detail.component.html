@@ -40,7 +40,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-2" *ngIf="ticket.status !== 'closed'">
+        <div class="flex flex-wrap gap-2">
           <button
             *ngIf="ticket.status === 'new'"
             (click)="changeStatus('open')"
@@ -75,6 +75,17 @@
             [disabled]="updating"
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
             Close Ticket
+          </button>
+          <!-- Reopen Button (Admin/Supervisor Only) -->
+          <button
+            *ngIf="canReopenTicket()"
+            (click)="showReopenModal = true"
+            [disabled]="updating"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Reopen Ticket
           </button>
         </div>
       </div>
@@ -202,6 +213,37 @@
             [disabled]="!resolutionSummary.trim() || updating"
             class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
             {{ updating ? 'Resolving...' : 'Resolve Ticket' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reopen Modal (Admin/Supervisor Only) -->
+    <div *ngIf="showReopenModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div class="bg-whatsapp-gray rounded-lg border border-orange-700 p-6 w-full max-w-lg mx-4">
+        <div class="flex items-center gap-3 mb-4">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <h3 class="text-lg font-semibold text-gray-100">Reopen Ticket</h3>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">Please provide a reason for reopening this ticket:</p>
+        <textarea
+          [(ngModel)]="reopenReason"
+          rows="4"
+          placeholder="Enter reason for reopening (e.g., 'Customer reported issue persists', 'New information received')..."
+          class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-orange-500 focus:outline-none mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button
+            (click)="showReopenModal = false; reopenReason = ''"
+            class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-whatsapp-dark">
+            Cancel
+          </button>
+          <button
+            (click)="reopenTicket()"
+            [disabled]="!reopenReason.trim() || updating"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50">
+            {{ updating ? 'Reopening...' : 'Reopen Ticket' }}
           </button>
         </div>
       </div>

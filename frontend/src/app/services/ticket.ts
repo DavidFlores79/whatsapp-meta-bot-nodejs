@@ -541,6 +541,19 @@ export class TicketService {
   }
 
   /**
+   * Reopen ticket (admin/supervisor only)
+   */
+  reopenTicket(ticketId: string, reason: string): Observable<Ticket> {
+    return this.http.put<{ success: boolean; data: Ticket }>(`${this.apiUrl}/${ticketId}/reopen`, { reason }).pipe(
+      map(response => response.data),
+      tap(ticket => {
+        this.handleTicketUpdated(ticket);
+        this.toastService.success(`Ticket ${ticket.ticketId} reopened successfully`);
+      })
+    );
+  }
+
+  /**
    * Get tickets by customer
    */
   getTicketsByCustomer(customerId: string): Observable<Ticket[]> {
