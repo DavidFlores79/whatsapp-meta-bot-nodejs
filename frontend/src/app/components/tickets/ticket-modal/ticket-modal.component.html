@@ -49,7 +49,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-wrap gap-2" *ngIf="ticket.status !== 'closed'">
+      <div class="flex flex-wrap gap-2">
         <button
           *ngIf="ticket.status === 'new'"
           (click)="changeStatus('open')"
@@ -84,6 +84,17 @@
           [disabled]="updating"
           class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
           Close Ticket
+        </button>
+        <!-- Reopen Button (Admin/Supervisor Only) -->
+        <button
+          *ngIf="canReopenTicket()"
+          (click)="showReopenModal = true"
+          [disabled]="updating"
+          class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Reopen Ticket
         </button>
       </div>
 
@@ -135,6 +146,31 @@
                 <span class="text-gray-400">Resolved</span>
                 <span class="font-medium text-green-400">{{ ticket.resolvedAt | date:'MMM d, h:mm a' }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Location Card -->
+          <div class="bg-whatsapp-dark rounded-lg border border-blue-700 p-4" *ngIf="ticket.location && (ticket.location.formattedAddress || ticket.location.address)">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Service Location</h3>
+              <span *ngIf="ticket.location.isServiceLocation" class="px-2 py-0.5 text-xs rounded-full bg-blue-900/50 text-blue-400">
+                Confirmed
+              </span>
+            </div>
+            <p class="text-gray-300 text-sm">{{ ticket.location.formattedAddress || ticket.location.address }}</p>
+            <div class="flex gap-2 mt-2" *ngIf="ticket.location.latitude && ticket.location.longitude">
+              <a [href]="'https://www.google.com/maps?q=' + ticket.location.latitude + ',' + ticket.location.longitude"
+                 target="_blank" rel="noopener noreferrer"
+                 class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                Open in Google Maps
+              </a>
             </div>
           </div>
         </div>
@@ -368,6 +404,37 @@
             [disabled]="!resolutionSummary.trim() || updating"
             class="px-4 py-2 bg-whatsapp-green text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
             {{ updating ? 'Resolving...' : 'Resolve Ticket' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reopen Modal (Admin/Supervisor Only) -->
+    <div *ngIf="showReopenModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
+      <div class="bg-whatsapp-gray rounded-lg border border-orange-700 p-6 w-full max-w-lg mx-4">
+        <div class="flex items-center gap-3 mb-4">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <h3 class="text-lg font-semibold text-gray-100">Reopen Ticket</h3>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">Please provide a reason for reopening this ticket:</p>
+        <textarea
+          [(ngModel)]="reopenReason"
+          rows="4"
+          placeholder="Enter reason for reopening (e.g., 'Customer reported issue persists', 'New information received')..."
+          class="w-full px-4 py-2 bg-whatsapp-dark text-gray-100 border border-gray-600 rounded-lg focus:border-orange-500 focus:outline-none mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button
+            (click)="showReopenModal = false"
+            class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-whatsapp-dark">
+            Cancel
+          </button>
+          <button
+            (click)="reopenTicket()"
+            [disabled]="!reopenReason.trim() || updating"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50">
+            {{ updating ? 'Reopening...' : 'Reopen Ticket' }}
           </button>
         </div>
       </div>

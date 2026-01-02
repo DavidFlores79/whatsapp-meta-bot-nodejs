@@ -7,6 +7,7 @@ import { TicketService, Ticket } from '../../../services/ticket';
 import { TicketStatusBadgeComponent } from '../ticket-status-badge/ticket-status-badge.component';
 import { ToastService } from '../../../services/toast';
 import { FormsModule } from '@angular/forms';
+import { AuthService, Agent } from '../../../services/auth';
 
 @Component({
   selector: 'app-ticket-modal',
@@ -28,12 +29,15 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   updating = false;
   addingNote = false;
   error: string | null = null;
+  currentAgent: Agent | null = null;
 
   // UI state
   showResolveModal = false;
   resolutionSummary = '';
   newNote = '';
   noteIsInternal = true;
+  showReopenModal = false;
+  reopenReason = '';
 
   // Conversation attachments
   conversationAttachments: any[] = [];
@@ -45,6 +49,7 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private ticketService: TicketService,
+    private authService: AuthService,
     private http: HttpClient,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
@@ -52,6 +57,12 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Get current agent for role-based permissions
+    this.authService.currentAgent$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(agent => {
+        this.currentAgent = agent;
+      });
     this.initializeTicket();
   }
 
@@ -284,6 +295,42 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
       'urgent': 'bg-red-900/50 text-red-400'
     };
     return classes[priority] || classes['medium'];
+  }
+
+  reopenTicket() {
+    if (!this.ticket || this.updating || !this.reopenReason.trim() || !this.ticketId) return;
+
+    this.updating = true;
+    this.ticketService.reopenTicket(this.ticketId, this.reopenReason)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (ticket) => {
+          this.ticket = ticket;
+          this.updating = false;
+          this.showReopenModal = false;
+          this.reopenReason = '';
+          this.ticketUpdated.emit(ticket);
+          this.toast.success('Ticket reopened successfully');
+        },
+        error: (err) => {
+          console.error('Error reopening ticket:', err);
+          this.updating = false;
+          const errorMsg = err.error?.message || 'Failed to reopen ticket';
+          this.toast.error(errorMsg);
+        }
+      });
+  }
+
+  canReopenTicket(): boolean {
+    if (!this.currentAgent || !this.ticket) return false;
+
+    // Only admin and supervisor can reopen tickets
+    const canReopen = this.currentAgent.role === 'admin' || this.currentAgent.role === 'supervisor';
+
+    // Ticket must be resolved or closed to reopen
+    const isReopenable = this.ticket.status === 'resolved' || this.ticket.status === 'closed';
+
+    return canReopen && isReopenable;
   }
 
   close() {
