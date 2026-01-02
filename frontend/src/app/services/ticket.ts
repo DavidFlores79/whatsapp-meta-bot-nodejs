@@ -68,15 +68,11 @@ export interface Ticket {
 
   // Additional fields
   location?: {
+    latitude?: number;
+    longitude?: number;
     address?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
+    formattedAddress?: string;
+    isServiceLocation?: boolean;
   };
 
   attachments?: Array<{
