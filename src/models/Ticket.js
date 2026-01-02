@@ -156,7 +156,7 @@ const ticketSchema = new mongoose.Schema({
         agent: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Agent',
-            required: true
+            required: false  // Allow system-generated notes without agent
         },
         content: {
             type: String,
