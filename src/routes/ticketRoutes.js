@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ticketController = require('../controllers/ticketController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken, requireRole } = require('../middleware/authMiddleware');
 
 // All ticket routes require authentication
 router.use(authenticateToken);
@@ -72,8 +72,9 @@ router.put('/:id/resolve', ticketController.resolveTicket);
  * PUT /api/v2/tickets/:id/reopen
  * Reopen a resolved/closed ticket
  * Body: { reason } (optional)
+ * Requires: admin or supervisor role
  */
-router.put('/:id/reopen', ticketController.reopenTicket);
+router.put('/:id/reopen', requireRole('admin', 'supervisor'), ticketController.reopenTicket);
 
 /**
  * PUT /api/v2/tickets/:id/escalate
