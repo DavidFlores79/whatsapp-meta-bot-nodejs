@@ -1,8 +1,11 @@
 const axios = require("axios");
 const UserThread = require("../models/UserThread");
 const Message = require("../models/Message");
+const Conversation = require("../models/Conversation");
+const Customer = require("../models/Customer");
 const { io } = require("../models/server");
 const configurationService = require("./configurationService");
+const ticketService = require("./ticketService");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
