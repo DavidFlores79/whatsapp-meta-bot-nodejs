@@ -179,3 +179,31 @@ After updating the OpenAI Assistant function:
 - The AI will intelligently choose which parameters to use based on customer request
 - Security is maintained: customers can only access their own tickets
 - Phone number format must match database (12-digit format: 529991234567)
+
+---
+
+## Related Function Updates
+
+### create_ticket_report (Location Support)
+
+If you need to enable location capture in tickets, see:
+- **Documentation:** `docs/OPENAI_FUNCTION_create_ticket_report_UPDATE.md`
+- **Function Definition:** `docs/OPENAI_FUNCTION_create_ticket_report.json`
+
+This update allows the AI to capture GPS coordinates and addresses when customers share their location before reporting issues.
+
+### Ticket Creation & Reopening Behavior (IMPORTANT)
+
+**CRITICAL:** The AI must understand when tickets are REOPENED vs. newly created.
+
+See: **`docs/OPENAI_ASSISTANT_INSTRUCTIONS_TICKET_HANDLING.md`**
+
+This document explains:
+- How to check the `reopened` field in `create_ticket_report` responses
+- What to tell customers when reopening vs. creating new tickets
+- Prevents customer confusion about ticket status
+
+**Action Required:**
+- Add the instructions from this document to your OpenAI Assistant system prompt
+- The backend automatically reopens tickets within 72 hours
+- The AI must communicate this clearly to customers

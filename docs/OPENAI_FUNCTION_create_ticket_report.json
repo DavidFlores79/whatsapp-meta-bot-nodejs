@@ -1,0 +1,72 @@
+{
+  "name": "create_ticket_report",
+  "description": "Create a support ticket when a customer reports an issue with lighting, solar panels, or electrical systems. Use this when customers describe problems, failures, or need technical support. IMPORTANT: If the customer has recently sent their location (GPS coordinates), include it in the location parameter.",
+  "strict": false,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "subject": {
+        "type": "string",
+        "description": "Brief summary of the issue (max 200 chars). Example: 'Solar panel not generating power'"
+      },
+      "description": {
+        "type": "string",
+        "description": "Detailed description of the problem reported by the customer, including symptoms, location details, and any relevant context from the conversation"
+      },
+      "category": {
+        "type": "string",
+        "enum": [
+          "solar_installation",
+          "light_malfunction",
+          "maintenance",
+          "electrical_issue",
+          "billing",
+          "other"
+        ],
+        "description": "Category of the issue. Choose the most appropriate category based on the problem"
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "urgent"
+        ],
+        "description": "Priority level. Use 'urgent' for safety issues or complete failures, 'high' for significant problems, 'medium' for moderate issues, 'low' for minor concerns"
+      },
+      "location": {
+        "type": "object",
+        "description": "Service location information. Include this if the customer has shared their GPS location or mentioned a specific address where the issue is occurring. This is critical for field service tickets.",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "GPS latitude coordinate if customer shared location"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "GPS longitude coordinate if customer shared location"
+          },
+          "address": {
+            "type": "string",
+            "description": "Street address or location description provided by customer or from GPS geocoding"
+          },
+          "formattedAddress": {
+            "type": "string",
+            "description": "Complete formatted address including city and state (if available from geocoding)"
+          },
+          "isServiceLocation": {
+            "type": "boolean",
+            "description": "Set to true if this is where the service/repair is needed. Set to false if it's just a reference location."
+          }
+        },
+        "required": []
+      }
+    },
+    "required": [
+      "subject",
+      "description",
+      "category"
+    ]
+  }
+}
