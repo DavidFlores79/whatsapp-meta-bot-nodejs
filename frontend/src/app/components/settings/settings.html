@@ -399,6 +399,41 @@
                   How many hours back to look for customer attachments when creating a ticket. Default: 48 hours
                 </p>
               </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  <i class="fas fa-redo mr-1"></i> Reopen Window (days)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="ticketBehavior.reopenWindowDays"
+                  min="1"
+                  max="365"
+                  [disabled]="!ticketBehavior.allowReopening"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-whatsapp-dark text-gray-900 dark:text-gray-100 disabled:opacity-50"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Days after resolution when a ticket can be reopened. Default: 30 days
+                </p>
+              </div>
+            </div>
+
+            <!-- Allow Reopening Toggle -->
+            <div class="mt-4">
+              <label class="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="ticketBehavior.allowReopening"
+                  class="sr-only peer"
+                />
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-whatsapp-teal"></div>
+                <span class="ms-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  <i class="fas fa-unlock-alt mr-1"></i> Allow Ticket Reopening
+                </span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-14">
+                When enabled, resolved tickets can be reopened within the specified time window
+              </p>
             </div>
 
             <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">

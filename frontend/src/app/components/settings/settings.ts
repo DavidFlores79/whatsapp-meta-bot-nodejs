@@ -59,7 +59,11 @@ export class SettingsComponent implements OnInit {
   isLoadingCRM = false;
 
   // Ticket Behavior Settings
-  ticketBehavior: TicketBehavior = { attachmentHoursLimit: 48 };
+  ticketBehavior: TicketBehavior = { 
+    attachmentHoursLimit: 48,
+    allowReopening: true,
+    reopenWindowDays: 30
+  };
   isSavingTicketBehavior = false;
 
   // AI Assistant Settings
