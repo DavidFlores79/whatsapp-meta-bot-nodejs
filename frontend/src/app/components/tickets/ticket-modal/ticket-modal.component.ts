@@ -8,6 +8,7 @@ import { TicketStatusBadgeComponent } from '../ticket-status-badge/ticket-status
 import { ToastService } from '../../../services/toast';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Agent } from '../../../services/auth';
+import { ConfigurationService, TicketBehavior } from '../../../services/configuration';
 
 @Component({
   selector: 'app-ticket-modal',
@@ -30,6 +31,7 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   addingNote = false;
   error: string | null = null;
   currentAgent: Agent | null = null;
+  ticketBehavior: TicketBehavior = { attachmentHoursLimit: 48, allowReopening: true, reopenWindowDays: 30 };
 
   // UI state
   showResolveModal = false;
@@ -50,6 +52,7 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     private ticketService: TicketService,
     private authService: AuthService,
+    private configService: ConfigurationService,
     private http: HttpClient,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
@@ -63,6 +66,14 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe(agent => {
         this.currentAgent = agent;
       });
+    
+    // Load ticket behavior configuration
+    this.configService.getTicketBehavior()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(behavior => {
+        this.ticketBehavior = behavior;
+      });
+
     this.initializeTicket();
   }
 
@@ -324,13 +335,32 @@ export class TicketModalComponent implements OnInit, OnChanges, OnDestroy {
   canReopenTicket(): boolean {
     if (!this.currentAgent || !this.ticket) return false;
 
+    // Check if reopening is allowed in configuration
+    if (this.ticketBehavior.allowReopening === false) return false;
+
     // Only admin and supervisor can reopen tickets
     const canReopen = this.currentAgent.role === 'admin' || this.currentAgent.role === 'supervisor';
 
     // Ticket must be resolved or closed to reopen
     const isReopenable = this.ticket.status === 'resolved' || this.ticket.status === 'closed';
 
-    return canReopen && isReopenable;
+    // Check if ticket is too old to reopen (configurable, default 30 days)
+    const maxReopenDays = this.ticketBehavior.reopenWindowDays || 30;
+    const closedDate = this.ticket.resolvedAt ? new Date(this.ticket.resolvedAt) : new Date(this.ticket.updatedAt);
+    const daysSinceClosed = Math.floor((Date.now() - closedDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isNotTooOld = daysSinceClosed <= maxReopenDays;
+
+    return canReopen && isReopenable && isNotTooOld;
+  }
+
+  getDaysSinceClosed(): number {
+    if (!this.ticket) return 0;
+    const closedDate = this.ticket.resolvedAt ? new Date(this.ticket.resolvedAt) : new Date(this.ticket.updatedAt);
+    return Math.floor((Date.now() - closedDate.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  getReopenWindowDays(): number {
+    return this.ticketBehavior.reopenWindowDays || 30;
   }
 
   close() {

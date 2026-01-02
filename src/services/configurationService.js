@@ -191,12 +191,10 @@ class ConfigurationService {
 
     getDefaultTicketBehavior() {
         return {
-            // Auto-reopen window in hours (72 hours = 3 days)
-            autoReopenWindowHours: 72,
-            // Whether to allow reopening closed tickets
-            allowReopenClosed: false,
-            // Whether to allow reopening escalated tickets
-            allowReopenEscalated: false,
+            // Reopen window in days (30 days default)
+            reopenWindowDays: 30,
+            // Whether to allow reopening closed tickets at all
+            allowReopening: true,
             // Maximum number of times a ticket can be reopened
             maxReopenCount: 3,
             // Time limit for showing conversation attachments (in hours)

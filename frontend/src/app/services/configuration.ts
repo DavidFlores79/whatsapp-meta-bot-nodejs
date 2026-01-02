@@ -43,7 +43,7 @@ export interface TicketBehavior {
   attachmentHoursLimit: number;
   autoCloseHours?: number;
   allowReopening?: boolean;
-  reopenWindowHours?: number;
+  reopenWindowDays?: number;
 }
 
 export interface InstructionsPreview {

@@ -631,32 +631,26 @@ class TicketService {
      */
     async findRecentResolvedTicket(customerId) {
         const behavior = await configService.getTicketBehavior();
-        const windowHours = behavior.autoReopenWindowHours || 72;
-        const allowReopenClosed = behavior.allowReopenClosed || false;
-        const allowReopenEscalated = behavior.allowReopenEscalated || false;
+        const windowDays = behavior.reopenWindowDays || 30;
+        const allowReopening = behavior.allowReopening !== false;
 
-        // Calculate cutoff time
+        if (!allowReopening) {
+            return null;
+        }
+
+        // Calculate cutoff time in days
         const cutoffTime = new Date();
-        cutoffTime.setHours(cutoffTime.getHours() - windowHours);
+        cutoffTime.setDate(cutoffTime.getDate() - windowDays);
 
         // Build query
         const query = {
             customerId,
             $or: [
-                { status: 'resolved' }
+                { status: 'resolved' },
+                { status: 'closed' }
             ],
-            'resolution.resolvedAt': { $gte: cutoffTime }
+            updatedAt: { $gte: cutoffTime }
         };
-
-        // Add closed status if allowed
-        if (allowReopenClosed) {
-            query.$or.push({ status: 'closed' });
-        }
-
-        // Exclude escalated tickets unless allowed
-        if (!allowReopenEscalated) {
-            query.isEscalated = { $ne: true };
-        }
 
         // Find most recent matching ticket
         const ticket = await Ticket.findOne(query)
