@@ -930,8 +930,17 @@ class TicketService {
         const templateName = 'incident_followup_update_es';
         const languageCode = 'es_MX';
 
+        // Fetch template from database to get actual content
+        const Template = require('../models/Template');
+        const template = await Template.findOne({ name: templateName });
+        if (!template) {
+            throw new Error(`Template '${templateName}' no encontrado en la base de datos`);
+        }
+
         // Build and send template message
         const { buildTemplateJSON } = require('../shared/whatsappModels');
+        const { getTemplateDisplayContent } = require('../shared/processMessage');
+
         const messagePayload = buildTemplateJSON(
             customer.phoneNumber,
             templateName,
@@ -941,8 +950,9 @@ class TicketService {
 
         await whatsappService.sendWhatsappResponse(messagePayload);
 
-        // Build summary text for display in chat - matches WhatsApp template format
-        const summaryText = `👋 Hola ${customerName}, te compartimos una actualización sobre tu ticket de incidente #${ticket.ticketId}.\n\n🚀 Estado actual: ${statusLabel}\n\n📝 Actualización: ${updateMessage}\n\n⚠️ Te notificaremos tan pronto haya nuevos avances.`;
+        // Generate display content from actual template (same as other template sends)
+        const parameterValues = parameters.map(p => p.text);
+        const summaryText = getTemplateDisplayContent(template, parameterValues);
 
         // Save message to database
         const Message = require('../models/Message');
