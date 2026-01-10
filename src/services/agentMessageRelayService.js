@@ -1,5 +1,11 @@
 const whatsappService = require('./whatsappService');
-const { buildTextJSON } = require('../shared/whatsappModels');
+const {
+    buildTextJSON,
+    buildImageJSON,
+    buildDocumentJSON,
+    buildVideoJSON,
+    buildAudioJSON
+} = require('../shared/whatsappModels');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const Customer = require('../models/Customer');
@@ -149,8 +155,122 @@ async function sendAgentMessageToCustomer(conversationId, customerId, agentId, c
     return newMessage;
 }
 
+/**
+ * Send media message from agent to customer
+ * @param {string} conversationId - Conversation ID
+ * @param {string} customerId - Customer ID
+ * @param {string} agentId - Agent ID
+ * @param {string} customerPhone - Customer phone number
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} filename - Original filename
+ * @param {string} mimeType - MIME type (e.g., 'image/jpeg', 'application/pdf')
+ * @param {string} caption - Optional caption
+ * @param {string} source - Source ('web' or 'whatsapp')
+ */
+async function sendMediaMessageToCustomer(conversationId, customerId, agentId, customerPhone, fileBuffer, filename, mimeType, caption = '', source = 'web') {
+    const { io } = require('../models/server');
+
+    // Determine media type
+    const mediaType = whatsappService.getMediaTypeFromMime(mimeType);
+
+    // Upload media to WhatsApp
+    const mediaId = await whatsappService.uploadMedia(fileBuffer, mimeType, filename);
+
+    // Build and send the appropriate message type
+    let mediaPayload;
+    switch (mediaType) {
+        case 'image':
+            mediaPayload = buildImageJSON(customerPhone, mediaId, caption);
+            break;
+        case 'video':
+            mediaPayload = buildVideoJSON(customerPhone, mediaId, caption);
+            break;
+        case 'audio':
+            mediaPayload = buildAudioJSON(customerPhone, mediaId);
+            break;
+        default:
+            mediaPayload = buildDocumentJSON(customerPhone, mediaId, filename, caption);
+    }
+
+    whatsappService.sendWhatsappResponse(mediaPayload);
+
+    // Build content description for database
+    const contentDescription = caption || `[${mediaType}: ${filename}]`;
+
+    // Save to database
+    const newMessage = new Message({
+        conversationId,
+        customerId,
+        content: contentDescription,
+        type: mediaType,
+        direction: 'outbound',
+        sender: 'agent',
+        agentId,
+        status: 'sent',
+        media: {
+            type: mediaType,
+            filename: filename,
+            mimeType: mimeType,
+            whatsappMediaId: mediaId,
+            caption: caption
+        }
+    });
+    await newMessage.save();
+
+    // Update conversation
+    await Conversation.findByIdAndUpdate(conversationId, {
+        $inc: { messageCount: 1 },
+        lastAgentResponse: new Date(),
+        lastMessage: {
+            content: contentDescription,
+            timestamp: new Date(),
+            from: 'agent',
+            type: mediaType
+        },
+        unreadCount: 0
+    });
+
+    // Update agent statistics
+    await Agent.findByIdAndUpdate(agentId, {
+        $inc: { 'statistics.totalMessages': 1 },
+        lastActivity: new Date()
+    });
+
+    // Emit socket event
+    io.emit('new_message', {
+        chatId: conversationId.toString(),
+        message: {
+            id: newMessage._id.toString(),
+            text: contentDescription,
+            sender: 'me',
+            timestamp: newMessage.timestamp,
+            agentId: agentId.toString(),
+            type: mediaType,
+            media: {
+                type: mediaType,
+                filename: filename,
+                mimeType: mimeType
+            }
+        }
+    });
+
+    // Emit to other agents for real-time updates
+    io.emit('agent_message_sent', {
+        conversationId,
+        agentId,
+        messageText: contentDescription,
+        mediaType,
+        source
+    });
+
+    console.log(`✅ Agent ${mediaType} message sent to customer ${customerPhone} (source: ${source})`);
+
+    return newMessage;
+}
+
 module.exports = {
     detectAgentMessage,
     handleAgentWhatsAppMessage,
-    sendAgentMessageToCustomer
+    sendAgentMessageToCustomer,
+    sendMediaMessageToCustomer
 };

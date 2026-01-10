@@ -1,0 +1,21 @@
+{
+  "name": "search_ecommerce_products",
+  "description": "Search for products in the e-commerce catalog. Use this function when a customer asks about product availability, prices, or product information.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The search query - product name, category, or keywords to search for"
+      },
+      "limit": {
+        "type": "integer",
+        "description": "Maximum number of products to return. Default is 5, maximum is 10.",
+        "default": 5,
+        "minimum": 1,
+        "maximum": 10
+      }
+    },
+    "required": ["query"]
+  }
+}

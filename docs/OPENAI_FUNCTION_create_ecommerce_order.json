@@ -1,0 +1,60 @@
+{
+  "name": "create_ecommerce_order",
+  "description": "Create a new order in the e-commerce system on behalf of a customer via WhatsApp. Use this when a customer wants to place an order through WhatsApp chat. Only available when e-commerce integration is enabled and order creation feature is active.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "required": ["customer_phone", "items"],
+    "additionalProperties": false,
+    "properties": {
+      "customer_phone": {
+        "type": "string",
+        "description": "Customer's phone number. The customer must have an existing account in the e-commerce system. Use the phone number from the current WhatsApp conversation."
+      },
+      "items": {
+        "type": "array",
+        "description": "Array of items to order. Each item must have a product_id and quantity.",
+        "items": {
+          "type": "object",
+          "required": ["product_id", "quantity"],
+          "additionalProperties": false,
+          "properties": {
+            "product_id": {
+              "type": "string",
+              "description": "The product ID from the e-commerce catalog. Use search_ecommerce_products first to find valid product IDs."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "Number of units to order. Must be at least 1.",
+              "minimum": 1
+            }
+          }
+        }
+      },
+      "payment_method": {
+        "type": "string",
+        "description": "Payment method selected by customer.",
+        "enum": ["cash", "credit_card", "paypal", "bank_transfer"],
+        "default": "cash"
+      },
+      "address": {
+        "type": "string",
+        "description": "Delivery address if delivery_option is 'delivery'. Include street, neighborhood, and any delivery references."
+      },
+      "delivery_option": {
+        "type": "string",
+        "description": "How the customer wants to receive their order.",
+        "enum": ["pickup", "delivery"],
+        "default": "delivery"
+      },
+      "delivery_date": {
+        "type": "string",
+        "description": "Requested delivery date in ISO format (YYYY-MM-DD). Optional - if not specified, earliest available date will be used."
+      },
+      "notes": {
+        "type": "string",
+        "description": "Additional notes or special instructions for the order."
+      }
+    }
+  }
+}

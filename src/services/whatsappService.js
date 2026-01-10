@@ -1,4 +1,7 @@
 const https = require('https');
+const FormData = require('form-data');
+const fs = require('fs');
+const path = require('path');
 
 const URI = process.env.WHATSAPP_URI;
 const VERSION = process.env.WHATSAPP_VERSION
@@ -104,8 +107,97 @@ const getMediaUrl = async (mediaId) => {
     });
 }
 
+/**
+ * Upload media to WhatsApp Cloud API
+ * @param {Buffer} fileBuffer - File buffer to upload
+ * @param {string} mimeType - MIME type of the file (e.g., 'image/jpeg', 'application/pdf')
+ * @param {string} filename - Original filename
+ * @returns {Promise<string>} - WhatsApp media ID
+ */
+const uploadMedia = async (fileBuffer, mimeType, filename) => {
+    return new Promise((resolve, reject) => {
+        const form = new FormData();
+        form.append('messaging_product', 'whatsapp');
+        form.append('file', fileBuffer, {
+            filename: filename,
+            contentType: mimeType
+        });
+        form.append('type', mimeType);
+
+        const options = {
+            host: URI,
+            path: `/${VERSION}/${PHONE_ID}/media`,
+            method: 'POST',
+            headers: {
+                ...form.getHeaders(),
+                'Authorization': `Bearer ${TOKEN}`,
+            }
+        };
+
+        console.log(`Uploading media: ${filename} (${mimeType})`);
+
+        const req = https.request(options, res => {
+            let data = '';
+
+            res.on('data', chunk => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+                    if (response.id) {
+                        console.log(`Media uploaded successfully: ${response.id}`);
+                        resolve(response.id);
+                    } else {
+                        console.error('No media ID in response:', response);
+                        reject(new Error(response.error?.message || 'Failed to upload media'));
+                    }
+                } catch (error) {
+                    console.error('Error parsing upload response:', error);
+                    reject(error);
+                }
+            });
+        });
+
+        req.on('error', error => {
+            console.error('Error uploading media:', error);
+            reject(error);
+        });
+
+        form.pipe(req);
+    });
+}
+
+/**
+ * Upload media from file path
+ * @param {string} filePath - Path to the file
+ * @param {string} mimeType - MIME type of the file
+ * @returns {Promise<string>} - WhatsApp media ID
+ */
+const uploadMediaFromPath = async (filePath, mimeType) => {
+    const fileBuffer = fs.readFileSync(filePath);
+    const filename = path.basename(filePath);
+    return uploadMedia(fileBuffer, mimeType, filename);
+}
+
+/**
+ * Get MIME type category for WhatsApp message type
+ * @param {string} mimeType - MIME type string
+ * @returns {string} - WhatsApp message type (image, document, video, audio)
+ */
+const getMediaTypeFromMime = (mimeType) => {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    return 'document';
+}
+
 module.exports = {
     sendWhatsappResponse,
     sendTypingIndicator,
     getMediaUrl,
+    uploadMedia,
+    uploadMediaFromPath,
+    getMediaTypeFromMime,
 }

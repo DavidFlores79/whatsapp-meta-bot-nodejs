@@ -1,0 +1,16 @@
+{
+  "name": "get_active_orders",
+  "description": "Get all pending and processing orders for a customer. Use this when a customer asks about their current/active orders, order status, or wants to know what orders are in progress. Only available when e-commerce integration is enabled.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "required": ["phone"],
+    "additionalProperties": false,
+    "properties": {
+      "phone": {
+        "type": "string",
+        "description": "Customer's phone number to look up active orders. Use the phone number from the current WhatsApp conversation."
+      }
+    }
+  }
+}

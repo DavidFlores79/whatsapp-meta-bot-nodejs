@@ -649,6 +649,16 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
             });
           }
         }
+      } else if (
+        functionName === "get_ecommerce_order" || 
+        functionName === "search_ecommerce_products" ||
+        functionName === "create_ecommerce_order" ||
+        functionName === "get_active_orders"
+      ) {
+        // E-commerce integration functions (only work with compatible presets)
+        const { handleEcommerceFunction } = require('../handlers/ecommerceFunctionHandler');
+        const result = await handleEcommerceFunction(functionName, args);
+        output = JSON.stringify(result);
       } else {
         // Unknown function
         output = JSON.stringify({

@@ -176,6 +176,7 @@ class Server {
     this.app.use("/api/v2/crm-settings", require("../routes/crmSettingsRoutes"));
     this.app.use("/api/v2/config", require("../routes/configurationRoutes"));
     this.app.use("/api/v2/tickets", require("../routes/ticketRoutes"));
+    this.app.use("/api/v2/ecommerce", require("../routes/ecommerceRoutes")); // E-commerce integration
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));
