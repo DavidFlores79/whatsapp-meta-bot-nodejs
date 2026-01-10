@@ -479,6 +479,38 @@ async function attachMessageToTicket(req, res) {
 }
 
 /**
+ * Send ticket summary to customer via WhatsApp
+ */
+async function sendTicketSummary(req, res) {
+    try {
+        const { id } = req.params;
+        const { conversationId } = req.body;
+        const agentId = req.agent._id;
+
+        if (!conversationId) {
+            return res.status(400).json({
+                success: false,
+                error: 'conversationId es requerido'
+            });
+        }
+
+        const result = await ticketService.sendTicketSummaryToCustomer(id, agentId, conversationId);
+
+        res.json({
+            success: true,
+            data: result,
+            message: 'Resumen del ticket enviado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error sending ticket summary:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al enviar el resumen del ticket'
+        });
+    }
+}
+
+/**
  * Remove an attachment from a ticket
  */
 async function removeAttachmentFromTicket(req, res) {
@@ -525,5 +557,6 @@ module.exports = {
     getStatistics,
     getConversationAttachments,
     attachMessageToTicket,
-    removeAttachmentFromTicket
+    removeAttachmentFromTicket,
+    sendTicketSummary
 };

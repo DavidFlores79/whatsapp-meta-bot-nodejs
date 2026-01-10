@@ -851,6 +851,108 @@ class TicketService {
     }
 
     /**
+     * Send ticket summary to customer via WhatsApp using template
+     * Uses incident_followup_update_es/en template to bypass 24-hour window
+     * Includes: Ticket ID, Status, Update details
+     */
+    async sendTicketSummaryToCustomer(ticketId, agentId, conversationId) {
+        const ticket = await this.getTicketById(ticketId);
+        if (!ticket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        const customer = ticket.customerId;
+        if (!customer || !customer.phoneNumber) {
+            throw new Error('Cliente o número de teléfono no encontrado');
+        }
+
+        // Get configuration for terminology
+        const configData = await configService.getAssistantConfig();
+        const categories = await configService.getTicketCategories();
+
+        // Find category label
+        const categoryConfig = categories.find(c => c.id === ticket.category);
+        const categoryLabel = categoryConfig ? categoryConfig.label : ticket.category;
+
+        // Status translation map (Spanish)
+        const statusLabels = {
+            'new': 'Nuevo',
+            'open': 'Abierto',
+            'in_progress': 'En progreso',
+            'pending_customer': 'Pendiente de cliente',
+            'waiting_internal': 'Esperando respuesta interna',
+            'resolved': 'Resuelto',
+            'closed': 'Cerrado'
+        };
+
+        const statusLabel = statusLabels[ticket.status] || ticket.status;
+
+        // Build update message ({{4}} parameter)
+        let updateParts = [];
+
+        // Add category info
+        updateParts.push(`Categoría: ${categoryLabel}`);
+
+        // Add external notes (non-internal only)
+        const externalNotes = (ticket.notes || []).filter(n => !n.isInternal);
+        if (externalNotes.length > 0) {
+            const latestNote = externalNotes[externalNotes.length - 1];
+            const agentName = latestNote.agent ? latestNote.agent.firstName : 'Sistema';
+            updateParts.push(`Última nota (${agentName}): ${latestNote.content}`);
+        }
+
+        // Add resolution if resolved
+        if (ticket.status === 'resolved' && ticket.resolution?.summary) {
+            updateParts.push(`Resolución: ${ticket.resolution.summary}`);
+        }
+
+        // If no updates, add a generic message
+        if (updateParts.length === 1) {
+            updateParts.push('Tu reporte está siendo atendido por nuestro equipo.');
+        }
+
+        const updateMessage = updateParts.join('. ');
+
+        // Build template parameters
+        // {{1}} - Customer name
+        // {{2}} - Ticket ID
+        // {{3}} - Current status
+        // {{4}} - Update message
+        const customerName = customer.firstName || 'Cliente';
+        const parameters = [
+            { type: 'text', text: customerName },
+            { type: 'text', text: ticket.ticketId },
+            { type: 'text', text: statusLabel },
+            { type: 'text', text: updateMessage }
+        ];
+
+        // Use Spanish template (default)
+        const templateName = 'incident_followup_update_es';
+        const languageCode = 'es_MX';
+
+        // Build and send template message
+        const { buildTemplateJSON } = require('../shared/whatsappModels');
+        const messagePayload = buildTemplateJSON(
+            customer.phoneNumber,
+            templateName,
+            parameters,
+            languageCode
+        );
+
+        await whatsappService.sendWhatsappResponse(messagePayload);
+
+        // Build summary text for logging/response
+        const summaryText = `Ticket ${ticket.ticketId} - Estado: ${statusLabel} - ${updateMessage}`;
+
+        console.log(`📤 Ticket summary template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
+
+        return {
+            message: { templateName, parameters },
+            summaryText
+        };
+    }
+
+    /**
      * Remove an attachment from a ticket
      */
     async removeAttachmentFromTicket(ticketId, attachmentId) {

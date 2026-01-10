@@ -34,7 +34,19 @@
                 </div>
             </div>
             <div class="flex gap-4 text-gray-400">
+                <!-- Ticket Indicator Badge -->
                 <button
+                    *ngIf="getOpenTicketCount() > 0"
+                    (click)="toggleTicketPanel(); $event.stopPropagation()"
+                    class="relative hover:text-gray-200"
+                    [title]="'Ver tickets abiertos (' + getOpenTicketCount() + ')'">
+                    <i class="fas fa-ticket-alt text-yellow-400"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                        {{ getOpenTicketCount() }}
+                    </span>
+                </button>
+                <button
+                    *ngIf="getOpenTicketCount() === 0"
                     (click)="createTicket(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
                     title="Create Ticket">
@@ -122,6 +134,43 @@
                 <span *ngIf="chat.assignedAgent && !isAssignedToMe(chat)">
                     {{ 'chat.assignedTo' | translate }} {{ getAssignedAgentFirstName(chat) }}
                 </span>
+            </div>
+        </div>
+
+        <!-- Expandable Ticket Panel -->
+        <div *ngIf="isTicketPanelOpen && customerTickets.length > 0"
+             class="px-4 pb-3 border-t border-gray-600 bg-gray-800/50">
+            <div class="flex items-center justify-between py-2">
+                <span class="text-sm text-gray-300 font-medium">
+                    <i class="fas fa-ticket-alt text-yellow-400 mr-2"></i>
+                    Tickets Abiertos ({{ customerTickets.length }})
+                </span>
+                <button (click)="createTicket(chat)" class="text-xs text-blue-400 hover:text-blue-300">
+                    <i class="fas fa-plus mr-1"></i> Nuevo
+                </button>
+            </div>
+            <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                <div *ngFor="let ticket of customerTickets"
+                     class="bg-gray-700/70 rounded-lg p-3 flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-mono text-blue-400">{{ ticket.ticketId }}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full text-white"
+                                  [ngClass]="getTicketStatusClass(ticket.status)">
+                                {{ getTicketStatusLabel(ticket.status) }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">{{ ticket.subject }}</p>
+                    </div>
+                    <button
+                        (click)="sendTicketSummary(ticket, chat); $event.stopPropagation()"
+                        [disabled]="isSendingTicketSummary"
+                        class="ml-3 px-3 py-1.5 bg-green-600 text-white text-xs rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        title="Enviar resumen al cliente">
+                        <i class="fas" [ngClass]="isSendingTicketSummary ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                        Enviar
+                    </button>
+                </div>
             </div>
         </div>
     </div>

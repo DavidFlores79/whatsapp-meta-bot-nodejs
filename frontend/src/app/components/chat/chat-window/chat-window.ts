@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
+import { TicketService, Ticket } from '../../../services/ticket';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
@@ -63,11 +64,19 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   currentImageFilename = '';
   isReopeningChat = false;
 
+  // Customer Tickets
+  customerTickets: Ticket[] = [];
+  isTicketPanelOpen = false;
+  isLoadingTickets = false;
+  isSendingTicketSummary = false;
+  private lastCustomerId: string | null = null;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private ticketService: TicketService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
@@ -91,6 +100,9 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
             this.forceScrollToBottom();
           }
           // Otherwise, wait for messages to load (handled by the else-if below)
+
+          // Fetch customer tickets when chat changes
+          this.fetchCustomerTickets(chat);
         } else if (currentMessageCount > this.lastMessageCount) {
           // Messages loaded for current chat OR new messages added - scroll to bottom
           this.shouldScroll = true;
@@ -575,5 +587,107 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     this.showImageViewer = false;
     this.currentImageUrl = '';
     this.currentImageFilename = '';
+  }
+
+  /**
+   * Fetch customer tickets for the current chat
+   */
+  fetchCustomerTickets(chat: Chat) {
+    // Reset ticket panel state when chat changes
+    this.isTicketPanelOpen = false;
+    this.customerTickets = [];
+
+    // Get customer ID from chat
+    const customerId = typeof chat.customerId === 'string'
+      ? chat.customerId
+      : (chat.customerId as any)?._id;
+
+    if (!customerId || customerId === this.lastCustomerId) {
+      return;
+    }
+
+    this.lastCustomerId = customerId;
+    this.isLoadingTickets = true;
+
+    this.ticketService.getTicketsByCustomer(customerId).subscribe({
+      next: (tickets) => {
+        // Filter to show only open tickets (not resolved/closed)
+        this.customerTickets = tickets.filter(t =>
+          !['resolved', 'closed'].includes(t.status)
+        );
+        this.isLoadingTickets = false;
+      },
+      error: (err) => {
+        console.error('Error fetching customer tickets:', err);
+        this.isLoadingTickets = false;
+      }
+    });
+  }
+
+  /**
+   * Toggle ticket panel visibility
+   */
+  toggleTicketPanel() {
+    this.isTicketPanelOpen = !this.isTicketPanelOpen;
+  }
+
+  /**
+   * Get open ticket count
+   */
+  getOpenTicketCount(): number {
+    return this.customerTickets.length;
+  }
+
+  /**
+   * Send ticket summary to customer via WhatsApp
+   */
+  sendTicketSummary(ticket: Ticket, chat: Chat) {
+    if (this.isSendingTicketSummary) return;
+
+    this.isSendingTicketSummary = true;
+
+    this.ticketService.sendTicketSummary(ticket._id, chat.id).subscribe({
+      next: () => {
+        this.isSendingTicketSummary = false;
+        // Message will appear via Socket.io
+      },
+      error: (err) => {
+        console.error('Error sending ticket summary:', err);
+        this.isSendingTicketSummary = false;
+        this.toastService.error('Error al enviar el resumen del ticket');
+      }
+    });
+  }
+
+  /**
+   * Get status label in Spanish
+   */
+  getTicketStatusLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'new': 'Nuevo',
+      'open': 'Abierto',
+      'in_progress': 'En progreso',
+      'pending_customer': 'Pendiente',
+      'waiting_internal': 'Esperando',
+      'resolved': 'Resuelto',
+      'closed': 'Cerrado'
+    };
+    return statusLabels[status] || status;
+  }
+
+  /**
+   * Get status color class for ticket badge
+   */
+  getTicketStatusClass(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'new': 'bg-gray-500',
+      'open': 'bg-blue-500',
+      'in_progress': 'bg-yellow-500',
+      'pending_customer': 'bg-purple-500',
+      'waiting_internal': 'bg-orange-500',
+      'resolved': 'bg-green-500',
+      'closed': 'bg-gray-600'
+    };
+    return colorMap[status] || 'bg-gray-500';
   }
 }

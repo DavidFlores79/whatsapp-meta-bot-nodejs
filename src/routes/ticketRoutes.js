@@ -103,4 +103,11 @@ router.post('/:id/attach-message', ticketController.attachMessageToTicket);
  */
 router.delete('/:id/remove-attachment', ticketController.removeAttachmentFromTicket);
 
+/**
+ * POST /api/v2/tickets/:id/send-summary
+ * Send ticket summary to customer via WhatsApp
+ * Body: { conversationId }
+ */
+router.post('/:id/send-summary', ticketController.sendTicketSummary);
+
 module.exports = router;

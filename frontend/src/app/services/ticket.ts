@@ -568,6 +568,21 @@ export class TicketService {
   }
 
   /**
+   * Send ticket summary to customer via WhatsApp
+   */
+  sendTicketSummary(ticketId: string, conversationId: string): Observable<{ message: any; summaryText: string }> {
+    return this.http.post<{ success: boolean; data: { message: any; summaryText: string } }>(
+      `${this.apiUrl}/${ticketId}/send-summary`,
+      { conversationId }
+    ).pipe(
+      map(response => response.data),
+      tap(() => {
+        this.toastService.success('Resumen del ticket enviado al cliente');
+      })
+    );
+  }
+
+  /**
    * Get ticket statistics
    */
   getStatistics(): Observable<TicketStatistics> {
