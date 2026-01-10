@@ -941,13 +941,81 @@ class TicketService {
 
         await whatsappService.sendWhatsappResponse(messagePayload);
 
-        // Build summary text for logging/response
-        const summaryText = `Ticket ${ticket.ticketId} - Estado: ${statusLabel} - ${updateMessage}`;
+        // Build summary text for display in chat
+        const summaryText = `*Reporte: ${ticket.ticketId}*\n\n*Estado:* ${statusLabel}\n*Categoría:* ${categoryLabel}`;
+
+        // Save message to database
+        const Message = require('../models/Message');
+        const Conversation = require('../models/Conversation');
+        const Agent = require('../models/Agent');
+
+        const newMessage = new Message({
+            conversationId,
+            customerId: customer._id,
+            content: summaryText,
+            type: 'template',
+            direction: 'outbound',
+            sender: 'agent',
+            agentId,
+            status: 'sent',
+            template: {
+                name: templateName,
+                language: languageCode,
+                parameters: parameters.map(p => p.text),
+                category: 'UTILITY'
+            }
+        });
+        await newMessage.save();
+
+        // Update conversation
+        await Conversation.findByIdAndUpdate(conversationId, {
+            $inc: { messageCount: 1 },
+            lastAgentResponse: new Date(),
+            lastMessage: {
+                content: summaryText,
+                timestamp: new Date(),
+                from: 'agent',
+                type: 'template'
+            },
+            unreadCount: 0
+        });
+
+        // Update agent statistics
+        await Agent.findByIdAndUpdate(agentId, {
+            $inc: { 'statistics.totalMessages': 1 },
+            lastActivity: new Date()
+        });
+
+        // Emit Socket.io events for real-time UI update
+        if (io) {
+            io.emit('new_message', {
+                chatId: conversationId.toString(),
+                message: {
+                    id: newMessage._id.toString(),
+                    text: summaryText,
+                    sender: 'me',
+                    timestamp: newMessage.timestamp,
+                    agentId: agentId.toString(),
+                    type: 'template',
+                    template: {
+                        name: templateName,
+                        language: languageCode
+                    }
+                }
+            });
+
+            io.emit('agent_message_sent', {
+                conversationId,
+                agentId,
+                messageText: summaryText,
+                source: 'web'
+            });
+        }
 
         console.log(`📤 Ticket summary template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
 
         return {
-            message: { templateName, parameters },
+            message: newMessage,
             summaryText
         };
     }
