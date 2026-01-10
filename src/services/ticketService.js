@@ -941,8 +941,8 @@ class TicketService {
 
         await whatsappService.sendWhatsappResponse(messagePayload);
 
-        // Build summary text for display in chat
-        const summaryText = `*Reporte: ${ticket.ticketId}*\n\n*Estado:* ${statusLabel}\n*Categoría:* ${categoryLabel}`;
+        // Build summary text for display in chat - matches WhatsApp template format
+        const summaryText = `👋 Hola ${customerName}, te compartimos una actualización sobre tu ticket de incidente #${ticket.ticketId}.\n\n🚀 Estado actual: ${statusLabel}\n\n📝 Actualización: ${updateMessage}\n\n⚠️ Te notificaremos tan pronto haya nuevos avances.`;
 
         // Save message to database
         const Message = require('../models/Message');
