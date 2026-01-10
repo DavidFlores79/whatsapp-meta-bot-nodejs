@@ -21,6 +21,10 @@ class Server {
     module.exports.io = io;
     require('../services/socket');
 
+    // Initialize template message service with Socket.io
+    const templateMessageService = require('../services/templateMessageService');
+    templateMessageService.setSocketIO(io);
+
     http.listen(this.port, () => {
       console.log(`Listen on port ${this.port}`);
     });

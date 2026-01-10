@@ -447,6 +447,8 @@ class TicketService {
     /**
      * Send WhatsApp notification when ticket is resolved
      * Uses WhatsApp template to bypass 24-hour messaging window
+     * Note: This is a notification only - not saved to conversation history
+     * because it's sent automatically on resolution (not by agent action)
      */
     async sendTicketResolvedNotification(ticket) {
         try {
@@ -484,20 +486,14 @@ class TicketService {
                 { type: 'text', text: companyName }             // {{6}} - Company name
             ];
 
-            // Use Spanish template (ticket_resolved_es)
-            const templateName = 'ticket_resolved_es';
-            const languageCode = 'en'; // Note: Template is in Spanish but marked as 'en' in database
-
-            // Build template message using buildTemplateJSON
-            const { buildTemplateJSON } = require('../shared/whatsappModels');
-            const messagePayload = buildTemplateJSON(
-                customer.phoneNumber,
-                templateName,
+            // Use centralized template message service (notification only, not saved to DB)
+            const templateMessageService = require('./templateMessageService');
+            await templateMessageService.sendTemplateNotification({
+                templateName: 'ticket_resolved_es',
+                languageCode: 'en', // Note: Template is in Spanish but marked as 'en' in database
                 parameters,
-                languageCode
-            );
-
-            await whatsappService.sendWhatsappResponse(messagePayload);
+                phoneNumber: customer.phoneNumber
+            });
 
             console.log(`📤 Ticket resolution template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
         } catch (error) {
@@ -867,7 +863,6 @@ class TicketService {
         }
 
         // Get configuration for terminology
-        const configData = await configService.getAssistantConfig();
         const categories = await configService.getTicketCategories();
 
         // Find category label
@@ -926,107 +921,24 @@ class TicketService {
             { type: 'text', text: updateMessage }
         ];
 
-        // Use Spanish template (default)
-        const templateName = 'incident_followup_update_es';
-        const languageCode = 'es_MX';
-
-        // Fetch template from database to get actual content
-        const Template = require('../models/Template');
-        const template = await Template.findOne({ name: templateName });
-        if (!template) {
-            throw new Error(`Template '${templateName}' no encontrado en la base de datos`);
-        }
-
-        // Build and send template message
-        const { buildTemplateJSON } = require('../shared/whatsappModels');
-        const { getTemplateDisplayContent } = require('../shared/processMessage');
-
-        const messagePayload = buildTemplateJSON(
-            customer.phoneNumber,
-            templateName,
+        // Use centralized template message service
+        const templateMessageService = require('./templateMessageService');
+        const result = await templateMessageService.sendTemplateMessage({
+            templateName: 'incident_followup_update_es',
+            languageCode: 'es_MX',
             parameters,
-            languageCode
-        );
-
-        await whatsappService.sendWhatsappResponse(messagePayload);
-
-        // Generate display content from actual template (same as other template sends)
-        const parameterValues = parameters.map(p => p.text);
-        const summaryText = getTemplateDisplayContent(template, parameterValues);
-
-        // Save message to database
-        const Message = require('../models/Message');
-        const Conversation = require('../models/Conversation');
-        const Agent = require('../models/Agent');
-
-        const newMessage = new Message({
-            conversationId,
+            phoneNumber: customer.phoneNumber,
             customerId: customer._id,
-            content: summaryText,
-            type: 'template',
-            direction: 'outbound',
-            sender: 'agent',
+            conversationId,
             agentId,
-            status: 'sent',
-            template: {
-                name: templateName,
-                language: languageCode,
-                parameters: parameters.map(p => p.text),
-                category: 'UTILITY'
-            }
+            sender: 'agent'
         });
-        await newMessage.save();
-
-        // Update conversation
-        await Conversation.findByIdAndUpdate(conversationId, {
-            $inc: { messageCount: 1 },
-            lastAgentResponse: new Date(),
-            lastMessage: {
-                content: summaryText,
-                timestamp: new Date(),
-                from: 'agent',
-                type: 'template'
-            },
-            unreadCount: 0
-        });
-
-        // Update agent statistics
-        await Agent.findByIdAndUpdate(agentId, {
-            $inc: { 'statistics.totalMessages': 1 },
-            lastActivity: new Date()
-        });
-
-        // Emit Socket.io events for real-time UI update
-        if (io) {
-            io.emit('new_message', {
-                chatId: conversationId.toString(),
-                message: {
-                    id: newMessage._id.toString(),
-                    text: summaryText,
-                    sender: 'me',
-                    timestamp: newMessage.timestamp,
-                    agentId: agentId.toString(),
-                    type: 'template',
-                    template: {
-                        name: templateName,
-                        language: languageCode
-                    }
-                }
-            });
-
-            io.emit('agent_message_sent', {
-                conversationId,
-                agentId,
-                messageText: summaryText,
-                source: 'web'
-            });
-        }
 
         console.log(`📤 Ticket summary template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
 
         return {
-            message: newMessage,
-            summaryText
+            message: result.message,
+            summaryText: result.displayContent
         };
     }
 

@@ -1,6 +1,5 @@
-const { buildTemplateJSON } = require('../shared/whatsappModels');
-const whatsappService = require('./whatsappService');
 const { formatNumber } = require('../shared/processMessage');
+const templateMessageService = require('./templateMessageService');
 
 /**
  * Determine agent's preferred language for notifications
@@ -83,15 +82,13 @@ const sendAssignmentNotification = async (agent, customer, conversation = null) 
         console.log(`   Priority: ${priorityText}`);
         console.log(`   Dashboard: ${dashboardName}`);
 
-        // Build and send template message
-        const templateData = buildTemplateJSON(
-            agentPhone,
+        // Use centralized template message service (notification to agent, not saved to DB)
+        await templateMessageService.sendTemplateNotification({
             templateName,
+            languageCode,
             parameters,
-            languageCode
-        );
-
-        whatsappService.sendWhatsappResponse(templateData);
+            phoneNumber: agentPhone
+        });
 
         console.log(`✅ Assignment notification sent to agent ${agent.email}`);
         return true;
