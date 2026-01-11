@@ -50,6 +50,22 @@ const ticketSchema = new mongoose.Schema({
     },
     subcategory: String,
 
+    // Business Type Isolation (CRITICAL for multi-preset support)
+    businessType: {
+        type: String,
+        required: true,
+        enum: ['luxfree', 'restaurant', 'ecommerce', 'healthcare', 'custom'],
+        index: true,
+        default: 'luxfree'  // Safe default for migration
+    },
+
+    // Preset snapshot for audit trail
+    presetSnapshot: {
+        presetId: String,
+        assistantName: String,
+        companyName: String
+    },
+
     // Priority and status
     priority: {
         type: String,
@@ -227,6 +243,11 @@ ticketSchema.index({ category: 1, status: 1 });
 ticketSchema.index({ priority: 1, status: 1 });
 ticketSchema.index({ status: 1, updatedAt: -1 });
 ticketSchema.index({ tags: 1 });
+
+// Business type isolation indexes (CRITICAL for cross-business prevention)
+ticketSchema.index({ customerId: 1, businessType: 1 });
+ticketSchema.index({ businessType: 1, status: 1 });
+ticketSchema.index({ businessType: 1, category: 1 });
 
 // Text index for search
 ticketSchema.index({

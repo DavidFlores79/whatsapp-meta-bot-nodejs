@@ -14,7 +14,9 @@
     "dev": "nodemon src/app",
     "test:threads": "node test-thread-optimization.js",
     "create-admin": "node scripts/createAdminAgent.js",
-    "reset-admin": "node scripts/resetAdminPassword.js"
+    "reset-admin": "node scripts/resetAdminPassword.js",
+    "migrate:business-type": "node scripts/add-business-type-field.js",
+    "test:business-isolation": "node scripts/test-business-isolation.js"
   },
   "keywords": [],
   "author": "",

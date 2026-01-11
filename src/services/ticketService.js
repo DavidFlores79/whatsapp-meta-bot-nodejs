@@ -8,6 +8,32 @@ const whatsappService = require('./whatsappService');
 
 class TicketService {
     /**
+     * Get active business type from configuration
+     * Used to enforce business type isolation across all operations
+     */
+    async getActiveBusinessType() {
+        const assistantConfig = await configService.getAssistantConfig();
+        return assistantConfig.presetId || 'luxfree';
+    }
+
+    /**
+     * Validate ticket belongs to active business type
+     * Prevents cross-business ticket access and modifications
+     */
+    async validateBusinessType(ticket) {
+        const activeBusinessType = await this.getActiveBusinessType();
+        
+        if (ticket.businessType !== activeBusinessType) {
+            throw new Error(
+                `Ticket ${ticket.ticketId} belongs to ${ticket.businessType} ` +
+                `but current business type is ${activeBusinessType}`
+            );
+        }
+        
+        return true;
+    }
+
+    /**
      * Helper to find a ticket by either MongoDB _id or human-readable ticketId
      */
     async findTicketByAnyId(id) {
@@ -51,6 +77,10 @@ class TicketService {
     async createTicketFromAI(data) {
         const { subject, description, category, priority, location, customerId, conversationId } = data;
 
+        // Get active business type
+        const businessType = await this.getActiveBusinessType();
+        const assistantConfig = await configService.getAssistantConfig();
+
         // Validate category
         const isValidCategory = await this.validateCategory(category);
         if (!isValidCategory) {
@@ -60,7 +90,7 @@ class TicketService {
         // Generate ticket ID
         const ticketId = await this.generateTicketId();
 
-        // Create ticket
+        // Create ticket with business type isolation
         const ticket = new Ticket({
             ticketId,
             customerId,
@@ -70,7 +100,13 @@ class TicketService {
             category,
             priority: priority || 'medium',
             location,
-            status: 'new'
+            status: 'new',
+            businessType,  // Store business type for isolation
+            presetSnapshot: {
+                presetId: businessType,
+                assistantName: assistantConfig.assistantName,
+                companyName: assistantConfig.companyName
+            }
         });
 
         await ticket.save();
@@ -97,6 +133,10 @@ class TicketService {
     async createTicketFromAgent(data, agentId) {
         const { subject, description, category, priority, customerId, conversationId, tags, attachments, location } = data;
 
+        // Get active business type
+        const businessType = await this.getActiveBusinessType();
+        const assistantConfig = await configService.getAssistantConfig();
+
         // Validate category
         const isValidCategory = await this.validateCategory(category);
         if (!isValidCategory) {
@@ -106,7 +146,7 @@ class TicketService {
         // Generate ticket ID
         const ticketId = await this.generateTicketId();
 
-        // Create ticket
+        // Create ticket with business type isolation
         const ticket = new Ticket({
             ticketId,
             customerId,
@@ -119,7 +159,13 @@ class TicketService {
             assignedAgent: agentId,
             tags,
             attachments: attachments || [],
-            location: location || undefined
+            location: location || undefined,
+            businessType,  // Store business type for isolation
+            presetSnapshot: {
+                presetId: businessType,
+                assistantName: assistantConfig.assistantName,
+                companyName: assistantConfig.companyName
+            }
         });
 
         await ticket.save();
@@ -175,9 +221,17 @@ class TicketService {
 
     /**
      * Get ticket by ID for customer (security check)
+     * CRITICAL: Validates business type for customer access
      */
     async getTicketByIdForCustomer(ticketId, customerId) {
-        const ticket = await Ticket.findOne({ ticketId, customerId })
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
+        const ticket = await Ticket.findOne({ 
+            ticketId, 
+            customerId,
+            businessType  // CRITICAL: Only return if belongs to active business
+        })
             .populate('assignedAgent', 'firstName lastName')
             .select('-notes'); // Don't expose internal notes
 
@@ -186,11 +240,18 @@ class TicketService {
 
     /**
      * Get tickets by customer
+     * CRITICAL: Filters by active business type to prevent cross-business access
      */
     async getTicketsByCustomer(customerId, options = {}) {
         const { page = 1, limit = 20, status, excludeStatus } = options;
 
-        const query = { customerId };
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
+        const query = { 
+            customerId,
+            businessType  // CRITICAL: Only return tickets for active business
+        };
         if (status) {
             query.status = status;
         }
@@ -217,11 +278,18 @@ class TicketService {
 
     /**
      * Get tickets by agent
+     * CRITICAL: Filters by active business type
      */
     async getTicketsByAgent(agentId, options = {}) {
         const { page = 1, limit = 20, status } = options;
 
-        const query = { assignedAgent: agentId };
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
+        const query = { 
+            assignedAgent: agentId,
+            businessType  // CRITICAL: Only return tickets for active business
+        };
         if (status) {
             query.status = status;
         }
@@ -245,11 +313,17 @@ class TicketService {
 
     /**
      * Get all tickets with filters
+     * CRITICAL: Filters by active business type
      */
     async getTickets(options = {}) {
         const { page = 1, limit = 20, status, category, priority, assignedAgent, search } = options;
 
-        const query = {};
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
+        const query = {
+            businessType  // CRITICAL: Only return tickets for active business
+        };
 
         if (status) query.status = status;
         if (category) query.category = category;
@@ -537,20 +611,29 @@ class TicketService {
 
     /**
      * Update ticket
+     * CRITICAL: Validates business type before allowing modifications
      */
     async updateTicket(ticketId, updates) {
+        // Find ticket by either ID type
+        const existingTicket = await this.findTicketByAnyId(ticketId);
+        if (!existingTicket) {
+            throw new Error('Ticket no encontrado');
+        }
+
+        // CRITICAL: Validate ticket belongs to current business
+        await this.validateBusinessType(existingTicket);
+
+        // Prevent changing businessType (immutable)
+        if (updates.businessType && updates.businessType !== existingTicket.businessType) {
+            throw new Error('Cannot change ticket business type');
+        }
+
         // Validate category if being updated
         if (updates.category) {
             const isValidCategory = await this.validateCategory(updates.category);
             if (!isValidCategory) {
                 throw new Error('Categoría de ticket inválida');
             }
-        }
-
-        // Find ticket by either ID type
-        const existingTicket = await this.findTicketByAnyId(ticketId);
-        if (!existingTicket) {
-            throw new Error('Ticket no encontrado');
         }
 
         const ticket = await Ticket.findByIdAndUpdate(
@@ -573,11 +656,17 @@ class TicketService {
 
     /**
      * Get ticket statistics
+     * CRITICAL: Filters by active business type
      */
     async getTicketStatistics(options = {}) {
         const { agentId, customerId } = options;
 
-        const query = {};
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
+        const query = {
+            businessType  // CRITICAL: Only count tickets for active business
+        };
         if (agentId) query.assignedAgent = agentId;
         if (customerId) query.customerId = customerId;
 
@@ -624,6 +713,7 @@ class TicketService {
     /**
      * Check if a customer has a recently resolved ticket that can be reopened
      * Returns the ticket if found, null otherwise
+     * CRITICAL: Only searches within active business type
      */
     async findRecentResolvedTicket(customerId) {
         const behavior = await configService.getTicketBehavior();
@@ -634,13 +724,17 @@ class TicketService {
             return null;
         }
 
+        // Get active business type for isolation
+        const businessType = await this.getActiveBusinessType();
+
         // Calculate cutoff time in days
         const cutoffTime = new Date();
         cutoffTime.setDate(cutoffTime.getDate() - windowDays);
 
-        // Build query
+        // Build query with business type filter
         const query = {
             customerId,
+            businessType,  // CRITICAL: Only find tickets from active business
             $or: [
                 { status: 'resolved' },
                 { status: 'closed' }
@@ -658,12 +752,16 @@ class TicketService {
 
     /**
      * Reopen a resolved ticket
+     * CRITICAL: Validates business type before reopening
      */
     async reopenTicket(ticketId, reason = 'Customer requested additional assistance') {
         const ticket = await this.findTicketByAnyId(ticketId);
         if (!ticket) {
             throw new Error('Ticket no encontrado');
         }
+
+        // CRITICAL: Validate ticket belongs to current business
+        await this.validateBusinessType(ticket);
 
         const behavior = await configService.getTicketBehavior();
         const maxReopenCount = behavior.maxReopenCount || 3;
