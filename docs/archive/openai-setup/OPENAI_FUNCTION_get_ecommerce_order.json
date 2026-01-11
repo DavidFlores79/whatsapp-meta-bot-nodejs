@@ -13,7 +13,7 @@
       },
       "search_value": {
         "type": "string",
-        "description": "The value to search for: the order ID, phone number, or email address depending on search_type"
+        "description": "The value to search for: the order ID, phone number, or email address depending on search_type. For phone, use whatever format the customer provides - the system handles matching."
       },
       "include_items": {
         "type": ["boolean", "null"],

@@ -9,7 +9,7 @@
     "properties": {
       "phone": {
         "type": "string",
-        "description": "Customer's phone number to look up active orders. Use the phone number from the current WhatsApp conversation."
+        "description": "Customer's phone number to look up active orders. Use the phone from the WhatsApp conversation or whatever the customer provides."
       }
     }
   }

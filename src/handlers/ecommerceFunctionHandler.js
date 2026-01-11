@@ -13,6 +13,20 @@
 const ecommerceService = require('../services/ecommerceIntegrationService');
 
 /**
+ * Clean phone number - removes non-essential characters only
+ * Does NOT add country codes - that's the e-commerce backend's responsibility
+ * 
+ * @param {string} phone - Phone number in any format
+ * @returns {string} Cleaned phone number (digits only)
+ */
+function cleanPhoneNumber(phone) {
+    if (!phone) return phone;
+    
+    // Remove all non-numeric characters (+, -, spaces, parentheses, etc.)
+    return phone.replace(/\D/g, '');
+}
+
+/**
  * Check if e-commerce integration is available
  * @returns {Promise<object|null>} Error response if not available, null if available
  */
@@ -57,7 +71,9 @@ async function handleGetEcommerceOrder(args) {
                 break;
 
             case 'phone':
-                orders = await ecommerceService.getOrdersByPhone(search_value, 5);
+                // Clean phone number (e-commerce backend handles format matching)
+                const cleanedPhone = cleanPhoneNumber(search_value);
+                orders = await ecommerceService.getOrdersByPhone(cleanedPhone, 5);
                 break;
 
             case 'email':
@@ -243,6 +259,9 @@ async function handleCreateOrder(args) {
             };
         }
 
+        // Clean phone number (e-commerce backend handles format matching)
+        const cleanedPhone = cleanPhoneNumber(customer_phone);
+
         // Format items for the service
         const orderItems = items.map(item => ({
             productId: item.product_id,
@@ -251,7 +270,7 @@ async function handleCreateOrder(args) {
 
         // Create the order
         const result = await ecommerceService.createOrder({
-            customerPhone: customer_phone,
+            customerPhone: cleanedPhone,
             customerName: customer_name,
             items: orderItems,
             paymentMethod: payment_method,
@@ -312,7 +331,9 @@ async function handleGetActiveOrders(args) {
             };
         }
 
-        const orders = await ecommerceService.getActiveOrders(phone);
+        // Clean phone number (e-commerce backend handles format matching)
+        const cleanedPhone = cleanPhoneNumber(phone);
+        const orders = await ecommerceService.getActiveOrders(cleanedPhone);
 
         if (orders.length === 0) {
             return {
@@ -381,5 +402,6 @@ module.exports = {
     handleGetEcommerceOrder,
     handleSearchProducts,
     handleCreateOrder,
-    handleGetActiveOrders
+    handleGetActiveOrders,
+    cleanPhoneNumber
 };

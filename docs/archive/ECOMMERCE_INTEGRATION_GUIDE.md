@@ -243,11 +243,12 @@ Customer: "¿Cuáles son mis pedidos activos?"
 
 ### create_ecommerce_order (Requires orderCreate feature)
 
-Create a new order via WhatsApp.
+Create a new order via WhatsApp. The system will automatically find an existing customer or create a new guest profile based on the phone number.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| customer_phone | string | Yes | Customer phone |
+| customer_phone | string | Yes | Customer phone (finds existing or creates new customer) |
+| customer_name | string | No | Customer name (for new customers, defaults to 'WhatsApp Customer') |
 | items | array | Yes | `[{ product_id, quantity }]` |
 | payment_method | string | No | cash, credit_card, paypal, bank_transfer |
 | address | string | No | Delivery address |
@@ -285,7 +286,7 @@ Customer: "Quiero ordenar 2 pizzas margarita para recoger"
 |----------|--------|--------|-------------|
 | `/api/v2/ecommerce/orders/search` | GET | Agent | Search orders |
 | `/api/v2/ecommerce/orders/active/:phone` | GET | Agent | Get active orders |
-| `/api/v2/ecommerce/orders` | POST | Agent | Create order |
+| `/api/v2/ecommerce/orders` | POST | Agent | Create order (supports customerPhone for auto customer lookup/create) |
 
 ### Product Catalog
 
@@ -363,6 +364,43 @@ These are the endpoints that your external e-commerce API must implement. The CR
 | paypal | PayPal |
 | bank_transfer | Transferencia |
 
+## Phone Number Matching
+
+The CRM cleans phone numbers (removes `+`, spaces, dashes) before sending to the e-commerce API. **The e-commerce backend is responsible for flexible phone matching.**
+
+### Recommended E-commerce Backend Implementation
+
+Your e-commerce API should implement flexible phone lookup that matches various formats:
+
+```javascript
+// Example: Flexible phone search in e-commerce backend
+async function findCustomerByPhone(phone) {
+    // Clean input
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Generate possible variations to search
+    const variations = [
+        cleanPhone,                           // as-is: 9991992696
+        `+${cleanPhone}`,                     // +9991992696
+        `52${cleanPhone}`,                    // with MX code: 529991992696
+        `+52${cleanPhone}`,                   // +529991992696
+        `521${cleanPhone}`,                   // WhatsApp format: 5219991992696
+        cleanPhone.replace(/^52/, ''),        // strip MX code if present
+        cleanPhone.replace(/^521/, ''),       // strip WhatsApp MX format
+    ];
+    
+    // Search for any matching variation
+    return await User.findOne({
+        phone: { $in: variations.map(v => new RegExp(`^\\+?${v}$`)) }
+    });
+}
+```
+
+### Why Backend Handles This
+- **Different countries**: Not all customers are from Mexico (52)
+- **Data consistency**: Backend knows how phones are stored
+- **Single source of truth**: Avoids duplicate normalization logic
+
 ## Security Considerations
 
 1. **Service Account**: Use dedicated account with minimal permissions
@@ -416,9 +454,16 @@ Customer: 2 de pepperoni para recoger
 AI: Perfecto, 2 Pizzas Pepperoni = $340.00
     ¿Método de pago: Efectivo o tarjeta?
 
-Customer: Efectivo
+Customer: Efectivo, me llamo María
 
 AI: [Calls create_ecommerce_order]
+→ create_ecommerce_order({
+    customer_phone: "529991234567",
+    customer_name: "María",
+    items: [{ product_id: "xxx", quantity: 2 }],
+    delivery_option: "pickup",
+    payment_method: "cash"
+  })
     ✅ ¡Pedido creado!
     
     📦 Número: ORD-2025-000789
@@ -426,7 +471,7 @@ AI: [Calls create_ecommerce_order]
     🏪 Recoger en: Av. Principal 123
     ⏰ Estará listo en ~30 minutos
     
-    ¡Gracias por tu pedido!
+    ¡Gracias por tu pedido, María!
 ```
 
 ## Troubleshooting
@@ -440,10 +485,6 @@ AI: [Calls create_ecommerce_order]
 - Verify service credentials
 - Check e-commerce API is running
 - Test credentials directly: `curl POST /auth/login`
-
-### "Customer not found"
-- Customer must exist in e-commerce system
-- Phone format must match (check `phoneFormat` setting)
 
 ### Empty results
 - Verify data exists in e-commerce database
