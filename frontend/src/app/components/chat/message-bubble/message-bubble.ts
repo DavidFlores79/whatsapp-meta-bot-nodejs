@@ -98,11 +98,25 @@ export class MessageBubbleComponent {
   /**
    * Check if text is just a media placeholder like [image: filename.jpg]
    * These should be hidden when the actual media is displayed
+   * Only returns true if the media can actually be shown (has URL or is document type)
    */
   get isMediaPlaceholder(): boolean {
     if (!this.message.text) return false;
     // Match patterns like [image: filename], [video: filename], [document: filename], [Image]
-    return /^\[(image|video|document|audio|Image)(:.*?)?\]$/i.test(this.message.text.trim());
+    const isPlaceholderText = /^\[(image|video|document|audio|Image)(:.*?)?\]$/i.test(this.message.text.trim());
+    if (!isPlaceholderText) return false;
+
+    // Only hide placeholder text if we can actually display the media
+    // For images: only if we have a URL to show
+    if (this.message.type === 'image') {
+      return !!this.imageUrl;
+    }
+    // For documents: show placeholder since we display filename
+    if (this.message.type === 'document' && this.message.media) {
+      return true;
+    }
+    // For other types, hide if it's placeholder text
+    return true;
   }
 
   /**

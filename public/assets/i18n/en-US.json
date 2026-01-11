@@ -150,7 +150,8 @@
     "filterByStatus": "Filter by status",
     "attachFile": "Attach file",
     "addCaption": "Add a caption...",
-    "sending": "Sending"
+    "sending": "Sending",
+    "imageNotAvailable": "Image not available"
   },
   "status": {
     "open": "Open",

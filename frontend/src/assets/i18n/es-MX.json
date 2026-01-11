@@ -182,7 +182,8 @@
     "filterByStatus": "Filtrar por estado",
     "attachFile": "Adjuntar archivo",
     "addCaption": "Agregar descripción...",
-    "sending": "Enviando"
+    "sending": "Enviando",
+    "imageNotAvailable": "Imagen no disponible"
   },
   "status": {
     "open": "Abierto",
