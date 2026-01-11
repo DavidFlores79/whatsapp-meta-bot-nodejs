@@ -167,13 +167,13 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       conversationId
     );
 
-    // Send AI reply back to user
+    // Send AI reply back to user and capture message ID
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
-    whatsappService.sendWhatsappResponse(replyPayload);
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(replyPayload);
 
-    console.log(`✅ AI response sent to ${phoneNumber} (with image context)`);
+    console.log(`✅ AI response sent to ${phoneNumber} (with image context), whatsappMessageId: ${whatsappMessageId}`);
 
-    // Save AI response to database
+    // Save AI response to database with WhatsApp message ID
     const aiResponseMessage = await Message.create({
       conversationId,
       customerId,
@@ -181,7 +181,8 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       type: 'text',
       direction: 'outbound',
       sender: 'ai',
-      status: 'sent'
+      status: 'sent',
+      whatsappMessageId
     });
 
     // Update conversation stats
@@ -345,13 +346,13 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
       conversationId
     );
 
-    // Send AI reply back to user
+    // Send AI reply back to user and capture message ID
     const replyPayload = buildTextJSON(phoneNumber, aiReply);
-    whatsappService.sendWhatsappResponse(replyPayload);
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(replyPayload);
 
-    console.log(`✅ AI response sent to ${phoneNumber} (with location context)`);
+    console.log(`✅ AI response sent to ${phoneNumber} (with location context), whatsappMessageId: ${whatsappMessageId}`);
 
-    // Save AI response to database
+    // Save AI response to database with WhatsApp message ID
     const aiMessage = await Message.create({
       conversationId,
       customerId,
@@ -359,7 +360,8 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
       type: 'text',
       direction: 'outbound',
       sender: 'ai',
-      status: 'sent'
+      status: 'sent',
+      whatsappMessageId
     });
 
     // Update conversation stats

@@ -95,11 +95,11 @@ async function handleAgentWhatsAppMessage(agent, messageObject, phoneNumber) {
 async function sendAgentMessageToCustomer(conversationId, customerId, agentId, customerPhone, messageText, source = 'web') {
     const { io } = require('../models/server');
 
-    // Send via WhatsApp
+    // Send via WhatsApp and capture the message ID
     const replyPayload = buildTextJSON(customerPhone, messageText);
-    whatsappService.sendWhatsappResponse(replyPayload);
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(replyPayload);
 
-    // Save to database
+    // Save to database with WhatsApp message ID
     const newMessage = new Message({
         conversationId,
         customerId,
@@ -108,9 +108,12 @@ async function sendAgentMessageToCustomer(conversationId, customerId, agentId, c
         direction: 'outbound',
         sender: 'agent',
         agentId,
-        status: 'sent'
+        status: 'sent',
+        whatsappMessageId
     });
     await newMessage.save();
+
+    console.log(`📤 Agent message saved with whatsappMessageId: ${whatsappMessageId}`);
 
     // Update conversation
     await Conversation.findByIdAndUpdate(conversationId, {
@@ -213,12 +216,12 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
             mediaPayload = buildDocumentJSON(customerPhone, mediaId, filename, caption);
     }
 
-    whatsappService.sendWhatsappResponse(mediaPayload);
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(mediaPayload);
 
     // Build content description for database
     const contentDescription = caption || `[${mediaType}: ${filename}]`;
 
-    // Save to database
+    // Save to database with WhatsApp message ID
     const newMessage = new Message({
         conversationId,
         customerId,
@@ -228,6 +231,7 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
         sender: 'agent',
         agentId,
         status: 'sent',
+        whatsappMessageId,
         media: {
             type: mediaType,
             filename: filename,
@@ -238,6 +242,8 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
         }
     });
     await newMessage.save();
+
+    console.log(`📤 Agent media message saved with whatsappMessageId: ${whatsappMessageId}`);
 
     // Update conversation
     await Conversation.findByIdAndUpdate(conversationId, {

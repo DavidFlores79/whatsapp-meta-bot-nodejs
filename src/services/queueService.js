@@ -278,11 +278,12 @@ async function processUserQueue(userId) {
 
     console.log(`🤖 OpenAI response received in ${duration}s (length: ${aiReply.length} chars)`);
 
-    // Send response to WhatsApp
+    // Send response to WhatsApp and capture message ID
     const replyPayload = buildTextJSON(userId, aiReply);
-    whatsappService.sendWhatsappResponse(replyPayload);
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(replyPayload);
 
     console.log(`✅ Single AI response sent to ${userId} for ${messagesToProcess.length} message(s)`);
+    console.log(`📤 AI message whatsappMessageId: ${whatsappMessageId}`);
     console.log(`🔓 Queue processing finished for ${userId}\n`);
 
     // Update conversation stats
@@ -306,7 +307,7 @@ async function processUserQueue(userId) {
     // NOTE: User messages are already saved in whatsappController.js before calling handlers
     // No need to save them again here - this was causing duplicate messages
 
-    // Save AI response to history
+    // Save AI response to history with WhatsApp message ID
     try {
       const customerId = messagesToProcess[0].customerId;
       const aiMessage = new Message({
@@ -316,7 +317,8 @@ async function processUserQueue(userId) {
         type: 'text',
         direction: 'outbound',
         sender: 'ai',
-        status: 'sent'
+        status: 'sent',
+        whatsappMessageId
       });
       await aiMessage.save();
 

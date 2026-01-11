@@ -11,34 +11,51 @@ const TOKEN = process.env.WHATSAPP_API_TOKEN;
 /**
  * Send any message or status to WhatsApp Cloud API
  * @param {string} data - JSON string payload to send
+ * @returns {Promise<{messageId: string|null, response: object|null}>} - WhatsApp message ID and response
  */
 const sendWhatsappResponse = (data) => {
+    return new Promise((resolve, reject) => {
+        const options = {
+            host: `${URI}`,
+            path: `/${VERSION}/${PHONE_ID}/messages`,
+            method: 'POST',
+            body: data,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TOKEN}`,
+            }
+        };
 
-    const options = {
-        host: `${URI}`,
-        path: `/${VERSION}/${PHONE_ID}/messages`,
-        method: 'POST',
-        body: data,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${TOKEN}`,
-        }
-    };
+        console.log({ options });
 
-    console.log({ options });
-
-    const req = https.request(options, res => {
-        res.on('data', data => {
-            process.stdout.write(data);
+        const req = https.request(options, res => {
+            let responseData = '';
+            
+            res.on('data', chunk => {
+                responseData += chunk;
+                process.stdout.write(chunk);
+            });
+            
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(responseData);
+                    const messageId = parsed?.messages?.[0]?.id || null;
+                    resolve({ messageId, response: parsed });
+                } catch (err) {
+                    console.error('Failed to parse WhatsApp response:', err);
+                    resolve({ messageId: null, response: null });
+                }
+            });
         });
-    });
 
-    req.on('error', error => {
-        console.error({ error });
-    });
+        req.on('error', error => {
+            console.error({ error });
+            resolve({ messageId: null, response: null });
+        });
 
-    req.write(data);
-    req.end();
+        req.write(data);
+        req.end();
+    });
 }
 
 /**
