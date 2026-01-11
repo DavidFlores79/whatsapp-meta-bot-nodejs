@@ -202,6 +202,7 @@ function getNotFoundMessage(searchType, searchValue) {
  * Handle create_ecommerce_order function call from OpenAI
  * @param {object} args - Function arguments from OpenAI
  * @param {string} args.customer_phone - Customer phone number
+ * @param {string} args.customer_name - Customer name (optional, for new customers)
  * @param {Array} args.items - Array of { product_id, quantity }
  * @param {string} args.payment_method - Payment method
  * @param {string} args.address - Delivery address
@@ -215,11 +216,12 @@ async function handleCreateOrder(args) {
     const unavailable = await checkAvailability();
     if (unavailable) return unavailable;
 
-    const { 
-        customer_phone, 
-        items, 
-        payment_method = 'cash', 
-        address = '', 
+    const {
+        customer_phone,
+        customer_name = '',
+        items,
+        payment_method = 'cash',
+        address = '',
         delivery_option = 'delivery',
         delivery_date = null,
         notes = ''
@@ -250,6 +252,7 @@ async function handleCreateOrder(args) {
         // Create the order
         const result = await ecommerceService.createOrder({
             customerPhone: customer_phone,
+            customerName: customer_name,
             items: orderItems,
             paymentMethod: payment_method,
             address,

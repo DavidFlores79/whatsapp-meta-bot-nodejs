@@ -627,16 +627,9 @@ class EcommerceIntegrationService {
         }
 
         try {
-            const { customerPhone, items, paymentMethod, address, deliveryOption, deliveryDate, notes } = orderData;
+            const { customerPhone, customerName, items, paymentMethod, address, deliveryOption, deliveryDate, notes } = orderData;
 
-            // Find or create customer
-            let customer = await this.findCustomerByPhone(customerPhone);
-            
-            if (!customer) {
-                return { error: 'Customer not found. They must have an account in the e-commerce system.' };
-            }
-
-            // Validate items - get product details
+            // Validate items - get product details and calculate totals
             const validatedItems = [];
             for (const item of items) {
                 const product = await this.getProductById(item.productId);
@@ -659,9 +652,10 @@ class EcommerceIntegrationService {
                 return { error: 'No delivery options available. Please contact support.' };
             }
 
-            // Create order payload
+            // Create order payload using customerPhone (API will find or create customer)
             const orderPayload = {
-                customer: customer._id,
+                customerPhone: customerPhone,
+                customerName: customerName || `WhatsApp Customer`,
                 items: validatedItems,
                 total,
                 payment_method: paymentMethod || 'cash',
@@ -672,6 +666,8 @@ class EcommerceIntegrationService {
                 notes: notes || `Order placed via WhatsApp from ${customerPhone}`
             };
 
+            console.log('📦 Creating order with payload:', JSON.stringify(orderPayload, null, 2));
+
             // Send to e-commerce API
             const response = await this.makeRequest('POST', '/api/orders', orderPayload);
 
@@ -679,7 +675,7 @@ class EcommerceIntegrationService {
                 return this.formatOrderForCRM(response);
             }
 
-            return { error: 'Failed to create order' };
+            return { error: response.message || 'Failed to create order' };
         } catch (error) {
             console.error(`❌ Error creating order:`, error.message);
             return { error: error.message };
