@@ -6,6 +6,7 @@ import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
 import { TicketService, Ticket } from '../../../services/ticket';
+import { EcommerceService, Order } from '../../../services/ecommerce';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
@@ -71,12 +72,19 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isSendingTicketSummary = false;
   private lastCustomerId: string | null = null;
 
+  // Customer Orders (ecommerce only)
+  customerOrders: Order[] = [];
+  isOrderPanelOpen = false;
+  isLoadingOrders = false;
+  isSendingOrderUpdate = false;
+
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
     private router: Router,
     private toastService: ToastService,
-    private ticketService: TicketService
+    private ticketService: TicketService,
+    private ecommerceService: EcommerceService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
@@ -103,6 +111,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
 
           // Fetch customer tickets when chat changes
           this.fetchCustomerTickets(chat);
+          // Fetch customer orders when chat changes (ecommerce only)
+          this.fetchCustomerOrders(chat);
         } else if (currentMessageCount > this.lastMessageCount) {
           // Messages loaded for current chat OR new messages added - scroll to bottom
           this.shouldScroll = true;
@@ -690,4 +700,110 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     };
     return colorMap[status] || 'bg-gray-500';
   }
+
+  /**
+   * Fetch customer orders for the current chat (ecommerce only)
+   */
+  fetchCustomerOrders(chat: Chat) {
+    // Reset order panel state when chat changes
+    this.isOrderPanelOpen = false;
+    this.customerOrders = [];
+
+    // Only fetch orders for ecommerce business type
+    const businessType = (chat.customerId as any)?.businessType;
+    if (businessType !== 'ecommerce') {
+      return;
+    }
+
+    const phoneNumber = chat.phoneNumber;
+    if (!phoneNumber) {
+      return;
+    }
+
+    this.isLoadingOrders = true;
+
+    this.ecommerceService.getActiveOrders(phoneNumber).subscribe({
+      next: (response) => {
+        this.customerOrders = response.orders;
+        this.isLoadingOrders = false;
+      },
+      error: (err) => {
+        console.error('Error fetching customer orders:', err);
+        this.isLoadingOrders = false;
+      }
+    });
+  }
+
+  /**
+   * Toggle order panel visibility
+   */
+  toggleOrderPanel() {
+    this.isOrderPanelOpen = !this.isOrderPanelOpen;
+  }
+
+  /**
+   * Get active order count
+   */
+  getActiveOrderCount(): number {
+    return this.customerOrders.length;
+  }
+
+  /**
+   * Send order update to customer via WhatsApp
+   */
+  sendOrderUpdate(order: Order, chat: Chat) {
+    if (this.isSendingOrderUpdate) return;
+
+    this.isSendingOrderUpdate = true;
+
+    this.ecommerceService.sendOrderUpdate(order._id, chat.id).subscribe({
+      next: () => {
+        this.isSendingOrderUpdate = false;
+        this.toastService.success('Actualización de orden enviada');
+        // Message will appear via Socket.io
+      },
+      error: (err) => {
+        console.error('Error sending order update:', err);
+        this.isSendingOrderUpdate = false;
+        this.toastService.error('Error al enviar la actualización de la orden');
+      }
+    });
+  }
+
+  /**
+   * Get order status label in Spanish
+   */
+  getOrderStatusLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'pending': 'Pendiente',
+      'processing': 'Procesando',
+      'shipped': 'Enviado',
+      'delivered': 'Entregado',
+      'cancelled': 'Cancelado'
+    };
+    return statusLabels[status] || status;
+  }
+
+  /**
+   * Get status color class for order badge
+   */
+  getOrderStatusClass(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'pending': 'bg-yellow-500',
+      'processing': 'bg-blue-500',
+      'shipped': 'bg-purple-500',
+      'delivered': 'bg-green-500',
+      'cancelled': 'bg-red-500'
+    };
+    return colorMap[status] || 'bg-gray-500';
+  }
+
+  /**
+   * Check if current business type is ecommerce
+   */
+  isEcommerceBusiness(chat: Chat): boolean {
+    const businessType = (chat.customerId as any)?.businessType;
+    return businessType === 'ecommerce';
+  }
 }
+

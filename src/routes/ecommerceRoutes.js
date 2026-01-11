@@ -614,4 +614,93 @@ router.post('/orders', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * @route POST /api/v2/ecommerce/orders/:orderId/send-update
+ * @desc Send order update summary to customer via WhatsApp
+ * @access Private (agents only)
+ * @param {string} orderId - MongoDB Order ID
+ * @body {string} conversationId - Conversation ID to send message to
+ */
+router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { conversationId } = req.body;
+
+        if (!conversationId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: conversationId'
+            });
+        }
+
+        // Get order details
+        const order = await ecommerceService.getOrderById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        // Get conversation to find phone number
+        const Conversation = require('../models/Conversation');
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Conversation not found'
+            });
+        }
+
+        // Build order summary message
+        const statusLabels = {
+            'pending': 'Pendiente',
+            'processing': 'En proceso',
+            'shipped': 'Enviado',
+            'delivered': 'Entregado',
+            'cancelled': 'Cancelado'
+        };
+
+        const itemsList = order.items.map((item, index) => 
+            `${index + 1}. ${item.name} - Cant: ${item.quantity} - $${item.price.toFixed(2)}`
+        ).join('\n');
+
+        const message = `📦 *Actualización de Orden #${order.orderId}*\n\n` +
+            `*Estado:* ${statusLabels[order.status] || order.status}\n` +
+            `*Artículos:*\n${itemsList}\n\n` +
+            `*Total:* $${order.total.toFixed(2)}\n\n` +
+            (order.notes ? `*Notas:* ${order.notes}\n\n` : '') +
+            `¿Tienes alguna pregunta sobre tu orden?`;
+
+        // Send message via WhatsApp
+        const whatsappService = require('../services/whatsappService');
+        const { buildTextJSON } = require('../shared/whatsappModels');
+        
+        const messageData = buildTextJSON(conversation.phoneNumber, message);
+        await whatsappService.sendWhatsappResponse(messageData);
+
+        // Save message to conversation
+        const Message = require('../models/Message');
+        await Message.create({
+            conversationId: conversation._id,
+            content: message,
+            direction: 'outgoing',
+            sender: 'agent',
+            agentId: req.agent._id,
+            timestamp: new Date()
+        });
+
+        res.json({
+            success: true,
+            message: 'Order update sent successfully'
+        });
+    } catch (error) {
+        console.error('Error sending order update:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to send order update'
+        });
+    }
+});
+
 module.exports = router;

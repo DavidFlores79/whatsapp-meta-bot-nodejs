@@ -52,6 +52,17 @@
                     title="Create Ticket">
                     <i class="fas fa-ticket-alt"></i>
                 </button>
+                <!-- Order Indicator Badge (Ecommerce Only) -->
+                <button
+                    *ngIf="isEcommerceBusiness(chat) && getActiveOrderCount() > 0"
+                    (click)="toggleOrderPanel(); $event.stopPropagation()"
+                    class="relative hover:text-gray-200"
+                    [title]="'Ver órdenes activas (' + getActiveOrderCount() + ')'">
+                    <i class="fas fa-shopping-cart text-green-400"></i>
+                    <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                        {{ getActiveOrderCount() }}
+                    </span>
+                </button>
                 <button
                     (click)="openTemplateSender(chat); $event.stopPropagation()"
                     class="hover:text-gray-200"
@@ -168,6 +179,43 @@
                         class="ml-3 px-3 py-1.5 bg-green-600 text-white text-xs rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                         title="Enviar resumen al cliente">
                         <i class="fas" [ngClass]="isSendingTicketSummary ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                        Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expandable Order Panel (Ecommerce Only) -->
+        <div *ngIf="isEcommerceBusiness(chat) && isOrderPanelOpen && customerOrders.length > 0"
+             class="px-4 pb-3 border-t border-gray-600 bg-gray-800/50">
+            <div class="flex items-center justify-between py-2">
+                <span class="text-sm text-gray-300 font-medium">
+                    <i class="fas fa-shopping-cart text-green-400 mr-2"></i>
+                    Órdenes Activas ({{ customerOrders.length }})
+                </span>
+            </div>
+            <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                <div *ngFor="let order of customerOrders"
+                     class="bg-gray-700/70 rounded-lg p-3 flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-mono text-green-400">{{ order.orderId }}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full text-white"
+                                  [ngClass]="getOrderStatusClass(order.status)">
+                                {{ getOrderStatusLabel(order.status) }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-300">
+                            {{ order.items.length }} artículo{{ order.items.length !== 1 ? 's' : '' }} - 
+                            ${{ order.total.toFixed(2) }}
+                        </p>
+                    </div>
+                    <button
+                        (click)="sendOrderUpdate(order, chat); $event.stopPropagation()"
+                        [disabled]="isSendingOrderUpdate"
+                        class="ml-3 px-3 py-1.5 bg-green-600 text-white text-xs rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        title="Enviar actualización al cliente">
+                        <i class="fas" [ngClass]="isSendingOrderUpdate ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
                         Enviar
                     </button>
                 </div>
