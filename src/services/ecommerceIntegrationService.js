@@ -667,15 +667,21 @@ class EcommerceIntegrationService {
                     console.error('⚠️ Product missing ID:', product);
                     return { error: `Invalid product data for ${item.productId}` };
                 }
+                
+                // Ensure price and quantity are valid numbers
+                const price = parseFloat(product.price) || 0;
+                const quantity = parseInt(item.quantity) || 1;
+                const subtotal = price * quantity;
+                
                 validatedItems.push({
                     product: productId,  // Backend expects 'product' field (singular)
-                    quantity: item.quantity,
-                    subtotal: product.price * item.quantity
+                    quantity: quantity,
+                    subtotal: subtotal
                 });
             }
 
-            // Calculate total
-            const total = validatedItems.reduce((sum, item) => sum + item.subtotal, 0);
+            // Calculate total - ensure it's a valid number
+            const total = validatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
 
             // Find the correct delivery option ObjectId
             const deliveryOptionId = await this.findDeliveryOptionId(deliveryOption || 'delivery');
