@@ -348,8 +348,16 @@ async function loadPreset(req, res) {
         }
         // Load industry-specific instructions template
         if (preset.config.assistant_instructions_template) {
+            const templatePreview = preset.config.assistant_instructions_template.substring(0, 200);
+            console.log(`📋 Loading instructions template for ${presetId}:`, templatePreview + '...');
             await configService.updateSetting('assistant_instructions_template', preset.config.assistant_instructions_template, agentId);
         }
+
+        // Clear all cache to ensure fresh data is loaded
+        configService.clearCache();
+
+        // Log confirmation
+        console.log(`✅ Preset "${preset.name}" loaded successfully with ${preset.config.assistant_instructions_template ? 'custom' : 'default'} instructions`);
 
         res.json({
             success: true,
