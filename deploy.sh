@@ -80,8 +80,8 @@ if [ "$STASHED" = true ]; then
 fi
 
 # Restart services
-echo "♻️  Restarting services..."
-pm2 restart all
+echo "♻️  Restarting WhatsApp bot..."
+pm2 restart whatsapp || pm2 start src/app.js --name whatsapp
 
 echo ""
 echo "✅ Deployment complete!"
