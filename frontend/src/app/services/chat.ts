@@ -203,6 +203,8 @@ export class ChatService {
             attachments: msg.attachments,
             location: msg.location,
             template: msg.template,
+            // Include media information for images/documents/videos/audio
+            media: msg.media,
             // Include agent information if available (populated by backend)
             agentName: msg.agentId
               ? `${msg.agentId.firstName} ${msg.agentId.lastName}`.trim()
