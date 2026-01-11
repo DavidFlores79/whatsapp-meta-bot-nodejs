@@ -162,7 +162,7 @@ const agentAssignmentHistorySchema = new mongoose.Schema({
     releaseReason: { type: String }, // 'resolved', 'timeout', 'transferred', 'manual', 'system'
     releaseMethod: {
         type: String,
-        enum: ['manual', 'automatic', 'timeout', 'transfer'],
+        enum: ['manual', 'automatic', 'timeout', 'transfer', 'normal_close', 'forced_close', 'customer_feedback'],
         default: 'manual'
     },
 
