@@ -284,7 +284,9 @@ class EcommerceIntegrationService {
         try {
             // Search by orderId using /api/orders/search endpoint
             const response = await this.makeRequest('GET', '/api/orders/search', null, {
-                orderId: orderId
+                search_type: 'order_id',
+                search_value: orderId,
+                include_items: true
             });
 
             if (response.data && response.data.length > 0) {
@@ -312,7 +314,9 @@ class EcommerceIntegrationService {
         try {
             // Search orders by phone using /api/orders/search endpoint
             const response = await this.makeRequest('GET', '/api/orders/search', null, {
-                phone: phoneNumber,
+                search_type: 'phone',
+                search_value: phoneNumber,
+                include_items: true,
                 limit: limit
             });
 
@@ -341,7 +345,9 @@ class EcommerceIntegrationService {
         try {
             // Search orders by email using /api/orders/search endpoint
             const response = await this.makeRequest('GET', '/api/orders/search', null, {
-                email: email,
+                search_type: 'email',
+                search_value: email,
+                include_items: true,
                 limit: limit
             });
 
