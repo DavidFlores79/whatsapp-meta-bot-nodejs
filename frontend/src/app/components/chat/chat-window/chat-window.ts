@@ -7,6 +7,7 @@ import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
 import { TicketService, Ticket } from '../../../services/ticket';
 import { EcommerceService, Order } from '../../../services/ecommerce';
+import { ConfigurationService } from '../../../services/configuration';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
@@ -84,7 +85,8 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     private router: Router,
     private toastService: ToastService,
     private ticketService: TicketService,
-    private ecommerceService: EcommerceService
+    private ecommerceService: EcommerceService,
+    private configurationService: ConfigurationService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
@@ -702,8 +704,9 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     this.customerOrders = [];
 
     // Only fetch orders for ecommerce business type
-    const businessType = (chat.customerId as any)?.businessType;
-    if (businessType !== 'ecommerce') {
+    // Check active preset from configuration service
+    const config = this.configurationService.assistantConfigSubject.value;
+    if (!config || (config.presetId !== 'ecommerce' && config.presetId !== 'restaurant')) {
       return;
     }
 
@@ -794,8 +797,9 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Check if current business type is ecommerce
    */
   isEcommerceBusiness(chat: Chat): boolean {
-    const businessType = (chat.customerId as any)?.businessType;
-    return businessType === 'ecommerce';
+    // Check if active preset is ecommerce or restaurant (both support orders)
+    const config = this.configurationService.assistantConfigSubject.value;
+    return config?.presetId === 'ecommerce' || config?.presetId === 'restaurant';
   }
 }
 

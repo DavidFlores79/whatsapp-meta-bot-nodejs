@@ -13,6 +13,7 @@ export interface TicketCategory {
 }
 
 export interface AssistantConfiguration {
+  presetId?: string; // Active preset ID: 'luxfree', 'restaurant', 'ecommerce', 'healthcare'
   assistantName: string;
   companyName: string;
   primaryServiceIssue: string;
@@ -79,7 +80,7 @@ export class ConfigurationService {
 
   // Cache configuration data with TTL (5 minutes as per backend)
   private categoriesSubject = new BehaviorSubject<TicketCategory[]>([]);
-  private assistantConfigSubject = new BehaviorSubject<AssistantConfiguration | null>(null);
+  public assistantConfigSubject = new BehaviorSubject<AssistantConfiguration | null>(null);
   private terminologySubject = new BehaviorSubject<TicketTerminology | null>(null);
   private idFormatSubject = new BehaviorSubject<TicketIdFormat | null>(null);
   private presetsSubject = new BehaviorSubject<IndustryPreset[]>([]);
