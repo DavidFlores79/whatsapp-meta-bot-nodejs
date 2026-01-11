@@ -26,17 +26,12 @@ async function extractReplyToContext(messageObject, conversationId) {
   let replyToId = null;
   let replyToData = null;
   
-  console.log(`🔍 extractReplyToContext called - context field:`, messageObject?.context);
-  
   if (messageObject?.context?.id) {
-    console.log(`🔍 Looking for message with whatsappMessageId: ${messageObject.context.id}`);
     // Find the original message by WhatsApp message ID
     const originalMessage = await Message.findOne({ 
       whatsappMessageId: messageObject.context.id,
       conversationId: conversationId
     });
-    
-    console.log(`🔍 Found original message:`, originalMessage ? originalMessage._id : 'NOT FOUND');
     
     if (originalMessage) {
       replyToId = originalMessage._id;
@@ -105,9 +100,6 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
   const Message = require('../models/Message');
   const { io } = require('../models/server');
   
-  console.log("📸 IMAGE messageObject:", JSON.stringify(messageObject, null, 2));
-  console.log("📎 Context present:", messageObject.context ? JSON.stringify(messageObject.context) : 'NO CONTEXT');
-  
   const imageId = messageObject.image.id;
   const caption = messageObject.image.caption || "";
   const imageMimeType = messageObject.image.mime_type || "";
@@ -133,7 +125,6 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
 
     // Extract replyTo context if this is a reply to another message
     const { replyToId, replyToData } = await extractReplyToContext(messageObject, conversationId);
-    console.log(`📎 Image handler - replyToId: ${replyToId}, replyToData: ${replyToData ? 'FOUND' : 'NULL'}`);
 
     // Save message to DB with image metadata
     const imageMessage = await Message.create({

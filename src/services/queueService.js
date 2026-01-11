@@ -30,8 +30,6 @@ const queueTimers = new Map(); // userId -> timer id
  * @returns {boolean} - True if queued, false if user is already being processed
  */
 function queueUserMessage(userId, messageText, messageId, messageType, messageObject, conversationId, customerId) {
-  console.log(`📋 queueUserMessage - messageObject.context:`, messageObject?.context);
-  
   // Get or create queue for this user
   if (!userQueues.has(userId)) {
     userQueues.set(userId, []);
@@ -182,19 +180,12 @@ async function processUserQueue(userId) {
       let replyToId = null;
       let replyToData = null;
       
-      console.log(`🔍 Processing message - checking for context`);
-      console.log(`   msg.object:`, msg.object ? 'EXISTS' : 'NULL');
-      console.log(`   msg.object?.context:`, msg.object?.context);
-      
       if (msg.object?.context?.id) {
-        console.log(`🔍 Looking for original message with whatsappMessageId: ${msg.object.context.id}`);
         // Find the original message by WhatsApp message ID
         const originalMessage = await Message.findOne({ 
           whatsappMessageId: msg.object.context.id,
           conversationId: msg.conversationId
         });
-        
-        console.log(`🔍 Original message found:`, originalMessage ? originalMessage._id : 'NOT FOUND');
         
         if (originalMessage) {
           replyToId = originalMessage._id;
@@ -206,10 +197,7 @@ async function processUserQueue(userId) {
             attachments: originalMessage.attachments,
             media: originalMessage.media
           };
-          console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
         }
-      } else {
-        console.log(`🔍 No context.id found - not a reply message`);
       }
 
       const newMessage = new Message({
