@@ -616,15 +616,17 @@ router.post('/orders', authenticateToken, async (req, res) => {
 
 /**
  * @route POST /api/v2/ecommerce/orders/:orderId/send-update
- * @desc Send order update summary to customer via WhatsApp
+ * @desc Send order update summary to customer via WhatsApp template
  * @access Private (agents only)
  * @param {string} orderId - MongoDB Order ID (_id)
  * @body {string} conversationId - Conversation ID to send message to
+ * @body {string} [templateName] - Optional template name (defaults to 'order_status_update')
+ * @body {string} [languageCode] - Optional language code (defaults to 'es_MX')
  */
 router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { conversationId } = req.body;
+        const { conversationId, templateName = 'order_status_update', languageCode = 'es_MX' } = req.body;
 
         if (!conversationId) {
             return res.status(400).json({
@@ -642,9 +644,9 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
             });
         }
 
-        // Get conversation to find phone number
+        // Get conversation to find phone number and customer
         const Conversation = require('../models/Conversation');
-        const conversation = await Conversation.findById(conversationId);
+        const conversation = await Conversation.findById(conversationId).populate('customerId');
         if (!conversation) {
             return res.status(404).json({
                 success: false,
@@ -652,45 +654,58 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
             });
         }
 
-        // Build order summary message
+        // Build order items list for template parameter
         const itemsList = order.items.map((item, index) =>
             `${index + 1}. ${item.productName} - Cant: ${item.quantity} - $${item.subtotal.toFixed(2)}`
         ).join('\n');
 
-        const message = `📦 *Actualización de Orden #${order.orderId}*\n\n` +
-            `*Estado:* ${order.statusLabel}\n` +
-            `*Artículos:*\n${itemsList}\n\n` +
-            `*Total:* $${order.total.toFixed(2)}\n\n` +
-            (order.notes ? `*Notas:* ${order.notes}\n\n` : '') +
-            `¿Tienes alguna pregunta sobre tu orden?`;
+        // Template parameters (adjust based on your actual template structure)
+        // Expected template format: "Actualización de Orden {{1}} - Estado: {{2}} - Items: {{3}} - Total: {{4}}"
+        const parameters = [
+            { type: 'text', text: order.orderId },
+            { type: 'text', text: order.statusLabel },
+            { type: 'text', text: itemsList },
+            { type: 'text', text: `$${order.total.toFixed(2)}` }
+        ];
 
-        // Send message via WhatsApp
-        const whatsappService = require('../services/whatsappService');
-        const { buildTextJSON } = require('../shared/whatsappModels');
+        // Add notes if present (adjust parameter index as needed)
+        if (order.notes) {
+            parameters.push({ type: 'text', text: order.notes });
+        }
+
+        // Send via template message service
+        const templateMessageService = require('../services/templateMessageService');
         
-        const messageData = buildTextJSON(conversation.phoneNumber, message);
-        await whatsappService.sendWhatsappResponse(messageData);
-
-        // Save message to conversation
-        const Message = require('../models/Message');
-        await Message.create({
+        const result = await templateMessageService.sendTemplateMessage({
+            templateName,
+            languageCode,
+            parameters,
+            phoneNumber: conversation.phoneNumber,
+            customerId: conversation.customerId._id,
             conversationId: conversation._id,
-            content: message,
-            direction: 'outgoing',
-            sender: 'agent',
             agentId: req.agent._id,
-            timestamp: new Date()
+            sender: 'agent',
+            saveToDatabase: true,
+            emitSocketEvents: true
         });
 
         res.json({
             success: true,
-            message: 'Order update sent successfully'
+            message: 'Order update sent successfully',
+            data: {
+                messageId: result.message?._id,
+                displayContent: result.displayContent
+            }
         });
     } catch (error) {
         console.error('Error sending order update:', error);
+        
+        // More detailed error response
+        const errorMessage = error.message || 'Failed to send order update';
         res.status(500).json({
             success: false,
-            error: 'Failed to send order update'
+            error: errorMessage,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
