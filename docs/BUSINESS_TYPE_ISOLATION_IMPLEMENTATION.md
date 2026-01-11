@@ -302,9 +302,18 @@ db.tickets.find({
 
 For issues or questions:
 1. Check [BUSINESS_TYPE_ISOLATION.md](BUSINESS_TYPE_ISOLATION.md) for detailed documentation
-2. Run `npm run test:business-isolation` to verify setup
-3. Review logs for businessType validation errors
-4. Check MongoDB indexes: `db.tickets.getIndexes()`
+2. Check [ECOMMERCE_WORKFLOW.md](ECOMMERCE_WORKFLOW.md) for e-commerce order and ticket flows
+3. Run `npm run test:business-isolation` to verify setup
+4. Review logs for businessType validation errors
+5. Check MongoDB indexes: `db.tickets.getIndexes()`
+
+---
+
+## Related Documentation
+
+- [ECOMMERCE_WORKFLOW.md](ECOMMERCE_WORKFLOW.md) - Complete guide for e-commerce orders and support tickets
+- [BUSINESS_TYPE_ISOLATION.md](BUSINESS_TYPE_ISOLATION.md) - Technical analysis and architecture
+- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API endpoints and Socket.io events
 
 ---
 

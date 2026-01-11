@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,7 +28,10 @@ export class TemplateSenderComponent implements OnInit {
   searchTerm = '';
   filteredTemplates: Template[] = [];
 
-  constructor(private templateService: TemplateService) {}
+  constructor(
+    private templateService: TemplateService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.loadTemplates();
@@ -36,17 +39,22 @@ export class TemplateSenderComponent implements OnInit {
 
   loadTemplates() {
     this.loading = true;
+    this.error = null;
+    this.cdr.detectChanges(); // Force change detection for loading state
+    
     this.templateService.getTemplates({ status: 'APPROVED' }).subscribe({
       next: (response) => {
         this.templates = response.data;
         this.approvedTemplates = response.data.filter(t => t.status === 'APPROVED');
         this.filteredTemplates = this.approvedTemplates;
         this.loading = false;
+        this.cdr.detectChanges(); // Force change detection after data loads
       },
       error: (err) => {
         console.error('Error loading templates:', err);
         this.error = 'Failed to load templates';
         this.loading = false;
+        this.cdr.detectChanges(); // Force change detection on error
       }
     });
   }

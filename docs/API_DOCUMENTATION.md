@@ -1021,4 +1021,439 @@ export interface PaginatedResponse<T> {
 }
 ```
 
-This documentation provides everything the Angular frontend team needs to integrate with your WhatsApp CRM API effectively.
+---
+
+## 🎫 Tickets API
+
+### Get Tickets
+```http
+GET /api/v2/tickets
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+```javascript
+{
+  page: 1,
+  limit: 20,
+  status: 'open',  // open, in_progress, resolved, closed
+  category: 'product_defect',
+  priority: 'high',
+  assignedAgent: '507f1f77bcf86cd799439011'
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "tickets": [{
+    "_id": "507f1f77bcf86cd799439011",
+    "ticketId": "ORD-2026-00456",
+    "businessType": "ecommerce",
+    "customerId": {
+      "_id": "507f1f77bcf86cd799439012",
+      "firstName": "Giovanni",
+      "lastName": "Rossi",
+      "phoneNumber": "529991234567"
+    },
+    "subject": "Defective product in order #ORD-2026-00123",
+    "description": "Package damaged, product leaked",
+    "category": "product_defect",
+    "priority": "high",
+    "status": "open",
+    "createdAt": "2026-01-11T10:00:00Z",
+    "updatedAt": "2026-01-11T10:00:00Z"
+  }],
+  "total": 45,
+  "page": 1,
+  "pages": 3
+}
+```
+
+### Get Ticket by ID
+```http
+GET /api/v2/tickets/:ticketId
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "ticket": {
+    "_id": "507f1f77bcf86cd799439011",
+    "ticketId": "ORD-2026-00456",
+    "businessType": "ecommerce",
+    "customerId": { /* full customer object */ },
+    "assignedAgent": { /* full agent object */ },
+    "subject": "Defective product in order #ORD-2026-00123",
+    "description": "Package damaged, product leaked",
+    "category": "product_defect",
+    "priority": "high",
+    "status": "in_progress",
+    "attachments": [{
+      "type": "image",
+      "url": "https://res.cloudinary.com/...",
+      "filename": "damaged_product.jpg"
+    }],
+    "notes": [{
+      "_id": "507f1f77bcf86cd799439013",
+      "agent": {
+        "_id": "507f1f77bcf86cd799439014",
+        "firstName": "Maria",
+        "lastName": "García"
+      },
+      "content": "Replacement order created",
+      "isInternal": false,
+      "timestamp": "2026-01-11T11:00:00Z"
+    }],
+    "resolution": {
+      "summary": "Replacement order sent",
+      "resolvedBy": "507f1f77bcf86cd799439014",
+      "resolvedAt": "2026-01-11T12:00:00Z"
+    },
+    "createdAt": "2026-01-11T10:00:00Z",
+    "updatedAt": "2026-01-11T12:00:00Z"
+  }
+}
+```
+
+### Update Ticket Status
+```http
+PATCH /api/v2/tickets/:ticketId/status
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "status": "resolved",
+  "reason": "Replacement order shipped"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "ticket": { /* updated ticket */ }
+}
+```
+
+### Add Ticket Note
+```http
+POST /api/v2/tickets/:ticketId/notes
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "content": "Customer confirmed receipt of replacement",
+  "isInternal": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "ticket": { /* ticket with new note */ }
+}
+```
+
+### Resolve Ticket
+```http
+POST /api/v2/tickets/:ticketId/resolve
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "resolution": {
+    "summary": "Sent replacement product via express shipping",
+    "steps": [
+      "Verified defective product via photos",
+      "Created replacement order #ORD-2026-00124",
+      "Applied express shipping at no cost"
+    ],
+    "category": "solved"
+  }
+}
+```
+
+---
+
+## 🛒 E-commerce Integration (AI Functions Only)
+
+**Note:** E-commerce features are only available through the AI Assistant when the **ecommerce preset** is active. These are not direct API endpoints but AI function calls.
+
+### AI Function: search_ecommerce_products
+
+**Triggered by customer requests like:**
+- "Show me pasta products"
+- "Do you have gluten-free options?"
+- "What Italian products are available?"
+
+**Function Call:**
+```javascript
+{
+  function: "search_ecommerce_products",
+  arguments: {
+    query: "pasta",
+    limit: 10
+  }
+}
+```
+
+**Response to AI:**
+```json
+{
+  "success": true,
+  "products": [{
+    "product_id": "507f1f77bcf86cd799439011",
+    "name": "Spaghetti Barilla 500g",
+    "price": 2.50,
+    "currency": "USD",
+    "stock": 45,
+    "description": "Premium Italian pasta",
+    "image_url": "https://cdn.example.com/pasta.jpg"
+  }],
+  "total": 25
+}
+```
+
+### AI Function: create_ecommerce_order
+
+**Triggered after customer confirms order**
+
+**Function Call:**
+```javascript
+{
+  function: "create_ecommerce_order",
+  arguments: {
+    customer_phone: "529991234567",
+    customer_name: "Giovanni Rossi",
+    customer_email: "giovanni@example.com",
+    items: [{
+      product_id: "507f1f77bcf86cd799439011",
+      product_name: "Spaghetti Barilla 500g",
+      quantity: 2,
+      unit_price: 2.50
+    }],
+    shipping_address: {
+      street: "123 Main Street",
+      city: "Rome",
+      state: "Lazio",
+      postal_code: "00100",
+      country: "Italy"
+    },
+    payment_method: "cash_on_delivery",
+    notes: "Please ring doorbell twice"
+  }
+}
+```
+
+**Response to AI:**
+```json
+{
+  "success": true,
+  "order": {
+    "order_id": "ORD-2026-00123",
+    "order_number": "LBI-20260111-00123",
+    "status": "pending",
+    "total": 8.80,
+    "estimated_delivery": "2026-01-15",
+    "tracking_url": "https://track.example.com/ORD-2026-00123",
+    "items": [{
+      "product_name": "Spaghetti Barilla 500g",
+      "quantity": 2,
+      "unit_price": 2.50,
+      "subtotal": 5.00
+    }],
+    "shipping_cost": 3.00,
+    "tax": 0.80
+  }
+}
+```
+
+### AI Function: get_ecommerce_order
+
+**Triggered by customer requests like:**
+- "Where's my order #ORD-2026-00123?"
+- "Check order status"
+
+**Function Call:**
+```javascript
+{
+  function: "get_ecommerce_order",
+  arguments: {
+    search_type: "order_id",  // or "phone", "email"
+    search_value: "ORD-2026-00123",
+    include_items: true
+  }
+}
+```
+
+**Response to AI:**
+```json
+{
+  "success": true,
+  "found": true,
+  "orders": [{
+    "order_id": "ORD-2026-00123",
+    "order_number": "LBI-20260111-00123",
+    "status": "in_transit",
+    "total": 8.80,
+    "order_date": "2026-01-11",
+    "estimated_delivery": "2026-01-15",
+    "tracking_number": "TRACK123456",
+    "items": [{
+      "product_name": "Spaghetti Barilla 500g",
+      "quantity": 2,
+      "unit_price": 2.50
+    }],
+    "timeline": [
+      { "status": "pending", "timestamp": "2026-01-11T10:00:00Z" },
+      { "status": "confirmed", "timestamp": "2026-01-11T10:30:00Z" },
+      { "status": "shipped", "timestamp": "2026-01-12T09:00:00Z" },
+      { "status": "in_transit", "timestamp": "2026-01-13T08:00:00Z" }
+    ]
+  }]
+}
+```
+
+### AI Function: get_active_orders
+
+**Triggered by customer requests like:**
+- "Show my recent orders"
+- "What orders do I have?"
+
+**Function Call:**
+```javascript
+{
+  function: "get_active_orders",
+  arguments: {
+    customer_phone: "529991234567"
+  }
+}
+```
+
+**Response to AI:**
+```json
+{
+  "success": true,
+  "orders": [{
+    "order_id": "ORD-2026-00123",
+    "status": "in_transit",
+    "total": 8.80,
+    "order_date": "2026-01-11",
+    "item_count": 1
+  }, {
+    "order_id": "ORD-2026-00098",
+    "status": "delivered",
+    "total": 15.50,
+    "order_date": "2026-01-05",
+    "item_count": 3
+  }],
+  "total": 2
+}
+```
+
+---
+
+## 🔔 Socket.io Events for Tickets
+
+### ticket_created
+```typescript
+socket.on('ticket_created', (data) => {
+  /*
+  {
+    ticket: { /* full ticket object */ },
+    customerId: "507f1f77bcf86cd799439012"
+  }
+  */
+});
+```
+
+### ticket_status_changed
+```typescript
+socket.on('ticket_status_changed', (data) => {
+  /*
+  {
+    ticket: { /* full ticket object */ },
+    previousStatus: "open"
+  }
+  */
+});
+```
+
+### ticket_assigned
+```typescript
+socket.on('ticket_assigned', (data) => {
+  /*
+  {
+    ticketId: "ORD-2026-00456",
+    agentId: "507f1f77bcf86cd799439014",
+    ticket: { /* full ticket object */ }
+  }
+  */
+});
+```
+
+### ticket_note_added
+```typescript
+socket.on('ticket_note_added', (data) => {
+  /*
+  {
+    ticket: { /* full ticket object */ },
+    note: {
+      _id: "507f1f77bcf86cd799439015",
+      content: "Replacement shipped",
+      timestamp: "2026-01-11T12:00:00Z"
+    }
+  }
+  */
+});
+```
+
+### ticket_resolved
+```typescript
+socket.on('ticket_resolved', (data) => {
+  /*
+  {
+    ticket: { /* full ticket object with resolution */ }
+  }
+  */
+});
+```
+
+### ticket_reopened
+```typescript
+socket.on('ticket_reopened', (data) => {
+  /*
+  {
+    ticket: { /* full ticket object */ },
+    previousStatus: "resolved",
+    reopenCount: 1
+  }
+  */
+});
+```
+
+---
+
+## 📚 Additional Resources
+
+- [E-commerce Workflow Guide](ECOMMERCE_WORKFLOW.md) - Complete guide for orders and tickets
+- [Business Type Isolation](BUSINESS_TYPE_ISOLATION.md) - Multi-preset architecture
+- [Configuration Presets](../src/services/configurationService.js) - Preset management
+
+---
+
+This documentation provides everything the Angular frontend team needs to integrate with your WhatsApp CRM API effectively, including the new ticket system and e-commerce integration features.
