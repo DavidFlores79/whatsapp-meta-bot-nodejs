@@ -653,6 +653,12 @@ class EcommerceIntegrationService {
             // Calculate total
             const total = validatedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
+            // Find the correct delivery option ObjectId
+            const deliveryOptionId = await this.findDeliveryOptionId(deliveryOption || 'delivery');
+            if (!deliveryOptionId) {
+                return { error: 'No delivery options available. Please contact support.' };
+            }
+
             // Create order payload
             const orderPayload = {
                 customer: customer._id,
@@ -660,7 +666,7 @@ class EcommerceIntegrationService {
                 total,
                 payment_method: paymentMethod || 'cash',
                 address: address || '',
-                deliveryOption: deliveryOption || 'delivery',
+                deliveryOption: deliveryOptionId,
                 deliveryDate: deliveryDate || null,
                 status: 'pending',
                 notes: notes || `Order placed via WhatsApp from ${customerPhone}`
@@ -681,19 +687,64 @@ class EcommerceIntegrationService {
     }
 
     /**
-     * Get delivery options available
-     * @returns {Promise<Array>} Array of delivery options
+     * Get delivery options from e-commerce API
+     * @returns {Promise<Array>} Array of delivery options with _id
      */
     async getDeliveryOptions() {
         if (!await this.isAvailable()) {
             return [];
         }
 
-        // These are typically hardcoded in the e-commerce system
-        return [
-            { id: 'pickup', label: 'Recoger en tienda', available: true },
-            { id: 'delivery', label: 'Envío a domicilio', available: true }
-        ];
+        try {
+            const response = await this.makeRequest('GET', '/api/delivery-options');
+            if (response.data && response.data.length > 0) {
+                return response.data.map(option => ({
+                    _id: option._id,
+                    name: option.name,
+                    description: option.description,
+                    price: option.price || 0,
+                    available: option.isActive !== false
+                }));
+            }
+            return [];
+        } catch (error) {
+            console.error(`❌ Error fetching delivery options:`, error.message);
+            return [];
+        }
+    }
+
+    /**
+     * Find delivery option ID by type (pickup/delivery)
+     * @param {string} optionType - 'pickup' or 'delivery'
+     * @returns {Promise<string|null>} Delivery option ObjectId or null
+     */
+    async findDeliveryOptionId(optionType) {
+        const options = await this.getDeliveryOptions();
+        if (options.length === 0) {
+            return null;
+        }
+
+        // Try to match by name (case-insensitive)
+        const searchTerms = {
+            'pickup': ['pickup', 'recoger', 'tienda', 'store', 'local'],
+            'delivery': ['delivery', 'envío', 'envio', 'domicilio', 'home', 'entrega']
+        };
+
+        const terms = searchTerms[optionType] || searchTerms['delivery'];
+
+        for (const option of options) {
+            const nameLower = (option.name || '').toLowerCase();
+            const descLower = (option.description || '').toLowerCase();
+
+            for (const term of terms) {
+                if (nameLower.includes(term) || descLower.includes(term)) {
+                    return option._id;
+                }
+            }
+        }
+
+        // If no match found, return first available option
+        return options[0]?._id || null;
     }
 
     /**
