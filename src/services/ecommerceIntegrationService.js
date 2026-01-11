@@ -661,8 +661,14 @@ class EcommerceIntegrationService {
                     return { error: `Product ${item.productId} is not available` };
                 }
                 // Use the actual product ID from the lookup (in case AI passed a name)
+                // Make sure to use product.id (which is product._id from formatProductForCRM)
+                const productId = product.id || product._id || item.productId;
+                if (!productId) {
+                    console.error('⚠️ Product missing ID:', product);
+                    return { error: `Invalid product data for ${item.productId}` };
+                }
                 validatedItems.push({
-                    product: product.id,
+                    product: productId,  // Backend expects 'product' field (singular)
                     quantity: item.quantity,
                     subtotal: product.price * item.quantity
                 });
