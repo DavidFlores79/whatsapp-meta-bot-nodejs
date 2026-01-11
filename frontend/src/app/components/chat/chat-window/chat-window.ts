@@ -496,23 +496,19 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Close conversation (final state)
    */
   closeConversation(chatId: string) {
-    if (!confirm('Are you sure you want to close this conversation? This action marks it as complete.')) {
-      return;
-    }
-
     this.isClosingChat = true;
 
     this.chatService.closeConversation(chatId).subscribe({
       next: () => {
         console.log('Conversation closed');
         this.isClosingChat = false;
-        this.toastService.success('Conversation closed successfully.');
+        this.toastService.success('Conversación cerrada exitosamente.');
       },
       error: (err) => {
         console.error('Close failed:', err);
         this.isClosingChat = false;
-        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
-        this.toastService.error(`Failed to close conversation: ${errorMessage}`);
+        const errorMessage = err.error?.error || err.error?.message || 'Error desconocido';
+        this.toastService.error(`Error al cerrar conversación: ${errorMessage}`);
       }
     });
   }
@@ -521,23 +517,19 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Reopen closed conversation (admin/supervisor only)
    */
   reopenConversation(chatId: string) {
-    if (!confirm('Are you sure you want to reopen this closed conversation?')) {
-      return;
-    }
-
     this.isReopeningChat = true;
 
     this.chatService.reopenConversation(chatId).subscribe({
       next: () => {
         console.log('Conversation reopened');
         this.isReopeningChat = false;
-        this.toastService.success('Conversation reopened successfully.');
+        this.toastService.success('Conversación reabierta exitosamente.');
       },
       error: (err) => {
         console.error('Reopen failed:', err);
         this.isReopeningChat = false;
-        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
-        this.toastService.error(`Failed to reopen conversation: ${errorMessage}`);
+        const errorMessage = err.error?.error || err.error?.message || 'Error desconocido';
+        this.toastService.error(`Error al reabrir conversación: ${errorMessage}`);
       }
     });
   }

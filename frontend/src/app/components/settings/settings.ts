@@ -396,22 +396,18 @@ export class SettingsComponent implements OnInit {
    * Reset CRM settings to defaults
    */
   resetCRMSettings() {
-    if (!confirm('Are you sure you want to reset all CRM settings to defaults? This cannot be undone.')) {
-      return;
-    }
-
     this.isSavingCRM = true;
     this.crmSettingsService.resetToDefaults().subscribe({
       next: (response) => {
         this.crmSettings = response.settings;
         this.isSavingCRM = false;
-        this.toastService.success(response.message || 'CRM settings reset to defaults');
+        this.toastService.success(response.message || 'Configuración CRM restaurada a valores por defecto');
         console.log('[Settings] CRM settings reset');
       },
       error: (err) => {
         this.isSavingCRM = false;
         console.error('[Settings] Error resetting CRM settings:', err);
-        this.toastService.error('Failed to reset CRM settings');
+        this.toastService.error('Error al restaurar configuración CRM');
       }
     });
   }
