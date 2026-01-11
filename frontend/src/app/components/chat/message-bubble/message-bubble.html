@@ -85,8 +85,8 @@
                 <span class="text-[10px] font-medium">{{ message.agentName }}</span>
             </div>
 
-            <!-- Text/Caption (shown for all types except standalone location without text, and hide [Image] placeholder) -->
-            <div *ngIf="message.text && message.type !== 'location' && message.text !== '[Image]'"
+            <!-- Text/Caption (shown for all types except standalone location/image without caption) -->
+            <div *ngIf="message.text && message.type !== 'location' && !isMediaPlaceholder"
                  class="mb-1 break-words whitespace-pre-wrap leading-relaxed"
                  [innerHTML]="formattedText"></div>
 

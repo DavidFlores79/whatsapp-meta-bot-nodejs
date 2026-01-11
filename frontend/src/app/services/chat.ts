@@ -683,23 +683,34 @@ export class ChatService {
 
     return this.http.post(`${this.apiUrl}/conversations/${currentChatId}/reply-media`, formData).pipe(
       tap((response: any) => {
-        // Add message to chat
+        // Add message to chat using server response data (includes Cloudinary URL)
         const mediaType = file.type.startsWith('image/') ? 'image' :
                           file.type.startsWith('video/') ? 'video' :
                           file.type.startsWith('audio/') ? 'audio' : 'document';
 
+        // Use server response for media URL if available
+        const serverMessage = response.message;
+        const mediaUrl = serverMessage?.media?.url || null;
+
         const newMessage: Message = {
-          id: response.message?._id || Date.now().toString(),
+          id: serverMessage?._id || Date.now().toString(),
           text: caption || `[${mediaType}: ${file.name}]`,
           sender: 'me',
           timestamp: new Date(),
-          status: response.message?.status || 'sent',
+          status: serverMessage?.status || 'sent',
           type: mediaType,
           media: {
             type: mediaType,
             filename: file.name,
-            mimeType: file.type
-          }
+            mimeType: file.type,
+            url: mediaUrl
+          },
+          // Include attachments for message-bubble compatibility
+          attachments: mediaUrl ? [{
+            type: mediaType,
+            url: mediaUrl,
+            filename: file.name
+          }] : undefined
         };
         this.handleNewMessage(currentChatId, newMessage);
       })

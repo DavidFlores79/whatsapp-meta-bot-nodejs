@@ -96,6 +96,16 @@ export class MessageBubbleComponent {
   }
 
   /**
+   * Check if text is just a media placeholder like [image: filename.jpg]
+   * These should be hidden when the actual media is displayed
+   */
+  get isMediaPlaceholder(): boolean {
+    if (!this.message.text) return false;
+    // Match patterns like [image: filename], [video: filename], [document: filename], [Image]
+    return /^\[(image|video|document|audio|Image)(:.*?)?\]$/i.test(this.message.text.trim());
+  }
+
+  /**
    * Get image URL from attachments or media property
    */
   get imageUrl(): string | null {
