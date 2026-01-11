@@ -556,15 +556,25 @@ class EcommerceIntegrationService {
             // If it looks like a valid MongoDB ObjectId, try direct fetch
             if (this.isValidObjectId(productId)) {
                 const response = await this.makeRequest('GET', `/api/products/${productId}`);
-                return this.formatProductForCRM(response);
+
+                // E-commerce API wraps response in { message: "...", data: {...} }
+                const productData = response.data || response;
+
+                console.log(`📦 Fetched product ${productId} from API:`, {
+                    name: productData.name,
+                    price: productData.price,
+                    _id: productData._id,
+                    hasPrice: productData.price !== undefined && productData.price !== null
+                });
+                return this.formatProductForCRM(productData);
             }
 
             // Otherwise, the AI passed a product name - search for it
             console.log(`🔍 Product ID "${productId}" is not an ObjectId, searching by name...`);
-            const searchResults = await this.searchProducts({ query: productId, limit: 1 });
-            
+            const searchResults = await this.searchProducts(productId, 1);
+
             if (searchResults && searchResults.length > 0) {
-                console.log(`✅ Found product by name: ${searchResults[0].name} (ID: ${searchResults[0].id})`);
+                console.log(`✅ Found product by name: ${searchResults[0].name} (ID: ${searchResults[0].id}), Price: ${searchResults[0].price}`);
                 return searchResults[0];
             }
 
@@ -673,12 +683,23 @@ class EcommerceIntegrationService {
                     console.error('⚠️ Product missing ID:', product);
                     return { error: `Invalid product data for ${item.productId}` };
                 }
-                
+
                 // Ensure price and quantity are valid numbers
-                const price = parseFloat(product.price) || 0;
+                const price = parseFloat(product.price);
                 const quantity = parseInt(item.quantity) || 1;
+
+                // CRITICAL: Validate that price is a valid positive number
+                if (isNaN(price) || price <= 0) {
+                    console.error('⚠️ Product has invalid or missing price:', {
+                        productId: item.productId,
+                        productData: product,
+                        parsedPrice: price
+                    });
+                    return { error: `Product "${product.name || item.productId}" has invalid or missing price information. Please contact support.` };
+                }
+
                 const subtotal = price * quantity;
-                
+
                 validatedItems.push({
                     product: productId,  // Backend expects 'product' field (singular)
                     quantity: quantity,
@@ -688,6 +709,16 @@ class EcommerceIntegrationService {
 
             // Calculate total - ensure it's a valid number
             const total = validatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+
+            // CRITICAL: Validate that total is greater than zero
+            if (total <= 0) {
+                console.error('⚠️ Order total is zero or negative:', {
+                    total,
+                    validatedItems,
+                    originalItems: items
+                });
+                return { error: 'Order total cannot be zero. Please ensure all products have valid prices.' };
+            }
 
             // Find the correct delivery option ObjectId
             const deliveryOptionId = await this.findDeliveryOptionId(deliveryOption || 'delivery');
