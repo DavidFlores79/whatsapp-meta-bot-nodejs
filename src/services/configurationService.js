@@ -50,9 +50,12 @@ class ConfigurationService {
 
     /**
      * Get configuration presets
+     * Always returns code-defined presets to ensure templates are current
      */
     async getConfigurationPresets() {
-        return this.getSetting('configuration_presets', this.getDefaultPresets());
+        // Always use code-defined presets to ensure instruction templates are up-to-date
+        // Database-stored presets would have stale template strings
+        return this.getDefaultPresets();
     }
 
     /**
