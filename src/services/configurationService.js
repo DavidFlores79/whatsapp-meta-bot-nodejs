@@ -161,6 +161,7 @@ class ConfigurationService {
 
     getDefaultAssistantConfig() {
         return {
+            presetId: 'luxfree',
             assistantName: 'Lúmen',
             companyName: process.env.COMPANY_NAME || 'LUXFREE',
             primaryServiceIssue: 'instalaciones solares, luminarias y servicios eléctricos',
@@ -344,6 +345,7 @@ GENERAL BEHAVIOR RULES
                 description: 'Configuración para restaurantes y servicios de comida',
                 config: {
                     assistant_configuration: {
+                        presetId: 'restaurant',
                         assistantName: 'FoodBot',
                         companyName: 'Restaurante',
                         primaryServiceIssue: 'problemas con pedidos, entregas o calidad de comida',
@@ -383,6 +385,7 @@ GENERAL BEHAVIOR RULES
                 description: 'Configuración para tiendas en línea y retail',
                 config: {
                     assistant_configuration: {
+                        presetId: 'ecommerce',
                         assistantName: 'ShopAssist',
                         companyName: 'TiendaOnline',
                         primaryServiceIssue: 'problemas con productos, envíos o devoluciones',
@@ -422,6 +425,7 @@ GENERAL BEHAVIOR RULES
                 description: 'Configuración para clínicas y servicios médicos',
                 config: {
                     assistant_configuration: {
+                        presetId: 'healthcare',
                         assistantName: 'MediAssist',
                         companyName: 'Clínica',
                         primaryServiceIssue: 'consultas médicas, citas o recetas',
