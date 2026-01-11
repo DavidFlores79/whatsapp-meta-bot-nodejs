@@ -618,7 +618,7 @@ router.post('/orders', authenticateToken, async (req, res) => {
  * @route POST /api/v2/ecommerce/orders/:orderId/send-update
  * @desc Send order update summary to customer via WhatsApp
  * @access Private (agents only)
- * @param {string} orderId - MongoDB Order ID
+ * @param {string} orderId - MongoDB Order ID (_id)
  * @body {string} conversationId - Conversation ID to send message to
  */
 router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) => {
@@ -633,8 +633,8 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
             });
         }
 
-        // Get order details
-        const order = await ecommerceService.getOrderById(orderId);
+        // Get order details by MongoDB _id
+        const order = await ecommerceService.getOrderByMongoId(orderId);
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -653,20 +653,12 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
         }
 
         // Build order summary message
-        const statusLabels = {
-            'pending': 'Pendiente',
-            'processing': 'En proceso',
-            'shipped': 'Enviado',
-            'delivered': 'Entregado',
-            'cancelled': 'Cancelado'
-        };
-
-        const itemsList = order.items.map((item, index) => 
-            `${index + 1}. ${item.name} - Cant: ${item.quantity} - $${item.price.toFixed(2)}`
+        const itemsList = order.items.map((item, index) =>
+            `${index + 1}. ${item.productName} - Cant: ${item.quantity} - $${item.subtotal.toFixed(2)}`
         ).join('\n');
 
         const message = `📦 *Actualización de Orden #${order.orderId}*\n\n` +
-            `*Estado:* ${statusLabels[order.status] || order.status}\n` +
+            `*Estado:* ${order.statusLabel}\n` +
             `*Artículos:*\n${itemsList}\n\n` +
             `*Total:* $${order.total.toFixed(2)}\n\n` +
             (order.notes ? `*Notas:* ${order.notes}\n\n` : '') +

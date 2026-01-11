@@ -292,10 +292,38 @@ class EcommerceIntegrationService {
             if (response.data && response.data.length > 0) {
                 return this.formatOrderForCRM(response.data[0]);
             }
-            
+
             return null;
         } catch (error) {
             console.error(`❌ Error fetching order ${orderId}:`, error.message);
+            return null;
+        }
+    }
+
+    /**
+     * Get order by MongoDB _id
+     * @param {string} mongoId - The MongoDB ObjectId
+     * @returns {Promise<object|null>} Order object or null if not found
+     */
+    async getOrderByMongoId(mongoId) {
+        if (!await this.isFeatureEnabled('orderLookup')) {
+            console.log('📦 Order lookup feature is disabled');
+            return null;
+        }
+
+        try {
+            // Fetch order directly by MongoDB ID using /api/orders/:id endpoint
+            const response = await this.makeRequest('GET', `/api/orders/${mongoId}`, null, {
+                include_items: true
+            });
+
+            if (response.data) {
+                return this.formatOrderForCRM(response.data);
+            }
+
+            return null;
+        } catch (error) {
+            console.error(`❌ Error fetching order by ID ${mongoId}:`, error.message);
             return null;
         }
     }
