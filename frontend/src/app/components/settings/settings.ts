@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast';
+import { NotificationService } from '../../services/notification';
 import { CRMSettingsService, CRMSettings } from '../../services/crm-settings';
 import { ConfigurationService, AssistantConfiguration, InstructionsPreview, TicketBehavior } from '../../services/configuration';
 import { AVAILABLE_LANGUAGES, LANGUAGE_STORAGE_KEY } from '../../config/translation.config';
@@ -38,6 +39,9 @@ export class SettingsComponent implements OnInit {
   notificationsEnabled = true;
   soundEnabled = true;
   desktopNotificationsEnabled = false;
+  vibrationEnabled = true;
+  titleBadgeEnabled = true;
+  notificationPermission: NotificationPermission = 'default';
 
   // Preferences
   autoAssignEnabled = false;
@@ -59,7 +63,7 @@ export class SettingsComponent implements OnInit {
   isLoadingCRM = false;
 
   // Ticket Behavior Settings
-  ticketBehavior: TicketBehavior = { 
+  ticketBehavior: TicketBehavior = {
     attachmentHoursLimit: 48,
     allowReopening: true,
     reopenWindowDays: 30
@@ -93,6 +97,7 @@ export class SettingsComponent implements OnInit {
     private translate: TranslateService,
     private authService: AuthService,
     private toastService: ToastService,
+    private notificationService: NotificationService,
     private crmSettingsService: CRMSettingsService,
     private configurationService: ConfigurationService,
     private cdr: ChangeDetectorRef
@@ -174,25 +179,69 @@ export class SettingsComponent implements OnInit {
   }
 
   toggleSound() {
-    localStorage.setItem('sound-enabled', JSON.stringify(this.soundEnabled));
+    this.notificationService.updateSettings({ soundEnabled: this.soundEnabled });
     this.savePreferences();
+
+    if (this.soundEnabled) {
+      this.toastService.success('Sound notifications enabled');
+    } else {
+      this.toastService.info('Sound notifications disabled');
+    }
   }
 
-  toggleDesktopNotifications() {
-    if (this.desktopNotificationsEnabled && 'Notification' in window) {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          localStorage.setItem('desktop-notifications', 'true');
-          this.savePreferences();
-        } else {
-          this.desktopNotificationsEnabled = false;
-          this.toastService.warning('Notification permission denied');
-        }
-      });
+  async toggleDesktopNotifications() {
+    if (this.desktopNotificationsEnabled) {
+      if (!('Notification' in window)) {
+        this.toastService.error('Browser does not support notifications');
+        this.desktopNotificationsEnabled = false;
+        return;
+      }
+
+      const permission = await this.notificationService.requestPermission();
+      if (permission === 'granted') {
+        this.notificationService.updateSettings({ desktopNotificationsEnabled: true });
+        this.toastService.success('Desktop notifications enabled');
+        this.savePreferences();
+      } else {
+        this.desktopNotificationsEnabled = false;
+        this.toastService.warning('Notification permission denied. Please enable in browser settings.');
+      }
     } else {
-      localStorage.setItem('desktop-notifications', 'false');
+      this.notificationService.updateSettings({ desktopNotificationsEnabled: false });
+      this.toastService.info('Desktop notifications disabled');
       this.savePreferences();
     }
+  }
+
+  toggleVibration() {
+    this.notificationService.updateSettings({ vibrationEnabled: this.vibrationEnabled });
+    localStorage.setItem('vibration-enabled', JSON.stringify(this.vibrationEnabled));
+    this.savePreferences();
+
+    if (this.vibrationEnabled) {
+      this.toastService.success('Vibration enabled');
+      // Test vibration
+      this.notificationService.vibrate();
+    } else {
+      this.toastService.info('Vibration disabled');
+    }
+  }
+
+  toggleTitleBadge() {
+    this.notificationService.updateSettings({ titleBadgeEnabled: this.titleBadgeEnabled });
+    localStorage.setItem('title-badge-enabled', JSON.stringify(this.titleBadgeEnabled));
+    this.savePreferences();
+
+    if (this.titleBadgeEnabled) {
+      this.toastService.success('Title badge enabled');
+    } else {
+      this.toastService.info('Title badge disabled');
+    }
+  }
+
+  testNotifications() {
+    this.notificationService.testNotification();
+    this.toastService.info('Testing notifications...');
   }
 
   toggleAutoAssign() {
@@ -250,6 +299,8 @@ export class SettingsComponent implements OnInit {
     const notifications = localStorage.getItem('notifications-enabled');
     const sound = localStorage.getItem('sound-enabled');
     const desktop = localStorage.getItem('desktop-notifications');
+    const vibration = localStorage.getItem('vibration-enabled');
+    const titleBadge = localStorage.getItem('title-badge-enabled');
     const theme = localStorage.getItem('app-theme') as 'light' | 'dark' | 'auto';
     const maxChats = localStorage.getItem('max-concurrent-chats');
 
@@ -262,12 +313,24 @@ export class SettingsComponent implements OnInit {
     if (desktop !== null) {
       this.desktopNotificationsEnabled = desktop === 'true';
     }
+    if (vibration !== null) {
+      this.vibrationEnabled = JSON.parse(vibration);
+    }
+    if (titleBadge !== null) {
+      this.titleBadgeEnabled = JSON.parse(titleBadge);
+    }
     if (theme) {
       this.selectedTheme = theme;
     }
     if (maxChats) {
       this.maxConcurrentChats = parseInt(maxChats, 10);
     }
+
+    // Check notification permission status
+    this.notificationService.permissionStatus$.subscribe(status => {
+      this.notificationPermission = status;
+      this.cdr.detectChanges();
+    });
   }
 
   private savePreferences() {

@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 import { AuthService, Agent } from './auth';
 import { ToastService } from './toast';
+import { NotificationService } from './notification';
 
 export interface Message {
   id: string;
@@ -123,7 +124,8 @@ export class ChatService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private notificationService: NotificationService
   ) {
     this.initSocket();
 
@@ -385,11 +387,11 @@ export class ChatService {
         this.conversationSummaries.set(data.conversationId, data.summary);
       }
 
-      // Play notification sound
-      this.playNotificationSound();
-
       // Update existing conversation or add it if not present
       const existingChat = this.mockChats.find(c => c.id === data.conversationId);
+      const customerName = data.customerName || existingChat?.name || 'Unknown Customer';
+      const lastMessage = data.lastMessage || existingChat?.lastMessage || 'New conversation';
+
       if (existingChat) {
         // Update assignment info - use current agent as assignedAgent
         existingChat.assignedAgent = this.currentAgent?._id || 'unknown';
@@ -400,8 +402,7 @@ export class ChatService {
         this.chatsSubject.next([...this.mockChats]);
         console.log(`✅ Updated conversation ${data.conversationId} with assignment to agent ${this.currentAgent?._id}`);
 
-        // Show notification with customer name
-        const customerName = data.customerName || existingChat.name || 'Unknown Customer';
+        // Show toast notification
         this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
 
         // Check if agent is viewing a different conversation
@@ -413,9 +414,15 @@ export class ChatService {
         // Conversation not in list, reload all to get the new conversation
         console.log('🔄 Conversation not found in list, reloading...');
         this.loadConversations(this.currentAgent);
-        const customerName = data.customerName || 'Unknown Customer';
         this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
       }
+
+      // Show comprehensive notifications (sound, desktop, badge)
+      this.notificationService.notifyNewConversation(
+        customerName,
+        lastMessage,
+        data.conversationId
+      );
     });
 
     this.socket.on('agent_typing', (data: any) => {
@@ -439,31 +446,7 @@ export class ChatService {
     });
   }
 
-  /**
-   * Play notification sound
-   */
-  private playNotificationSound() {
-    try {
-      // Create a short notification sound using Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = 800; // Frequency in Hz
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (error) {
-      console.warn('Could not play notification sound:', error);
-    }
-  }
 
   /**
    * Observable for typing indicator

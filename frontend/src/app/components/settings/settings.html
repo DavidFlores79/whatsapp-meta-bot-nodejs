@@ -158,20 +158,84 @@
           </div>
 
           <!-- Desktop Notifications -->
-          <div class="setting-item flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {{ 'settings.desktopNotifications' | translate }}
-            </label>
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <div class="flex-1">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {{ 'settings.desktopNotifications' | translate }}
+              </label>
+              <p *ngIf="notificationPermission === 'denied'" class="text-xs text-red-500 mt-1">
+                Permission denied. Please enable in browser settings.
+              </p>
+              <p *ngIf="notificationPermission === 'default'" class="text-xs text-gray-500 mt-1">
+                Click to request permission
+              </p>
+            </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 [(ngModel)]="desktopNotificationsEnabled"
                 (change)="toggleDesktopNotifications()"
+                [disabled]="!notificationsEnabled || notificationPermission === 'denied'"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+            </label>
+          </div>
+
+          <!-- Vibration (Mobile) -->
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <div class="flex-1">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {{ 'settings.vibration' | translate }}
+              </label>
+              <p class="text-xs text-gray-500 mt-1">
+                Vibrate on new conversations (mobile only)
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="vibrationEnabled"
+                (change)="toggleVibration()"
                 [disabled]="!notificationsEnabled"
                 class="sr-only peer"
               />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
             </label>
+          </div>
+
+          <!-- Title Badge -->
+          <div class="setting-item mb-4 flex items-center justify-between">
+            <div class="flex-1">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {{ 'settings.titleBadge' | translate }}
+              </label>
+              <p class="text-xs text-gray-500 mt-1">
+                Blink browser tab title on new conversations
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [(ngModel)]="titleBadgeEnabled"
+                (change)="toggleTitleBadge()"
+                [disabled]="!notificationsEnabled"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+            </label>
+          </div>
+
+          <!-- Test Notifications Button -->
+          <div class="setting-item">
+            <button
+              (click)="testNotifications()"
+              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 flex items-center gap-2"
+              [disabled]="!notificationsEnabled"
+            >
+              <i class="fas fa-bell"></i>
+              {{ 'settings.testNotifications' | translate }}
+            </button>
           </div>
         </div>
       </div>
