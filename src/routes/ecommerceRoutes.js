@@ -620,13 +620,19 @@ router.post('/orders', authenticateToken, async (req, res) => {
  * @access Private (agents only)
  * @param {string} orderId - MongoDB Order ID (_id)
  * @body {string} conversationId - Conversation ID to send message to
- * @body {string} [templateName] - Optional template name (defaults to 'order_status_update')
- * @body {string} [languageCode] - Optional language code (defaults to 'es_MX')
+ * @body {string} [templateName] - Optional template name (if not provided, uses language to build name)
+ * @body {string} [language] - Language suffix ('es' or 'en', defaults to 'es')
+ * @body {string} [languageCode] - WhatsApp language code (defaults to 'es_MX' or 'en_US' based on language)
  */
 router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { conversationId, templateName = 'order_status_update', languageCode = 'es_MX' } = req.body;
+        const { 
+            conversationId, 
+            templateName, 
+            language = 'es',
+            languageCode 
+        } = req.body;
 
         if (!conversationId) {
             return res.status(400).json({
@@ -634,6 +640,10 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
                 error: 'Missing required field: conversationId'
             });
         }
+
+        // Build template name and language code based on language preference
+        const finalTemplateName = templateName || `order_status_update_${language}`;
+        const finalLanguageCode = languageCode || (language === 'en' ? 'en_US' : 'es_MX');
 
         // Get order details by MongoDB _id
         const order = await ecommerceService.getOrderByMongoId(orderId);
@@ -677,8 +687,8 @@ router.post('/orders/:orderId/send-update', authenticateToken, async (req, res) 
         const templateMessageService = require('../services/templateMessageService');
         
         const result = await templateMessageService.sendTemplateMessage({
-            templateName,
-            languageCode,
+            templateName: finalTemplateName,
+            languageCode: finalLanguageCode,
             parameters,
             phoneNumber: conversation.phoneNumber,
             customerId: conversation.customerId._id,
