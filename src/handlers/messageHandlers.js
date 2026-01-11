@@ -15,12 +15,57 @@ const { buildTextJSON } = require("../shared/whatsappModels");
 const processedMessages = new Set();
 
 /**
+ * Extract replyTo context from WhatsApp message object
+ * @param {object} messageObject - WhatsApp message object
+ * @param {string} conversationId - Conversation ID to search for original message
+ * @returns {Promise<{replyToId: string|null, replyToData: object|null}>}
+ */
+async function extractReplyToContext(messageObject, conversationId) {
+  const Message = require('../models/Message');
+  
+  let replyToId = null;
+  let replyToData = null;
+  
+  console.log(`🔍 extractReplyToContext called - context field:`, messageObject?.context);
+  
+  if (messageObject?.context?.id) {
+    console.log(`🔍 Looking for message with whatsappMessageId: ${messageObject.context.id}`);
+    // Find the original message by WhatsApp message ID
+    const originalMessage = await Message.findOne({ 
+      whatsappMessageId: messageObject.context.id,
+      conversationId: conversationId
+    });
+    
+    console.log(`🔍 Found original message:`, originalMessage ? originalMessage._id : 'NOT FOUND');
+    
+    if (originalMessage) {
+      replyToId = originalMessage._id;
+      replyToData = {
+        id: originalMessage._id.toString(),
+        text: originalMessage.content,
+        type: originalMessage.type,
+        sender: (originalMessage.sender === 'agent' || originalMessage.sender === 'ai') ? 'me' : 'other',
+        attachments: originalMessage.attachments,
+        media: originalMessage.media
+      };
+      console.log(`📎 Message is reply to: ${messageObject.context.id} -> ${originalMessage._id}`);
+    }
+  } else {
+    console.log(`🔍 No context.id found in messageObject`);
+  }
+  
+  return { replyToId, replyToData };
+}
+
+/**
  * Handle text messages
  * @param {object} messageObject - WhatsApp message object
  * @param {string} phoneNumber - User phone number (formatted)
  */
 async function handleTextMessage(messageObject, phoneNumber, conversationId, customerId) {
   console.log("📝 TEXT message received");
+  console.log("📋 Full messageObject:", JSON.stringify(messageObject, null, 2));
+  console.log("📎 Context present:", messageObject.context ? JSON.stringify(messageObject.context) : 'NO CONTEXT');
   const messageId = messageObject.id;
   const messageBody = messageObject.text.body;
 
@@ -60,6 +105,9 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
   const Message = require('../models/Message');
   const { io } = require('../models/server');
   
+  console.log("📸 IMAGE messageObject:", JSON.stringify(messageObject, null, 2));
+  console.log("📎 Context present:", messageObject.context ? JSON.stringify(messageObject.context) : 'NO CONTEXT');
+  
   const imageId = messageObject.image.id;
   const caption = messageObject.image.caption || "";
   const imageMimeType = messageObject.image.mime_type || "";
@@ -83,6 +131,9 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
 
     console.log(`✅ Image uploaded to Cloudinary: ${uploadResult.url}`);
 
+    // Extract replyTo context if this is a reply to another message
+    const { replyToId, replyToData } = await extractReplyToContext(messageObject, conversationId);
+
     // Save message to DB with image metadata
     const imageMessage = await Message.create({
       conversationId,
@@ -93,6 +144,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
       sender: 'customer',
       whatsappMessageId: messageId,
       status: 'delivered',
+      replyTo: replyToId,
       attachments: [{
         type: 'image',
         url: uploadResult.url,
@@ -128,7 +180,8 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
         message: caption || '📷 Image',
         type: 'image',
         attachments: imageMessage.attachments,
-        timestamp: new Date()
+        timestamp: new Date(),
+        replyTo: replyToData
       });
       
       return; // Don't process with AI - agent is handling
@@ -143,7 +196,8 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
         sender: 'other',
         timestamp: imageMessage.timestamp,
         type: 'image',
-        attachments: imageMessage.attachments
+        attachments: imageMessage.attachments,
+        replyTo: replyToData
       }
     });
 
@@ -251,6 +305,9 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
     // Generate Google Maps static map URL for preview
     const mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=400x300&markers=color:red%7C${latitude},${longitude}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
 
+    // Extract replyTo context if this is a reply to another message
+    const { replyToId, replyToData } = await extractReplyToContext(messageObject, conversationId);
+
     // Save message to DB with location metadata
     const locationMessage = await Message.create({
       conversationId,
@@ -261,6 +318,7 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
       sender: 'customer',
       whatsappMessageId: messageId,
       status: 'delivered',
+      replyTo: replyToId,
       location: {
         latitude,
         longitude,
@@ -296,7 +354,8 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
         message: addressData.formatted_address,
         type: 'location',
         location: locationMessage.location,
-        timestamp: new Date()
+        timestamp: new Date(),
+        replyTo: replyToData
       });
       
       return; // Don't process with AI - agent is handling
@@ -311,7 +370,8 @@ async function handleLocationMessage(messageObject, phoneNumber, conversationId,
         sender: 'other',
         timestamp: locationMessage.timestamp,
         type: 'location',
-        location: locationMessage.location
+        location: locationMessage.location,
+        replyTo: replyToData
       }
     });
 
@@ -488,6 +548,9 @@ async function handleInteractiveMessage(messageObject, phoneNumber, conversation
       return;
     }
 
+    // Extract replyTo context if this is a reply to another message
+    const { replyToId, replyToData } = await extractReplyToContext(messageObject, conversationId);
+
     // Create message record in database
     const newMessage = await Message.create({
       messageId,
@@ -498,7 +561,8 @@ async function handleInteractiveMessage(messageObject, phoneNumber, conversation
       content: messageText,
       interactive: interactionData,
       timestamp: new Date(parseInt(timestamp) * 1000),
-      status: 'delivered'
+      status: 'delivered',
+      replyTo: replyToId
     });
 
     // Update conversation
@@ -527,7 +591,8 @@ async function handleInteractiveMessage(messageObject, phoneNumber, conversation
         sender: 'other',
         timestamp: newMessage.timestamp,
         type: 'interactive',
-        interactive: interactionData
+        interactive: interactionData,
+        replyTo: replyToData
       }
     });
 

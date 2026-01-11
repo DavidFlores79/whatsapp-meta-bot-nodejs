@@ -58,6 +58,11 @@ const receivedMessage = async (req, res) => {
     const messageType = messageObject.type;
     const messageId = messageObject.id;
 
+    // Log full message object for debugging context/replyTo
+    console.log(`\n🔔 [${new Date().toISOString()}] FULL MESSAGE OBJECT:`);
+    console.log(JSON.stringify(messageObject, null, 2));
+    console.log(`📎 Context field:`, messageObject.context ? JSON.stringify(messageObject.context) : 'NO CONTEXT');
+
     // Format phone number early for all checks
     let userPhoneNumber = messageObject.from;
     if (userPhoneNumber.length === 13) {

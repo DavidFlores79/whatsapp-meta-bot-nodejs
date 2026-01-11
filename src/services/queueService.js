@@ -30,6 +30,8 @@ const queueTimers = new Map(); // userId -> timer id
  * @returns {boolean} - True if queued, false if user is already being processed
  */
 function queueUserMessage(userId, messageText, messageId, messageType, messageObject, conversationId, customerId) {
+  console.log(`📋 queueUserMessage - messageObject.context:`, messageObject?.context);
+  
   // Get or create queue for this user
   if (!userQueues.has(userId)) {
     userQueues.set(userId, []);
@@ -280,7 +282,10 @@ async function processUserQueue(userId) {
 
     // Send response to WhatsApp and capture message ID
     const replyPayload = buildTextJSON(userId, aiReply);
-    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(replyPayload);
+    console.log(`📤 Sending to WhatsApp API...`);
+    const sendResult = await whatsappService.sendWhatsappResponse(replyPayload);
+    console.log(`📤 WhatsApp API response:`, JSON.stringify(sendResult));
+    const whatsappMessageId = sendResult?.messageId;
 
     console.log(`✅ Single AI response sent to ${userId} for ${messagesToProcess.length} message(s)`);
     console.log(`📤 AI message whatsappMessageId: ${whatsappMessageId}`);
