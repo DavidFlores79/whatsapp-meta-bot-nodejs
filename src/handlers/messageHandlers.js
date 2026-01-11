@@ -133,6 +133,7 @@ async function handleImageMessage(messageObject, phoneNumber, conversationId, cu
 
     // Extract replyTo context if this is a reply to another message
     const { replyToId, replyToData } = await extractReplyToContext(messageObject, conversationId);
+    console.log(`📎 Image handler - replyToId: ${replyToId}, replyToData: ${replyToData ? 'FOUND' : 'NULL'}`);
 
     // Save message to DB with image metadata
     const imageMessage = await Message.create({
