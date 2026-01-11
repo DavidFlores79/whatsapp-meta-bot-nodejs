@@ -183,7 +183,11 @@
     "attachFile": "Adjuntar archivo",
     "addCaption": "Agregar descripción...",
     "sending": "Enviando",
-    "imageNotAvailable": "Imagen no disponible"
+    "imageNotAvailable": "Imagen no disponible",
+    "photo": "Foto",
+    "video": "Video",
+    "document": "Documento",
+    "audio": "Audio"
   },
   "status": {
     "open": "Abierto",

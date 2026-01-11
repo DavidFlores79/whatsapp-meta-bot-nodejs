@@ -145,6 +145,21 @@ export class MessageBubbleComponent {
     return 'Image';
   }
 
+  /**
+   * Get image URL from the replied message (if it's an image reply)
+   */
+  getReplyImageUrl(): string | null {
+    if (!this.message.replyTo) return null;
+
+    if (this.message.replyTo.attachments && this.message.replyTo.attachments.length > 0) {
+      return this.message.replyTo.attachments[0].url;
+    }
+    if (this.message.replyTo.media?.url) {
+      return this.message.replyTo.media.url;
+    }
+    return null;
+  }
+
   openImage(url?: string | null, filename?: string) {
     const imageUrl = url || this.imageUrl;
     if (!imageUrl) return;

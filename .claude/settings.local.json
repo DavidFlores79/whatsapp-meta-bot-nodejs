@@ -32,7 +32,12 @@
       "Skill(explore-plan:*)",
       "Bash(mkdir:*)",
       "Bash(pm2 logs:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(xcopy /E /Y /I \"frontend\\\\dist\\\\frontend\\\\browser\\\\*\" \"public\"\")",
+      "Bash(git rm:*)",
+      "Bash(git reset:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

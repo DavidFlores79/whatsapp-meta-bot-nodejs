@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -41,7 +41,9 @@ export class MessageInputComponent {
 
   constructor(
     private chatService: ChatService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) { }
 
   /**
@@ -181,17 +183,25 @@ export class MessageInputComponent {
     this.chatService.sendMediaMessage(this.selectedFile, caption).subscribe({
       next: (response) => {
         console.log('Media sent successfully:', response);
-        this.resetFileState();
+        // Use NgZone to ensure change detection runs
+        this.ngZone.run(() => {
+          this.resetFileState();
+        });
       },
       error: (err) => {
         console.error('Failed to send media:', err);
-        this.isUploading = false;
-        this.uploadProgress = 0;
+        this.ngZone.run(() => {
+          this.isUploading = false;
+          this.uploadProgress = 0;
+          this.cdr.detectChanges();
+        });
         alert('Failed to send file: ' + (err.error?.error || err.message || 'Unknown error'));
       },
       complete: () => {
         // Ensure cleanup happens even if next doesn't trigger properly
-        this.resetFileState();
+        this.ngZone.run(() => {
+          this.resetFileState();
+        });
       }
     });
   }
@@ -205,5 +215,7 @@ export class MessageInputComponent {
     this.selectedFile = null;
     this.messageText = '';
     this.clearFileInput();
+    // Force change detection
+    this.cdr.detectChanges();
   }
 }

@@ -43,6 +43,23 @@ export interface Message {
     mimeType?: string;
     url?: string;
   };
+  // Reply context - when message is a reply to another message
+  replyTo?: {
+    id: string;
+    text: string;
+    type?: string;
+    sender: 'me' | 'other' | 'system';
+    attachments?: Array<{
+      type: string;
+      url: string;
+      filename?: string;
+    }>;
+    media?: {
+      type: string;
+      url?: string;
+      filename?: string;
+    };
+  };
 }
 
 export interface Chat {
@@ -209,7 +226,16 @@ export class ChatService {
             agentName: msg.agentId
               ? `${msg.agentId.firstName} ${msg.agentId.lastName}`.trim()
               : undefined,
-            agentId: msg.agentId?._id
+            agentId: msg.agentId?._id,
+            // Include reply context if this message is a reply to another message
+            replyTo: msg.replyTo ? {
+              id: msg.replyTo._id,
+              text: msg.replyTo.content,
+              type: msg.replyTo.type,
+              sender: (msg.replyTo.sender === 'agent' || msg.replyTo.sender === 'ai') ? 'me' : 'other',
+              attachments: msg.replyTo.attachments,
+              media: msg.replyTo.media
+            } : undefined
           }));
 
           // Fetch assignment history to inject context markers

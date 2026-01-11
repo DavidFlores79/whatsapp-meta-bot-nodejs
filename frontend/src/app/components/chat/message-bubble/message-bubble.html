@@ -15,6 +15,39 @@
             'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other'
         }">
 
+        <!-- Quoted/Reply message context -->
+        <div *ngIf="message.replyTo" class="mx-2 mt-2 mb-1">
+            <div class="bg-black/20 rounded-lg p-2 border-l-4"
+                [ngClass]="{
+                    'border-green-500': message.replyTo.sender === 'me',
+                    'border-gray-400': message.replyTo.sender === 'other'
+                }">
+                <div class="flex items-start gap-2">
+                    <!-- Thumbnail for image replies -->
+                    <img *ngIf="message.replyTo.type === 'image' && getReplyImageUrl()"
+                         [src]="getReplyImageUrl()"
+                         class="w-10 h-10 rounded object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-semibold mb-0.5"
+                           [ngClass]="{
+                               'text-green-400': message.replyTo.sender === 'me',
+                               'text-gray-300': message.replyTo.sender === 'other'
+                           }">
+                            {{ message.replyTo.sender === 'me' ? ('chat.you' | translate) : ('chat.customer' | translate) }}
+                        </p>
+                        <p class="text-xs text-gray-300 truncate">
+                            <ng-container *ngIf="message.replyTo.type === 'image'">
+                                <i class="fas fa-image mr-1 text-[10px]"></i>{{ 'chat.photo' | translate }}
+                            </ng-container>
+                            <ng-container *ngIf="message.replyTo.type !== 'image'">
+                                {{ message.replyTo.text | slice:0:100 }}{{ (message.replyTo.text?.length || 0) > 100 ? '...' : '' }}
+                            </ng-container>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Image attachment (from attachments array or media.url) -->
         <div *ngIf="message.type === 'image' && imageUrl">
             <img [src]="imageUrl"

@@ -151,7 +151,11 @@
     "attachFile": "Attach file",
     "addCaption": "Add a caption...",
     "sending": "Sending",
-    "imageNotAvailable": "Image not available"
+    "imageNotAvailable": "Image not available",
+    "photo": "Photo",
+    "video": "Video",
+    "document": "Document",
+    "audio": "Audio"
   },
   "status": {
     "open": "Open",

@@ -111,6 +111,20 @@ async function processUserQueue(userId) {
 
       // Save messages to database
       for (const msg of messagesToProcess) {
+        // Extract reply context from WhatsApp message object if present
+        let replyToId = null;
+        if (msg.object?.context?.id) {
+          // Find the original message by WhatsApp message ID
+          const originalMessage = await Message.findOne({ 
+            whatsappMessageId: msg.object.context.id,
+            conversationId: msg.conversationId
+          });
+          if (originalMessage) {
+            replyToId = originalMessage._id;
+            console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
+          }
+        }
+
         const newMessage = new Message({
           conversationId: msg.conversationId,
           customerId: msg.customerId,
@@ -119,7 +133,8 @@ async function processUserQueue(userId) {
           direction: 'inbound',
           sender: 'customer',
           whatsappMessageId: msg.id,
-          status: 'delivered'
+          status: 'delivered',
+          replyTo: replyToId
         });
         await newMessage.save();
 
@@ -153,6 +168,20 @@ async function processUserQueue(userId) {
 
     // Save messages first
     for (const msg of messagesToProcess) {
+      // Extract reply context from WhatsApp message object if present
+      let replyToId = null;
+      if (msg.object?.context?.id) {
+        // Find the original message by WhatsApp message ID
+        const originalMessage = await Message.findOne({ 
+          whatsappMessageId: msg.object.context.id,
+          conversationId: msg.conversationId
+        });
+        if (originalMessage) {
+          replyToId = originalMessage._id;
+          console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
+        }
+      }
+
       const newMessage = new Message({
         conversationId: msg.conversationId,
         customerId: msg.customerId,
@@ -161,7 +190,8 @@ async function processUserQueue(userId) {
         direction: 'inbound',
         sender: 'customer',
         whatsappMessageId: msg.id,
-        status: 'delivered'
+        status: 'delivered',
+        replyTo: replyToId
       });
       await newMessage.save();
 

@@ -354,6 +354,7 @@ async function getConversationMessages(req, res) {
         // Get all messages for the conversation, sorted by timestamp ascending (oldest first)
         const messages = await Message.find({ conversationId })
             .populate('agentId', 'firstName lastName avatar')
+            .populate('replyTo', 'content type sender timestamp attachments media')
             .sort({ timestamp: 1 })
             .limit(parseInt(limit))
             .skip(parseInt(skip));
