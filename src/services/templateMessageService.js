@@ -77,8 +77,8 @@ const sendTemplateMessage = async (options) => {
         languageCode
     );
 
-    // 3. Send to WhatsApp
-    await whatsappService.sendWhatsappResponse(messagePayload);
+    // 3. Send to WhatsApp and capture message ID
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(messagePayload);
 
     // 4. Generate display content from actual template
     const parameterValues = parameters.map(p => p.text);
@@ -97,6 +97,7 @@ const sendTemplateMessage = async (options) => {
             sender,
             agentId,
             status: 'sent',
+            whatsappMessageId,
             template: {
                 name: templateName,
                 language: languageCode,
@@ -199,8 +200,8 @@ const sendTemplateNotification = async (options) => {
         languageCode
     );
 
-    // Send to WhatsApp
-    await whatsappService.sendWhatsappResponse(messagePayload);
+    // Send to WhatsApp and capture message ID
+    const { messageId: whatsappMessageId } = await whatsappService.sendWhatsappResponse(messagePayload);
 
     // Generate display content if template exists
     let displayContent = null;
