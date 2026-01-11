@@ -76,6 +76,19 @@ const messageSchema = new mongoose.Schema({
         duration: Number
     }],
 
+    // Media field (for agent-sent media messages)
+    media: {
+        type: {
+            type: String,
+            enum: ['image', 'document', 'audio', 'video']
+        },
+        url: String,
+        filename: String,
+        mimeType: String,
+        whatsappMediaId: String,
+        caption: String
+    },
+
     // Location Data
     location: {
         latitude: Number,
