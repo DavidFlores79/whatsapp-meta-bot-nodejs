@@ -390,7 +390,17 @@ export class ChatService {
       // Update existing conversation or add it if not present
       const existingChat = this.mockChats.find(c => c.id === data.conversationId);
       const customerName = data.customerName || existingChat?.name || 'Unknown Customer';
-      const lastMessage = data.lastMessage || existingChat?.lastMessage || 'New conversation';
+
+      // Extract lastMessage text properly
+      let lastMessageText = 'New conversation';
+      if (data.lastMessage) {
+        // Handle if lastMessage is a string or object
+        lastMessageText = typeof data.lastMessage === 'string'
+          ? data.lastMessage
+          : (data.lastMessage.content || data.lastMessage.text || 'New conversation');
+      } else if (existingChat?.lastMessage) {
+        lastMessageText = existingChat.lastMessage;
+      }
 
       if (existingChat) {
         // Update assignment info - use current agent as assignedAgent
@@ -398,7 +408,7 @@ export class ChatService {
         existingChat.isAIEnabled = false;
         existingChat.status = 'assigned';
         existingChat.name = data.customerName || existingChat.name;
-        existingChat.lastMessage = data.lastMessage || existingChat.lastMessage;
+        existingChat.lastMessage = lastMessageText;
         this.chatsSubject.next([...this.mockChats]);
         console.log(`✅ Updated conversation ${data.conversationId} with assignment to agent ${this.currentAgent?._id}`);
 
@@ -420,7 +430,7 @@ export class ChatService {
       // Show comprehensive notifications (sound, desktop, badge)
       this.notificationService.notifyNewConversation(
         customerName,
-        lastMessage,
+        lastMessageText,
         data.conversationId
       );
     });
