@@ -363,14 +363,15 @@ export class ChatService {
       console.log('Customer message (assigned to me):', data);
       if (data && data.conversationId && data.message) {
         this.handleNewMessage(data.conversationId, {
-          id: Date.now().toString(),
+          id: data.messageId || Date.now().toString(),
           text: data.message,
           sender: 'other',
           timestamp: new Date(data.timestamp),
           type: data.type || 'text',
           status: data.status,
           attachments: data.attachments,
-          location: data.location
+          location: data.location,
+          replyTo: data.replyTo
         });
       }
     });

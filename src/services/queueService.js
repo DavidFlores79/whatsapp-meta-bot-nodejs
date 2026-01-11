@@ -99,20 +99,11 @@ async function processUserQueue(userId) {
     if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
       console.log(`📨 Conversation assigned to agent ${conversation.assignedAgent.email} - Routing to agent`);
 
-      // Emit to specific agent via socket
-      io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
-        conversationId: conversation._id,
-        customerId: messagesToProcess[0].customerId,
-        customerPhone: userId,
-        message: combinedText,
-        messageCount: messagesToProcess.length,
-        timestamp: new Date()
-      });
-
-      // Save messages to database
+      // Save messages to database first, then emit with full data
       for (const msg of messagesToProcess) {
         // Extract reply context from WhatsApp message object if present
         let replyToId = null;
+        let replyToData = null;
         if (msg.object?.context?.id) {
           // Find the original message by WhatsApp message ID
           const originalMessage = await Message.findOne({ 
@@ -121,6 +112,14 @@ async function processUserQueue(userId) {
           });
           if (originalMessage) {
             replyToId = originalMessage._id;
+            replyToData = {
+              id: originalMessage._id.toString(),
+              text: originalMessage.content,
+              type: originalMessage.type,
+              sender: (originalMessage.sender === 'agent' || originalMessage.sender === 'ai') ? 'me' : 'other',
+              attachments: originalMessage.attachments,
+              media: originalMessage.media
+            };
             console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
           }
         }
@@ -138,8 +137,17 @@ async function processUserQueue(userId) {
         });
         await newMessage.save();
 
-        // Message already sent to agent via customer_message event above
-        // No need to emit new_message here
+        // Emit to specific agent via socket with full message data including replyTo
+        io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
+          conversationId: conversation._id,
+          customerId: msg.customerId,
+          customerPhone: userId,
+          message: msg.text,
+          messageId: newMessage._id.toString(),
+          timestamp: newMessage.timestamp,
+          type: msg.type || 'text',
+          replyTo: replyToData
+        });
       }
 
       // Update conversation stats
@@ -170,6 +178,7 @@ async function processUserQueue(userId) {
     for (const msg of messagesToProcess) {
       // Extract reply context from WhatsApp message object if present
       let replyToId = null;
+      let replyToData = null;
       if (msg.object?.context?.id) {
         // Find the original message by WhatsApp message ID
         const originalMessage = await Message.findOne({ 
@@ -178,6 +187,14 @@ async function processUserQueue(userId) {
         });
         if (originalMessage) {
           replyToId = originalMessage._id;
+          replyToData = {
+            id: originalMessage._id.toString(),
+            text: originalMessage.content,
+            type: originalMessage.type,
+            sender: (originalMessage.sender === 'agent' || originalMessage.sender === 'ai') ? 'me' : 'other',
+            attachments: originalMessage.attachments,
+            media: originalMessage.media
+          };
           console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
         }
       }
@@ -195,14 +212,16 @@ async function processUserQueue(userId) {
       });
       await newMessage.save();
 
-      // Emit customer message to frontend
+      // Emit customer message to frontend with replyTo data
       io.emit('new_message', {
         chatId: conversationId,
         message: {
           id: newMessage._id.toString(),
           text: newMessage.content,
           sender: 'other',
-          timestamp: newMessage.timestamp
+          timestamp: newMessage.timestamp,
+          type: msg.type || 'text',
+          replyTo: replyToData
         }
       });
     }
