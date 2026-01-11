@@ -3,17 +3,19 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface OrderItem {
-  product_id: string;
-  name: string;
+  productId: string; // Product MongoDB ID
+  productName: string; // Product name
   quantity: number;
-  price: number;
   subtotal: number;
+  discount?: number;
 }
 
 export interface Order {
-  _id: string;
-  orderId: string;
+  id: string; // MongoDB _id formatted by backend
+  orderId: string; // Human-readable order ID (e.g., ORD-2025-000001)
   customer: {
+    id?: string;
+    name?: string;
     firstName?: string;
     lastName?: string;
     email?: string;
@@ -21,10 +23,16 @@ export interface Order {
   };
   items: OrderItem[];
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  statusLabel?: string;
+  paymentMethod?: string;
+  paymentMethodLabel?: string;
+  address?: string;
+  deliveryDate?: Date;
   total: number;
   createdAt: Date;
   updatedAt: Date;
   notes?: string;
+  summary?: string;
 }
 
 export interface OrderResponse {

@@ -751,7 +751,7 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
 
     this.isSendingOrderUpdate = true;
 
-    this.ecommerceService.sendOrderUpdate(order._id, chat.id).subscribe({
+    this.ecommerceService.sendOrderUpdate(order.id, chat.id).subscribe({
       next: () => {
         this.isSendingOrderUpdate = false;
         this.toastService.success('Actualización de orden enviada');
