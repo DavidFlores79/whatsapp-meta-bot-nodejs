@@ -46,7 +46,8 @@ class Server {
 
   middlewares(io) {
     // Trust proxy - required when behind reverse proxy (nginx, apache)
-    this.app.set('trust proxy', true);
+    // Set to 1 to trust the first proxy hop (avoids ERR_ERL_PERMISSIVE_TRUST_PROXY)
+    this.app.set('trust proxy', 1);
 
     // Serve static files from Angular build
     const frontendPath = path.join(__dirname, '../../frontend/dist/frontend/browser');

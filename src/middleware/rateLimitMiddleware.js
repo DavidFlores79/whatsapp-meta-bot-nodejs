@@ -7,10 +7,10 @@ const authLimiter = rateLimit({
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    // Trust proxy to correctly identify client IPs behind reverse proxy
+    // Disable trust proxy validation - configured at Express app level with app.set('trust proxy', 1)
     validate: {
         xForwardedForHeader: false,
-        trustProxy: true
+        trustProxy: false
     }
 });
 
@@ -21,10 +21,10 @@ const apiLimiter = rateLimit({
     message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    // Trust proxy to correctly identify client IPs behind reverse proxy
+    // Disable trust proxy validation - configured at Express app level with app.set('trust proxy', 1)
     validate: {
         xForwardedForHeader: false,
-        trustProxy: true
+        trustProxy: false
     }
 });
 
