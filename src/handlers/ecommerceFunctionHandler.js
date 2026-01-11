@@ -174,6 +174,7 @@ async function handleSearchProducts(args) {
         }
 
         const formattedProducts = products.map(product => ({
+            product_id: product.id, // Required for create_ecommerce_order
             name: product.name,
             price: `$${product.price?.toFixed(2) || 0}`,
             category: product.category,
