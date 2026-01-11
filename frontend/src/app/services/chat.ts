@@ -633,14 +633,12 @@ export class ChatService {
       }
     }
 
-    // Reset unread count and clear "assigned" status for NEW indicator
+    // Reset unread count when chat is viewed
     const chatIndex = this.mockChats.findIndex(c => c.id === chatId);
     if (chatIndex !== -1) {
       this.mockChats[chatIndex].unreadCount = 0;
-      // Clear the "assigned" status once viewed (keeps assignedAgent but removes NEW badge)
-      if (this.mockChats[chatIndex].status === 'assigned') {
-        this.mockChats[chatIndex].status = 'active';
-      }
+      // Keep status as 'assigned' - it should only change when agent explicitly resolves/releases
+      // The status determines button visibility, NOT just the "NEW" badge
       this.chatsSubject.next([...this.mockChats]);
     }
   }
