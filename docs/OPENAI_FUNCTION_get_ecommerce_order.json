@@ -1,8 +1,10 @@
 {
   "name": "get_ecommerce_order",
   "description": "Search for an e-commerce order by order ID, phone number, or email. Use this function when a customer asks about their order status, delivery, or order history. Returns order details including status, items, total, payment method, and delivery information.",
+  "strict": true,
   "parameters": {
     "type": "object",
+    "additionalProperties": false,
     "properties": {
       "search_type": {
         "type": "string",
@@ -14,11 +16,10 @@
         "description": "The value to search for: the order ID, phone number, or email address depending on search_type"
       },
       "include_items": {
-        "type": "boolean",
-        "description": "Whether to include the list of items in the order. Default is true.",
-        "default": true
+        "type": ["boolean", "null"],
+        "description": "Whether to include the list of items in the order. Default is true if null."
       }
     },
-    "required": ["search_type", "search_value"]
+    "required": ["search_type", "search_value", "include_items"]
   }
 }
