@@ -15,12 +15,26 @@
             'bg-whatsapp-gray text-gray-100 rounded-tl-none': message.sender === 'other'
         }">
 
-        <!-- Image attachment -->
-        <div *ngIf="message.type === 'image' && message.attachments && message.attachments.length > 0">
-            <img [src]="message.attachments[0].url"
-                 [alt]="message.attachments[0].filename || 'Image'"
+        <!-- Image attachment (from attachments array or media.url) -->
+        <div *ngIf="message.type === 'image' && imageUrl">
+            <img [src]="imageUrl"
+                 [alt]="imageFilename"
                  class="max-w-full max-h-[400px] object-contain rounded-t-lg cursor-pointer hover:opacity-90"
-                 (click)="openImage(message.attachments[0].url, message.attachments[0].filename); $event.stopPropagation()">
+                 (click)="openImage(); $event.stopPropagation()">
+        </div>
+
+        <!-- Document attachment -->
+        <div *ngIf="message.type === 'document' && message.media" class="p-3 bg-gray-800/50 rounded-t-lg">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-file-pdf text-red-400 text-2xl" [class.hidden]="!message.media.mimeType?.includes('pdf')"></i>
+                <i class="fas fa-file-word text-blue-400 text-2xl" [class.hidden]="!(message.media.mimeType?.includes('word') || message.media.mimeType?.includes('document'))"></i>
+                <i class="fas fa-file-excel text-green-400 text-2xl" [class.hidden]="!(message.media.mimeType?.includes('excel') || message.media.mimeType?.includes('spreadsheet'))"></i>
+                <i class="fas fa-file text-gray-400 text-2xl" [class.hidden]="message.media.mimeType?.includes('pdf') || message.media.mimeType?.includes('word') || message.media.mimeType?.includes('excel') || message.media.mimeType?.includes('spreadsheet')"></i>
+                <div class="flex-1 min-w-0">
+                    <p class="text-gray-200 text-sm truncate">{{ message.media.filename }}</p>
+                    <p class="text-gray-400 text-xs">Document</p>
+                </div>
+            </div>
         </div>
 
         <!-- Location -->

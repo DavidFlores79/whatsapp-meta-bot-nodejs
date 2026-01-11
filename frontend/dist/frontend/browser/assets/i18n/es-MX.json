@@ -179,7 +179,10 @@
     "conversationClosed": "Conversación cerrada",
     "gotIt": "Entendido",
     "whatsappWebDescription": "Envía y recibe mensajes directamente desde tu computadora",
-    "filterByStatus": "Filtrar por estado"
+    "filterByStatus": "Filtrar por estado",
+    "attachFile": "Adjuntar archivo",
+    "addCaption": "Agregar descripción...",
+    "sending": "Enviando"
   },
   "status": {
     "open": "Abierto",

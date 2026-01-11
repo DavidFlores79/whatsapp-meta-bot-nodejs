@@ -147,7 +147,10 @@
     "conversationClosed": "Conversation Closed",
     "gotIt": "Got it",
     "whatsappWebDescription": "Send and receive messages right from your computer",
-    "filterByStatus": "Filter by status"
+    "filterByStatus": "Filter by status",
+    "attachFile": "Attach file",
+    "addCaption": "Add a caption...",
+    "sending": "Sending"
   },
   "status": {
     "open": "Open",

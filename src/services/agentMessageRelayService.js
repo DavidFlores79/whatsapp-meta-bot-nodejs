@@ -1,4 +1,5 @@
 const whatsappService = require('./whatsappService');
+const cloudinaryService = require('./cloudinaryService');
 const {
     buildTextJSON,
     buildImageJSON,
@@ -176,6 +177,26 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
     // Upload media to WhatsApp
     const mediaId = await whatsappService.uploadMedia(fileBuffer, mimeType, filename);
 
+    // Upload to Cloudinary for CRM display (images and videos only)
+    let cloudinaryUrl = null;
+    if (mediaType === 'image' || mediaType === 'video') {
+        try {
+            // Convert buffer to base64 data URI for Cloudinary upload
+            const base64Data = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+            const cloudinaryResult = await cloudinaryService.uploadToCloudinary(base64Data, {
+                folder: cloudinaryService.CLOUDINARY_FOLDERS.GENERAL,
+                subfolder: `agent-uploads/${customerId}`,
+                resourceType: mediaType === 'video' ? 'video' : 'image',
+                tags: ['agent-upload', mediaType, conversationId.toString()]
+            });
+            cloudinaryUrl = cloudinaryResult.url;
+            console.log(`✅ Media uploaded to Cloudinary: ${cloudinaryUrl}`);
+        } catch (cloudinaryError) {
+            console.error('⚠️ Cloudinary upload failed (non-critical):', cloudinaryError.message);
+            // Continue without Cloudinary URL - message will still be sent to WhatsApp
+        }
+    }
+
     // Build and send the appropriate message type
     let mediaPayload;
     switch (mediaType) {
@@ -212,6 +233,7 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
             filename: filename,
             mimeType: mimeType,
             whatsappMediaId: mediaId,
+            url: cloudinaryUrl,
             caption: caption
         }
     });
@@ -249,8 +271,15 @@ async function sendMediaMessageToCustomer(conversationId, customerId, agentId, c
             media: {
                 type: mediaType,
                 filename: filename,
-                mimeType: mimeType
-            }
+                mimeType: mimeType,
+                url: cloudinaryUrl
+            },
+            // Also include as attachments for compatibility with message-bubble template
+            attachments: cloudinaryUrl ? [{
+                type: mediaType,
+                url: cloudinaryUrl,
+                filename: filename
+            }] : undefined
         }
     });
 

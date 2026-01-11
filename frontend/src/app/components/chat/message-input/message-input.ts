@@ -181,18 +181,29 @@ export class MessageInputComponent {
     this.chatService.sendMediaMessage(this.selectedFile, caption).subscribe({
       next: (response) => {
         console.log('Media sent successfully:', response);
-        this.isUploading = false;
-        this.uploadProgress = 100;
-        this.selectedFile = null;
-        this.messageText = '';
-        this.clearFileInput();
+        this.resetFileState();
       },
       error: (err) => {
         console.error('Failed to send media:', err);
         this.isUploading = false;
         this.uploadProgress = 0;
         alert('Failed to send file: ' + (err.error?.error || err.message || 'Unknown error'));
+      },
+      complete: () => {
+        // Ensure cleanup happens even if next doesn't trigger properly
+        this.resetFileState();
       }
     });
+  }
+
+  /**
+   * Reset file upload state
+   */
+  private resetFileState() {
+    this.isUploading = false;
+    this.uploadProgress = 100;
+    this.selectedFile = null;
+    this.messageText = '';
+    this.clearFileInput();
   }
 }

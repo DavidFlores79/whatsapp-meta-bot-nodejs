@@ -95,9 +95,37 @@ export class MessageBubbleComponent {
     }
   }
 
-  openImage(url: string, filename?: string) {
-    console.log('Emitting image click:', url, filename);
-    this.imageClick.emit({ url, filename: filename || 'Image' });
+  /**
+   * Get image URL from attachments or media property
+   */
+  get imageUrl(): string | null {
+    if (this.message.attachments && this.message.attachments.length > 0) {
+      return this.message.attachments[0].url;
+    }
+    if (this.message.media?.url) {
+      return this.message.media.url;
+    }
+    return null;
+  }
+
+  /**
+   * Get image filename from attachments or media property
+   */
+  get imageFilename(): string {
+    if (this.message.attachments && this.message.attachments.length > 0) {
+      return this.message.attachments[0].filename || 'Image';
+    }
+    if (this.message.media?.filename) {
+      return this.message.media.filename;
+    }
+    return 'Image';
+  }
+
+  openImage(url?: string | null, filename?: string) {
+    const imageUrl = url || this.imageUrl;
+    if (!imageUrl) return;
+    console.log('Emitting image click:', imageUrl, filename);
+    this.imageClick.emit({ url: imageUrl, filename: filename || this.imageFilename });
   }
 
   onMapImageError(event: Event) {

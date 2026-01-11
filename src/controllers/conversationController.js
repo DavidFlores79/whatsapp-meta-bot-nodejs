@@ -175,9 +175,23 @@ async function sendReply(req, res) {
             return res.status(404).json({ error: 'Conversation not found' });
         }
 
-        // Verify agent is assigned
-        if (conversation.assignedAgent?.toString() !== agentId.toString()) {
-            return res.status(403).json({ error: 'Conversation not assigned to you' });
+        // Verify agent is assigned - handle both ObjectId and string comparison
+        const assignedAgentId = conversation.assignedAgent?._id || conversation.assignedAgent;
+        const isAssigned = assignedAgentId && assignedAgentId.toString() === agentId.toString();
+
+        if (!isAssigned) {
+            console.log('[sendReply] Assignment check failed:', {
+                conversationId,
+                assignedAgent: conversation.assignedAgent,
+                assignedAgentId: assignedAgentId?.toString(),
+                requestingAgentId: agentId.toString(),
+                isAIEnabled: conversation.isAIEnabled
+            });
+            // Provide more helpful error message
+            const errorMsg = conversation.assignedAgent
+                ? 'Conversation is assigned to another agent'
+                : 'You must take over the conversation first';
+            return res.status(403).json({ error: errorMsg });
         }
 
         // Send message
@@ -259,9 +273,23 @@ async function sendMediaReply(req, res) {
             return res.status(404).json({ error: 'Conversation not found' });
         }
 
-        // Verify agent is assigned
-        if (conversation.assignedAgent?.toString() !== agentId.toString()) {
-            return res.status(403).json({ error: 'Conversation not assigned to you' });
+        // Verify agent is assigned - handle both ObjectId and string comparison
+        const assignedAgentId = conversation.assignedAgent?._id || conversation.assignedAgent;
+        const isAssigned = assignedAgentId && assignedAgentId.toString() === agentId.toString();
+
+        if (!isAssigned) {
+            console.log('[sendMediaReply] Assignment check failed:', {
+                conversationId,
+                assignedAgent: conversation.assignedAgent,
+                assignedAgentId: assignedAgentId?.toString(),
+                requestingAgentId: agentId.toString(),
+                isAIEnabled: conversation.isAIEnabled
+            });
+            // Provide more helpful error message
+            const errorMsg = conversation.assignedAgent
+                ? 'Conversation is assigned to another agent'
+                : 'You must take over the conversation first';
+            return res.status(403).json({ error: errorMsg });
         }
 
         // Send media message

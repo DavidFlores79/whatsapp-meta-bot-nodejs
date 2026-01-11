@@ -37,6 +37,12 @@ export interface Message {
     parameters?: string[];
     category?: string;
   };
+  media?: {
+    type: string;
+    filename?: string;
+    mimeType?: string;
+    url?: string;
+  };
 }
 
 export interface Chat {
@@ -656,6 +662,48 @@ export class ChatService {
         this.toastService.error(`Failed to send message: ${errorMessage}`, 6000);
       }
     });
+  }
+
+  /**
+   * Send media message (image, document, video, audio) to current chat
+   */
+  sendMediaMessage(file: File, caption: string = ''): Observable<any> {
+    const currentChatId = this.selectedChatIdSubject.value;
+    if (!currentChatId) {
+      return new Observable(observer => {
+        observer.error(new Error('No chat selected'));
+      });
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+
+    return this.http.post(`${this.apiUrl}/conversations/${currentChatId}/reply-media`, formData).pipe(
+      tap((response: any) => {
+        // Add message to chat
+        const mediaType = file.type.startsWith('image/') ? 'image' :
+                          file.type.startsWith('video/') ? 'video' :
+                          file.type.startsWith('audio/') ? 'audio' : 'document';
+
+        const newMessage: Message = {
+          id: response.message?._id || Date.now().toString(),
+          text: caption || `[${mediaType}: ${file.name}]`,
+          sender: 'me',
+          timestamp: new Date(),
+          status: response.message?.status || 'sent',
+          type: mediaType,
+          media: {
+            type: mediaType,
+            filename: file.name,
+            mimeType: file.type
+          }
+        };
+        this.handleNewMessage(currentChatId, newMessage);
+      })
+    );
   }
 
   // ======================================

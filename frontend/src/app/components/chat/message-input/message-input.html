@@ -1,8 +1,48 @@
-<div class="flex items-center gap-2">
+<!-- Hidden file input -->
+<input
+    #fileInput
+    type="file"
+    [accept]="acceptTypes"
+    (change)="onFileSelected($event)"
+    class="hidden">
+
+<!-- File preview bar (shown when file is selected) -->
+<div *ngIf="selectedFile" class="flex items-center gap-3 px-4 py-2 bg-whatsapp-dark rounded-t-lg border-b border-gray-700">
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+        <i [class]="getFileIcon()" class="text-whatsapp-green text-lg"></i>
+        <div class="flex-1 min-w-0">
+            <p class="text-gray-200 text-sm truncate">{{ selectedFile.name }}</p>
+            <p class="text-gray-400 text-xs">{{ getFormattedFileSize() }}</p>
+        </div>
+    </div>
+    <button
+        (click)="removeSelectedFile()"
+        [disabled]="isUploading"
+        class="text-gray-400 hover:text-red-400 p-1"
+        [class.opacity-50]="isUploading">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<!-- Upload progress bar -->
+<div *ngIf="isUploading" class="px-4 py-1 bg-whatsapp-dark">
+    <div class="w-full bg-gray-700 rounded-full h-1">
+        <div class="bg-whatsapp-green h-1 rounded-full transition-all duration-300"
+             [style.width.%]="uploadProgress"></div>
+    </div>
+    <p class="text-gray-400 text-xs mt-1">{{ 'chat.sending' | translate }}...</p>
+</div>
+
+<div class="flex items-center gap-2" [class.rounded-t-none]="selectedFile">
     <button class="text-gray-400 hover:text-gray-200 p-2" [disabled]="!canSendMessage()" [class.opacity-50]="!canSendMessage()">
         <i class="far fa-smile text-xl"></i>
     </button>
-    <button class="text-gray-400 hover:text-gray-200 p-2" [disabled]="!canSendMessage()" [class.opacity-50]="!canSendMessage()">
+    <button
+        (click)="openFilePicker()"
+        class="text-gray-400 hover:text-gray-200 p-2"
+        [disabled]="!canSendMessage() || isUploading"
+        [class.opacity-50]="!canSendMessage() || isUploading"
+        [title]="'chat.attachFile' | translate">
         <i class="fas fa-paperclip text-xl"></i>
     </button>
 
@@ -10,16 +50,28 @@
         <input
             type="text"
             [(ngModel)]="messageText"
-            (keyup.enter)="sendMessage()"
-            [placeholder]="canSendMessage() ? ('chat.typeMessage' | translate) : ('chat.takeOverToSendMessages' | translate)"
-            [disabled]="!canSendMessage()"
-            [class.cursor-not-allowed]="!canSendMessage()"
-            [class.opacity-60]="!canSendMessage()"
+            (keyup.enter)="selectedFile ? sendFile() : sendMessage()"
+            [placeholder]="selectedFile ? ('chat.addCaption' | translate) : (canSendMessage() ? ('chat.typeMessage' | translate) : ('chat.takeOverToSendMessages' | translate))"
+            [disabled]="!canSendMessage() || isUploading"
+            [class.cursor-not-allowed]="!canSendMessage() || isUploading"
+            [class.opacity-60]="!canSendMessage() || isUploading"
             class="bg-transparent border-none text-gray-200 text-sm w-full focus:outline-none placeholder-gray-400">
     </div>
 
+    <!-- Send file button (when file is selected) -->
     <button
-        *ngIf="messageText.trim()"
+        *ngIf="selectedFile"
+        (click)="sendFile()"
+        [disabled]="!canSendMessage() || isUploading"
+        [class.opacity-50]="!canSendMessage() || isUploading"
+        [class.cursor-not-allowed]="!canSendMessage() || isUploading"
+        class="text-whatsapp-green hover:text-whatsapp-green/80 p-2">
+        <i class="fas fa-paper-plane text-xl"></i>
+    </button>
+
+    <!-- Send text button (when no file, has text) -->
+    <button
+        *ngIf="!selectedFile && messageText.trim()"
         (click)="sendMessage()"
         [disabled]="!canSendMessage()"
         [class.opacity-50]="!canSendMessage()"
@@ -27,8 +79,10 @@
         class="text-whatsapp-green hover:text-whatsapp-green/80 p-2">
         <i class="fas fa-paper-plane text-xl"></i>
     </button>
+
+    <!-- Microphone button (no file, no text) -->
     <button
-        *ngIf="!messageText.trim()"
+        *ngIf="!selectedFile && !messageText.trim()"
         class="text-gray-400 hover:text-gray-200 p-2"
         [disabled]="!canSendMessage()"
         [class.opacity-50]="!canSendMessage()">
