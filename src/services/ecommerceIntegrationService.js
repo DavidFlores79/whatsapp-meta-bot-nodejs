@@ -510,10 +510,10 @@ class EcommerceIntegrationService {
         }
 
         try {
-            // Use /api/products/search endpoint with ?search= query param
-            const response = await this.makeRequest('GET', '/api/products/search', null, {
+            // Use /api/products endpoint with ?search= query param
+            const response = await this.makeRequest('GET', '/api/products', null, {
                 search: query,
-                limit: limit
+                page_size: limit
             });
 
             if (response.data && response.data.length > 0) {
