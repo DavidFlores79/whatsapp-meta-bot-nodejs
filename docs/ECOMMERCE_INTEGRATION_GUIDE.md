@@ -310,6 +310,41 @@ Customer: "Quiero ordenar 2 pizzas margarita para recoger"
 | `/api/v2/ecommerce/payment-methods` | GET | Agent | Available payment methods |
 | `/api/v2/ecommerce/dashboard` | GET | Admin | E-commerce summary |
 
+## E-commerce Backend API Endpoints
+
+These are the endpoints that your external e-commerce API must implement. The CRM bot will call these endpoints using the configured service credentials.
+
+### Order Management
+
+| Endpoint | Method | Access | Description |
+|----------|--------|--------|-------------|
+| `/api/orders/search` | GET | Agent | Search orders by orderId, phone, or email |
+| `/api/orders/active/:phone` | GET | Agent | Get active orders for customer |
+| `/api/orders` | POST | Agent | Create order |
+
+### Product Catalog
+
+| Endpoint | Method | Access | Description |
+|----------|--------|--------|-------------|
+| `/api/products/search` | GET | Agent | Search products (use ?search= query param) |
+| `/api/products/:id` | GET | Agent | Get product details |
+| `/api/categories` | GET | Agent | List categories |
+
+### Customer Data
+
+| Endpoint | Method | Access | Description |
+|----------|--------|--------|-------------|
+| `/api/users/by-phone/:phone` | GET | Agent | Find customer by phone |
+| `/api/users/:phone/profile` | GET | Agent | Customer profile with order stats |
+
+### Reference Data
+
+| Endpoint | Method | Access | Description |
+|----------|--------|--------|-------------|
+| `/api/delivery-options` | GET | Agent | Available delivery options |
+| `/api/payment-methods` | GET | Agent | Available payment methods |
+| `/api/dashboard` | GET | Admin | E-commerce summary |
+
 ## Data Mappings
 
 ### Order Status

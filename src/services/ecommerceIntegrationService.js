@@ -282,10 +282,9 @@ class EcommerceIntegrationService {
         }
 
         try {
-            // First try to search by orderId field
-            const response = await this.makeRequest('GET', '/api/orders', null, {
-                search: orderId,
-                page_size: 1
+            // Search by orderId using /api/orders/search endpoint
+            const response = await this.makeRequest('GET', '/api/orders/search', null, {
+                orderId: orderId
             });
 
             if (response.data && response.data.length > 0) {
@@ -311,18 +310,10 @@ class EcommerceIntegrationService {
         }
 
         try {
-            // First find the customer by phone
-            const customer = await this.findCustomerByPhone(phoneNumber);
-            
-            if (!customer) {
-                return [];
-            }
-
-            // Get recent orders for this customer
-            const response = await this.makeRequest('GET', '/api/orders', null, {
-                search: customer._id, // Search by customer ID
-                page_size: limit,
-                status: '' // All statuses
+            // Search orders by phone using /api/orders/search endpoint
+            const response = await this.makeRequest('GET', '/api/orders/search', null, {
+                phone: phoneNumber,
+                limit: limit
             });
 
             if (response.data && response.data.length > 0) {
@@ -348,15 +339,10 @@ class EcommerceIntegrationService {
         }
 
         try {
-            const customer = await this.findCustomerByEmail(email);
-            
-            if (!customer) {
-                return [];
-            }
-
-            const response = await this.makeRequest('GET', '/api/orders', null, {
-                search: customer._id,
-                page_size: limit
+            // Search orders by email using /api/orders/search endpoint
+            const response = await this.makeRequest('GET', '/api/orders/search', null, {
+                email: email,
+                limit: limit
             });
 
             if (response.data && response.data.length > 0) {
@@ -381,32 +367,14 @@ class EcommerceIntegrationService {
         }
 
         try {
-            const customer = await this.findCustomerByPhone(phoneNumber);
-            
-            if (!customer) {
-                return [];
+            // Get active orders directly using /api/orders/active/:phone endpoint
+            const response = await this.makeRequest('GET', `/api/orders/active/${encodeURIComponent(phoneNumber)}`);
+
+            if (response.data && response.data.length > 0) {
+                return response.data.map(order => this.formatOrderForCRM(order));
             }
 
-            // Get pending and processing orders
-            const [pending, processing] = await Promise.all([
-                this.makeRequest('GET', '/api/orders', null, {
-                    status: 'pending',
-                    page_size: 10
-                }),
-                this.makeRequest('GET', '/api/orders', null, {
-                    status: 'processing',
-                    page_size: 10
-                })
-            ]);
-
-            const allOrders = [...(pending.data || []), ...(processing.data || [])];
-            
-            // Filter by customer ID
-            const customerOrders = allOrders.filter(order => 
-                order.customer?._id === customer._id || order.customer === customer._id
-            );
-
-            return customerOrders.map(order => this.formatOrderForCRM(order));
+            return [];
         } catch (error) {
             console.error(`❌ Error fetching active orders:`, error.message);
             return [];
@@ -434,13 +402,11 @@ class EcommerceIntegrationService {
         if (cached) return cached;
 
         try {
-            const response = await this.makeRequest('GET', '/api/users', null, {
-                search: phoneNumber,
-                page_size: 1
-            });
+            // Use /api/users/by-phone/:phone endpoint
+            const response = await this.makeRequest('GET', `/api/users/by-phone/${encodeURIComponent(phoneNumber)}`);
 
-            if (response.data && response.data.length > 0) {
-                const customer = response.data[0];
+            if (response.data) {
+                const customer = response.data;
                 this.setCache(cacheKey, customer);
                 return customer;
             }
@@ -497,10 +463,17 @@ class EcommerceIntegrationService {
         }
 
         try {
+            // Use /api/users/:phone/profile endpoint for customer profile with stats
+            const response = await this.makeRequest('GET', `/api/users/${encodeURIComponent(phoneNumber)}/profile`);
+
+            if (response.data) {
+                return response.data;
+            }
+
+            // Fallback: build profile manually if endpoint returns no data
             const customer = await this.findCustomerByPhone(phoneNumber);
             if (!customer) return null;
 
-            // Get order stats
             const orders = await this.getOrdersByPhone(phoneNumber, 50);
             
             const stats = {
@@ -537,9 +510,10 @@ class EcommerceIntegrationService {
         }
 
         try {
-            const response = await this.makeRequest('GET', '/api/products', null, {
+            // Use /api/products/search endpoint with ?search= query param
+            const response = await this.makeRequest('GET', '/api/products/search', null, {
                 search: query,
-                page_size: limit
+                limit: limit
             });
 
             if (response.data && response.data.length > 0) {
@@ -895,12 +869,72 @@ class EcommerceIntegrationService {
      * @returns {Promise<boolean>} True if healthy
      */
     async healthCheck() {
+        if (!await this.isAvailable()) {
+            return false;
+        }
+        
         try {
-            const response = await axios.get(`${this.baseUrl}/health`, { timeout: 5000 });
-            return response.data?.status === 'healthy';
+            const response = await axios.get(`${this.config.baseUrl}/health`, { timeout: 5000 });
+            return response.status === 200;
         } catch (error) {
             console.error('❌ E-commerce API health check failed:', error.message);
             return false;
+        }
+    }
+
+    // ============================================
+    // REFERENCE DATA
+    // ============================================
+
+    /**
+     * Get available delivery options
+     * @returns {Promise<Array>} Array of delivery options
+     */
+    async getDeliveryOptions() {
+        if (!await this.isAvailable()) {
+            return [];
+        }
+
+        const cacheKey = 'delivery_options';
+        const cached = this.getFromCache(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const response = await this.makeRequest('GET', '/api/delivery-options');
+            if (response.data) {
+                this.setCache(cacheKey, response.data, 60 * 60 * 1000); // 1 hour cache
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('❌ Error fetching delivery options:', error.message);
+            return [];
+        }
+    }
+
+    /**
+     * Get available payment methods
+     * @returns {Promise<Array>} Array of payment methods
+     */
+    async getPaymentMethods() {
+        if (!await this.isAvailable()) {
+            return [];
+        }
+
+        const cacheKey = 'payment_methods';
+        const cached = this.getFromCache(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const response = await this.makeRequest('GET', '/api/payment-methods');
+            if (response.data) {
+                this.setCache(cacheKey, response.data, 60 * 60 * 1000); // 1 hour cache
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('❌ Error fetching payment methods:', error.message);
+            return [];
         }
     }
 }
