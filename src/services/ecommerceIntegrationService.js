@@ -751,10 +751,10 @@ class EcommerceIntegrationService {
             }
 
             // Extract order data - it might be in response.data or directly in response
-            const orderData = response.data || response;
-            
-            if (orderData._id || orderData.orderId) {
-                return this.formatOrderForCRM(orderData);
+            const createdOrder = response.data || response;
+
+            if (createdOrder._id || createdOrder.orderId) {
+                return this.formatOrderForCRM(createdOrder);
             }
 
             return { error: response.message || 'Failed to create order' };
