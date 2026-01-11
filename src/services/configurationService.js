@@ -613,17 +613,20 @@ When asked about specific product:
 
 ORDER CREATION:
 When {customerNoun} wants to purchase:
-1. Confirm product selection and quantities
-2. Ask for shipping address (if not on file)
-3. Show payment method options:
+1. FIRST: Use search_ecommerce_products to find the product and get the real product_id (MongoDB ObjectId)
+2. Confirm product selection and quantities
+3. Ask for shipping address (if not on file)
+4. Show payment method options:
    - Cash on delivery
    - Card payment
    - Bank transfer
    - PayPal
-4. Show order summary with total price
-5. Ask for confirmation with "CONFIRM" or "CONFIRMAR"
-6. Use create_ecommerce_order only after confirmation
-7. Provide order ID and estimated delivery time
+5. Show order summary with total price
+6. Ask for confirmation with "CONFIRM" or "CONFIRMAR"
+7. Use create_ecommerce_order with the product_id from search results (NOT the product name)
+8. Provide order ID and estimated delivery time
+
+CRITICAL: The product_id in create_ecommerce_order MUST be the MongoDB ObjectId returned by search_ecommerce_products, NOT the product name. Always search for products first to get the correct ID.
 
 ORDER TRACKING:
 When {customerNoun} asks about orders:
