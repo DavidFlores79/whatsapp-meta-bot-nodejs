@@ -41,7 +41,7 @@ export class TemplateSenderComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.cdr.detectChanges(); // Force change detection for loading state
-    
+
     this.templateService.getTemplates({ status: 'APPROVED' }).subscribe({
       next: (response) => {
         this.templates = response.data;
