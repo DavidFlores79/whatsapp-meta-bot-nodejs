@@ -714,8 +714,16 @@ class EcommerceIntegrationService {
             // Send to e-commerce API
             const response = await this.makeRequest('POST', '/api/orders', orderPayload);
 
-            if (response._id || response.orderId) {
-                return this.formatOrderForCRM(response);
+            // Check if response indicates success - handle both direct response and wrapped response
+            if (response.success === false) {
+                return { error: response.message || response.error || 'Failed to create order' };
+            }
+
+            // Extract order data - it might be in response.data or directly in response
+            const orderData = response.data || response;
+            
+            if (orderData._id || orderData.orderId) {
+                return this.formatOrderForCRM(orderData);
             }
 
             return { error: response.message || 'Failed to create order' };
