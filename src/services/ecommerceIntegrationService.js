@@ -528,8 +528,17 @@ class EcommerceIntegrationService {
     }
 
     /**
-     * Get product details by ID
-     * @param {string} productId - Product ID
+     * Check if a string looks like a MongoDB ObjectId
+     * @param {string} str - String to check
+     * @returns {boolean} True if it looks like an ObjectId
+     */
+    isValidObjectId(str) {
+        return /^[0-9a-fA-F]{24}$/.test(str);
+    }
+
+    /**
+     * Get product details by ID or search by name as fallback
+     * @param {string} productId - Product ID or product name
      * @returns {Promise<object|null>} Product object or null
      */
     async getProductById(productId) {
@@ -538,8 +547,23 @@ class EcommerceIntegrationService {
         }
 
         try {
-            const response = await this.makeRequest('GET', `/api/products/${productId}`);
-            return this.formatProductForCRM(response);
+            // If it looks like a valid MongoDB ObjectId, try direct fetch
+            if (this.isValidObjectId(productId)) {
+                const response = await this.makeRequest('GET', `/api/products/${productId}`);
+                return this.formatProductForCRM(response);
+            }
+
+            // Otherwise, the AI passed a product name - search for it
+            console.log(`🔍 Product ID "${productId}" is not an ObjectId, searching by name...`);
+            const searchResults = await this.searchProducts({ query: productId, limit: 1 });
+            
+            if (searchResults && searchResults.length > 0) {
+                console.log(`✅ Found product by name: ${searchResults[0].name} (ID: ${searchResults[0].id})`);
+                return searchResults[0];
+            }
+
+            console.log(`❌ No product found matching: ${productId}`);
+            return null;
         } catch (error) {
             console.error(`❌ Error fetching product ${productId}:`, error.message);
             return null;
@@ -636,8 +660,9 @@ class EcommerceIntegrationService {
                 if (!product || !product.available) {
                     return { error: `Product ${item.productId} is not available` };
                 }
+                // Use the actual product ID from the lookup (in case AI passed a name)
                 validatedItems.push({
-                    product: item.productId,
+                    product: product.id,
                     quantity: item.quantity,
                     subtotal: product.price * item.quantity
                 });
