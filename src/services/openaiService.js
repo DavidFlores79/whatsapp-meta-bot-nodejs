@@ -1,4 +1,5 @@
 const axios = require("axios");
+const OpenAI = require("openai");
 const UserThread = require("../models/UserThread");
 const Message = require("../models/Message");
 const Conversation = require("../models/Conversation");
@@ -9,6 +10,11 @@ const ticketService = require("./ticketService");
 const { getToolsForPreset } = require("../shared/toolDefinitions");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+
+// In-memory cache: userId -> OpenAI Conversations API conversation ID
+const userConversations = new Map();
 
 // ============================================
 // LANGUAGE DETECTION (using GPT-4o-mini)
