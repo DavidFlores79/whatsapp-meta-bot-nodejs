@@ -9,7 +9,12 @@ const userThreadSchema = new mongoose.Schema({
   },
   threadId: {
     type: String,
-    required: true
+    required: false  // Legacy field — kept for backward compatibility during migration
+  },
+  conversationId: {
+    type: String,
+    required: false,  // OpenAI Conversations API ID (conv_xxx)
+    index: true
   },
   lastInteraction: {
     type: Date,

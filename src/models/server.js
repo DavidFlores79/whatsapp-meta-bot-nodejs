@@ -33,10 +33,6 @@ class Server {
     //conectar a DB
     this.conectarDB();
 
-    // Initialize background services
-    const autoTimeoutService = require('../services/autoTimeoutService');
-    autoTimeoutService.startAutoTimeoutService();
-
     //middlewares
     this.middlewares(io);
 
@@ -95,6 +91,9 @@ class Server {
     await dbConnection();
     // Initialize ticket system after DB connection
     await this.initializeTicketSystem();
+    // Start background services after DB is connected
+    const autoTimeoutService = require('../services/autoTimeoutService');
+    autoTimeoutService.startAutoTimeoutService();
   }
 
   async initializeTicketSystem() {

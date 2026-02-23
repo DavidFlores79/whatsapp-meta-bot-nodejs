@@ -36,7 +36,7 @@ const healthCheck = async (req, res) => {
 
     // Check OpenAI service availability
     try {
-      if (process.env.OPENAI_API_KEY && process.env.OPENAI_ASSISTANT_ID) {
+      if (process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL) {
         health.checks.openai = 'configured';
       } else {
         health.checks.openai = 'not_configured';
@@ -81,7 +81,7 @@ const readiness = async (req, res) => {
   try {
     // Check critical dependencies
     const isMongoReady = mongoose.connection.readyState === 1;
-    const isOpenAIConfigured = !!(process.env.OPENAI_API_KEY && process.env.OPENAI_ASSISTANT_ID);
+    const isOpenAIConfigured = !!(process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL);
     const isWhatsAppConfigured = !!(process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
 
     if (isMongoReady && isOpenAIConfigured && isWhatsAppConfigured) {
@@ -150,7 +150,7 @@ const info = async (req, res) => {
         info: 'GET /info'
       },
       features: {
-        ai_assistant: !!process.env.OPENAI_ASSISTANT_ID,
+        ai_assistant: !!process.env.OPENAI_MODEL,
         socket_io: true,
         thread_management: true,
         multimedia_support: true
