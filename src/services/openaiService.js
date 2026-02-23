@@ -760,16 +760,56 @@ async function executeToolCall(functionName, args, userId) {
  * Create an AI response using the Responses API, handling the full tool call loop.
  * Replaces: runAssistant + pollRunCompletion + handleRunStatus + getAssistantResponse
  */
-async function createResponse(conversationId, inputItems, instructions, tools, userId) {
-  let response = await openai.responses.create({
-    model: OPENAI_MODEL,
-    instructions,
-    tools,
-    tool_choice: 'auto',
-    conversation: conversationId,
-    input: inputItems,
-    truncation: 'auto'
+async function resetConversation(userId) {
+  userConversations.delete(userId);
+  try {
+    await UserThread.deleteOne({ userId });
+  } catch (e) {
+    console.error(`DB error clearing conversation for ${userId}:`, e.message);
+  }
+  const conversation = await openai.conversations.create({
+    metadata: { user_id: userId, phone_number: userId }
   });
+  const newConversationId = conversation.id;
+  userConversations.set(userId, newConversationId);
+  try {
+    await UserThread.create({ userId, conversationId: newConversationId, messageCount: 1 });
+  } catch (e) {
+    console.error(`DB error saving new conversation for ${userId}:`, e.message);
+  }
+  console.log(`♻️ Reset conversation for user ${userId} → ${newConversationId}`);
+  return newConversationId;
+}
+
+async function createResponse(conversationId, inputItems, instructions, tools, userId) {
+  let response;
+  try {
+    response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      instructions,
+      tools,
+      tool_choice: 'auto',
+      conversation: conversationId,
+      input: inputItems,
+      truncation: 'auto'
+    });
+  } catch (err) {
+    if (err.message && err.message.includes('No tool output found')) {
+      console.warn(`⚠️ Stale tool call in conversation for ${userId}, resetting and retrying...`);
+      const freshConversationId = await resetConversation(userId);
+      response = await openai.responses.create({
+        model: OPENAI_MODEL,
+        instructions,
+        tools,
+        tool_choice: 'auto',
+        conversation: freshConversationId,
+        input: inputItems,
+        truncation: 'auto'
+      });
+    } else {
+      throw err;
+    }
+  }
 
   // Tool call loop — max 5 iterations to prevent infinite loops
   let iterations = 0;
