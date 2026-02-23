@@ -10,6 +10,7 @@ const ticketService = require("./ticketService");
 const { getToolsForPreset } = require("../shared/toolDefinitions");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
