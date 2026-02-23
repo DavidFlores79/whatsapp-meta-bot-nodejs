@@ -56,16 +56,9 @@ async function detectLanguage(text) {
     return 'es'; // Default to Spanish on error
   }
 }
-const OPENAI_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
-const BASE_URL = "https://api.openai.com/v1";
-
-// Store threads per user (in-memory cache for performance)
-// Database persistence for reliability across restarts
-const userThreads = new Map();
-
-// Configuration for message management
+// Configuration for message management (kept for reference, no longer used)
 const MAX_MESSAGES_PER_THREAD = 10;
-const CLEANUP_THRESHOLD = 15; // When to trigger cleanup
+const CLEANUP_THRESHOLD = 15;
 
 // ============================================
 // CONCURRENT REQUEST PROTECTION
@@ -204,195 +197,113 @@ You MUST respond ENTIRELY in ${languageName.toUpperCase()}.`;
   }
 }
 
-// Clean up old messages in thread
-async function cleanupThreadMessages(threadId, headers, maxMessages = MAX_MESSAGES_PER_THREAD) {
+// ============================================
+// CONVERSATION MANAGEMENT (Responses API)
+// Replaces: thread creation, message adding, run polling
+// ============================================
+
+/**
+ * Get or create an OpenAI Conversations API conversation for a user.
+ * Conversations are persisted in MongoDB and cached in-memory.
+ * Replaces: getOrCreateThread / getOrCreateThreadFromDB
+ */
+async function getOrCreateConversation(userId) {
+  // 1. Check in-memory cache
+  let conversationId = userConversations.get(userId);
+  if (conversationId) return conversationId;
+
+  // 2. Check MongoDB
   try {
-    const messagesResponse = await axios.get(
-      `${BASE_URL}/threads/${threadId}/messages?order=desc&limit=100`,
-      { headers }
-    );
-    const messages = messagesResponse.data.data;
-    if (messages.length <= maxMessages) return;
-
-    const messagesToDelete = messages.slice(maxMessages);
-    for (const message of messagesToDelete) {
-      try {
-        await axios.delete(
-          `${BASE_URL}/threads/${threadId}/messages/${message.id}`,
-          { headers }
-        );
-      } catch (e) { console.error(`Error deleting message ${message.id}:`, e.message); }
+    const userThread = await UserThread.findOne({ userId });
+    if (userThread?.conversationId) {
+      conversationId = userThread.conversationId;
+      userConversations.set(userId, conversationId);
+      console.log(`📂 Loaded existing conversation ${conversationId} for user ${userId}`);
+      return conversationId;
     }
-  } catch (error) {
-    console.error("Error during thread cleanup:", error.message);
-  }
-}
-
-// Load thread from cache or database
-async function getOrCreateThreadFromDB(userId, headers) {
-  let threadId = userThreads.get(userId);
-  let shouldCleanup = false;
-
-  if (!threadId) {
-    try {
-      let userThread = await UserThread.findOne({ userId });
-      if (userThread) {
-        threadId = userThread.threadId;
-        userThreads.set(userId, threadId);
-        if (userThread.messageCount >= CLEANUP_THRESHOLD) shouldCleanup = true;
-      }
-    } catch (dbError) { console.error("Database error loading thread:", dbError.message); }
+  } catch (dbError) {
+    console.error("DB error loading conversation:", dbError.message);
   }
 
-  if (!threadId) {
-    const threadResponse = await axios.post(
-      `${BASE_URL}/threads`,
-      { metadata: { user_id: userId, phone_number: userId } },
-      { headers }
-    );
-    threadId = threadResponse.data.id;
-    userThreads.set(userId, threadId);
+  // 3. Create new OpenAI Conversation
+  const conversation = await openai.conversations.create({
+    metadata: { user_id: userId, phone_number: userId }
+  });
+  conversationId = conversation.id;
+  userConversations.set(userId, conversationId);
+  console.log(`🆕 Created new conversation ${conversationId} for user ${userId}`);
 
-    try {
-      await UserThread.create({ userId, threadId, messageCount: 1 });
-    } catch (dbError) { console.error("Database error saving thread:", dbError.message); }
-  } else {
-    try {
-      await UserThread.updateOne({ userId }, { $inc: { messageCount: 1 }, $set: { lastInteraction: Date.now() } });
-    } catch (e) { }
-    if (shouldCleanup) {
-      await cleanupThreadMessages(threadId, headers);
-      try {
-        await UserThread.updateOne({ userId }, { $set: { messageCount: MAX_MESSAGES_PER_THREAD, lastCleanup: Date.now() } });
-      } catch (e) { }
-    }
-  }
-  return threadId;
-}
-
-async function getOrCreateThread(userId, headers) {
-  return await getOrCreateThreadFromDB(userId, headers);
-}
-
-async function ensureNoActiveRun(threadId, headers) {
+  // 4. Persist to MongoDB
   try {
-    const runsResponse = await axios.get(`${BASE_URL}/threads/${threadId}/runs`, { headers });
-    const problematicRuns = runsResponse.data.data.filter(r => ['queued', 'in_progress', 'cancelling'].includes(r.status));
-
-    if (problematicRuns.length > 0) {
-      const runsToCancel = problematicRuns.filter(r => r.status !== 'cancelling');
-      for (const run of runsToCancel) {
-        try {
-          await axios.post(`${BASE_URL}/threads/${threadId}/runs/${run.id}/cancel`, {}, { headers });
-        } catch (e) { }
-      }
-
-      let attempts = 0;
-      while (attempts < 15) {
-        await new Promise(r => setTimeout(r, 1000));
-        const check = await axios.get(`${BASE_URL}/threads/${threadId}/runs`, { headers });
-        if (!check.data.data.some(r => ['queued', 'in_progress', 'cancelling'].includes(r.status))) break;
-        attempts++;
-      }
+    const existing = await UserThread.findOne({ userId });
+    if (existing) {
+      await UserThread.updateOne({ userId }, { $set: { conversationId, lastInteraction: Date.now() } });
+    } else {
+      await UserThread.create({ userId, conversationId, messageCount: 1 });
     }
-  } catch (e) { console.error("Error checking active runs:", e.message); }
+  } catch (dbError) {
+    console.error("DB error saving conversation:", dbError.message);
+  }
+
+  return conversationId;
 }
 
-async function addMessageToThread(threadId, message, context, headers) {
-  const metadata = { phone_number: context.userId };
+/**
+ * Build the Responses API input items array from a message and optional context.
+ * Handles rich content: images and location data.
+ */
+function buildInputItems(message, context) {
+  if (!context || (!context.imageUrl && !context.location)) {
+    return [{ role: 'user', content: message }];
+  }
+
+  const contentParts = [{ type: 'input_text', text: message }];
+
   if (context.imageUrl) {
-    metadata.has_image = "true";
-    metadata.image_url = context.imageUrl;
-    if (context.imageCaption) metadata.image_caption = context.imageCaption;
-  }
-  if (context.location) {
-    metadata.has_location = "true";
-    metadata.location_address = context.location.formatted_address || "";
-    metadata.location_coords = context.location.coordinates_string || "";
-  }
-
-  let messageAdded = false;
-  let retryCount = 0;
-  while (!messageAdded && retryCount < 3) {
-    try {
-      await axios.post(
-        `${BASE_URL}/threads/${threadId}/messages`,
-        { role: "user", content: message, metadata },
-        { headers }
-      );
-      messageAdded = true;
-    } catch (e) {
-      if (e.response?.data?.error?.message?.includes("while a run") && retryCount < 2) {
-        retryCount++;
-        await new Promise(r => setTimeout(r, 2000));
-        await ensureNoActiveRun(threadId, headers);
-      } else {
-        throw e;
-      }
+    contentParts.push({ type: 'input_image', image_url: context.imageUrl, detail: 'auto' });
+    if (context.imageCaption) {
+      contentParts.push({ type: 'input_text', text: `[Image caption: ${context.imageCaption}]` });
     }
   }
-  if (!messageAdded) throw new Error("Failed to add message after retries");
+
+  if (context.location) {
+    const parts = [];
+    if (context.location.formatted_address) parts.push(`Address: ${context.location.formatted_address}`);
+    if (context.location.coordinates_string) parts.push(`Coords: ${context.location.coordinates_string}`);
+    if (parts.length) contentParts.push({ type: 'input_text', text: `[Location: ${parts.join(', ')}]` });
+  }
+
+  return [{ role: 'user', content: contentParts }];
 }
 
-async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') {
-  // Build instructions from database configuration + runtime context
-  const dynamicInstructions = await buildAdditionalInstructions(userId, detectedLanguage);
-
-  // Resolve the active preset and pick the matching tool set.
-  // By passing `tools` at run-creation time we OVERRIDE the assistant's global
-  // tool list, so the model can only invoke functions that belong to this preset.
-  const activePresetId = await configurationService.getActivePresetId();
-  const allowedTools = getToolsForPreset(activePresetId);
-
-  console.log(`📝 Using database instructions for user ${userId} (lang: ${detectedLanguage}, preset: ${activePresetId}, tools: ${allowedTools.map(t => t.function.name).join(', ')})`);
-
-  const runResponse = await axios.post(
-    `${BASE_URL}/threads/${threadId}/runs`,
-    {
-      assistant_id: OPENAI_ASSISTANT_ID,
-      // OVERRIDE the assistant's base instructions with database-driven ones
-      instructions: dynamicInstructions,
-      // OVERRIDE the assistant's registered tools with only the preset-allowed subset.
-      // This is the hard enforcement layer: even if the prompt somehow asked for a
-      // disallowed function, OpenAI will reject the call because the tool isn't listed.
-      tools: allowedTools,
-      tool_choice: 'auto'
-    },
-    { headers }
-  );
-  return runResponse.data.id;
+/**
+ * Extract the assistant's text from a Responses API response object.
+ */
+function extractResponseText(response) {
+  if (!response?.output) return 'No response from AI.';
+  for (const item of response.output) {
+    if (item.type === 'message') {
+      const textContent = (item.content || []).find(c => c.type === 'output_text');
+      if (textContent?.text) return textContent.text;
+    }
+  }
+  return 'No response from AI.';
 }
 
-async function pollRunCompletion(threadId, runId, headers) {
-  let run;
-  let attempts = 0;
-  do {
-    await new Promise(r => setTimeout(r, 1000));
-    const res = await axios.get(`${BASE_URL}/threads/${threadId}/runs/${runId}`, { headers });
-    run = res.data;
-    attempts++;
-    if (attempts >= 60) throw new Error("Run timeout");
-  } while (['queued', 'in_progress'].includes(run.status));
-  return run;
-}
+/**
+ * Execute a single tool call by name and return the result as a plain JS object.
+ * The tool call loop and JSON serialization are handled by createResponse().
+ * Business logic is identical to the former handleToolCalls inner loop.
+ */
+async function executeToolCall(functionName, args, userId) {
+  console.log(`🔧 Processing tool call: ${functionName}`);
+  console.log(`🔧 Raw arguments: ${JSON.stringify(args)}`);
 
-async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
-  console.log(`🔧 handleToolCalls called with ${toolCalls.length} tool call(s)`);
-
-  const ticketService = require('./ticketService');
+  const ticketSvc = require('./ticketService');
   const configService = require('./configurationService');
-  const Customer = require('../models/Customer');
-  const UserThread = require('../models/UserThread');
+  const CustomerModel = require('../models/Customer');
 
-  const toolOutputs = [];
-
-  for (const call of toolCalls) {
-    const functionName = call.function.name;
-    console.log(`🔧 Processing tool call: ${functionName}`);
-    console.log(`🔧 Raw arguments string: ${call.function.arguments}`);
-
-    const args = JSON.parse(call.function.arguments || "{}");
-    let output;
+  let output;
 
     try {
       if (functionName === "create_ticket_report") {
@@ -418,7 +329,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
           });
         } else {
           // Find customer by phone number
-          const customer = await Customer.findOne({ phoneNumber: userId });
+          const customer = await CustomerModel.findOne({ phoneNumber: userId });
           if (!customer) {
             output = JSON.stringify({
               success: false,
@@ -426,13 +337,13 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
             });
           } else {
             // Check if customer has a recently resolved ticket that should be reopened instead
-            const recentResolvedTicket = await ticketService.findRecentResolvedTicket(customer._id);
+            const recentResolvedTicket = await ticketSvc.findRecentResolvedTicket(customer._id);
 
             if (recentResolvedTicket) {
               // Reopen the existing ticket instead of creating a new one
               console.log(`🔄 Found recent resolved ticket ${recentResolvedTicket.ticketId}, reopening instead of creating new ticket`);
 
-              const reopenedTicket = await ticketService.reopenTicket(
+              const reopenedTicket = await ticketSvc.reopenTicket(
                 recentResolvedTicket.ticketId,
                 `Customer reported: ${subject}. ${description}`
               );
@@ -464,7 +375,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
                 category = 'other';
               }
 
-              const ticket = await ticketService.createTicketFromAI({
+              const ticket = await ticketSvc.createTicketFromAI({
                 subject,
                 description,
                 category,
@@ -500,7 +411,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
         console.log(`   Filters: ticket_id=${args.ticket_id}, lookup_recent=${args.lookup_recent}, exclude_closed=${args.exclude_closed}, include_notes=${args.include_notes}`);
 
         // Find customer by phone number
-        const customer = await Customer.findOne({ phoneNumber: phoneToSearch });
+        const customer = await CustomerModel.findOne({ phoneNumber: phoneToSearch });
         if (!customer) {
           output = JSON.stringify({
             success: false,
@@ -514,7 +425,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
             console.log(`   Normalized ticket ID: ${args.ticket_id} → ${normalizedTicketId}`);
 
             // First try to find ticket by ID alone, then verify access
-            const ticket = await ticketService.getTicketById(normalizedTicketId);
+            const ticket = await ticketSvc.getTicketById(normalizedTicketId);
 
             if (!ticket) {
               console.log(`   ❌ Ticket not found: ${normalizedTicketId}`);
@@ -616,7 +527,7 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
             // Support include_notes filter
             const includeNotes = args.include_notes || false;
 
-            const result = await ticketService.getTicketsByCustomer(customer._id, queryOptions);
+            const result = await ticketSvc.getTicketsByCustomer(customer._id, queryOptions);
 
             const ticketResults = result.tickets.map(t => {
               const ticketData = {
@@ -835,167 +746,128 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
       });
     }
 
-    toolOutputs.push({ tool_call_id: call.id, output });
-  }
-
-  await axios.post(
-    `${BASE_URL}/threads/${threadId}/runs/${runId}/submit_tool_outputs`,
-    { tool_outputs: toolOutputs },
-    { headers }
-  );
-}
-
-async function handleRunStatus(threadId, runId, headers, userId) {
-  let run = await pollRunCompletion(threadId, runId, headers);
-  let toolAttempts = 0;
-  while (run.status === "requires_action" && run.required_action?.submit_tool_outputs && toolAttempts < 3) {
-    await handleToolCalls(threadId, runId, run.required_action.submit_tool_outputs.tool_calls, headers, userId);
-    run = await pollRunCompletion(threadId, runId, headers);
-    toolAttempts++;
-  }
-  if (run.status !== "completed") {
-    // Log detailed error information
-    const errorDetails = {
-      status: run.status,
-      lastError: run.last_error,
-      failedAt: run.failed_at,
-      incompleteDetails: run.incomplete_details
-    };
-    console.error("🚨 OpenAI Run Failed - Detailed Error:", JSON.stringify(errorDetails, null, 2));
-    
-    // Throw with more context
-    const errorMessage = run.last_error 
-      ? `${run.last_error.code}: ${run.last_error.message}` 
-      : run.status;
-    throw new Error(`Run failed: ${errorMessage}`);
-  }
-  return run;
-}
-
-async function getAssistantResponse(threadId, runId, userId, conversationId) {
-  const headers = {
-    Authorization: `Bearer ${OPENAI_API_KEY}`,
-    "Content-Type": "application/json",
-    "OpenAI-Beta": "assistants=v2",
-  };
-
-  const response = await axios.get(
-    `${BASE_URL}/threads/${threadId}/messages?limit=1&order=desc`,
-    { headers }
-  );
-
-  const assistantMessages = response.data.data.filter(msg => msg.role === "assistant" && msg.run_id === runId);
-  if (assistantMessages.length > 0) {
-    const textContent = assistantMessages[0].content.find(c => c.type === "text");
-    const aiResponseText = textContent?.text?.value || "No response";
-
-    // Extract and update metadata from conversation context
-    await updateThreadMetadataFromConversation(threadId, userId, headers);
-
-    // NOTE: Socket emission is handled in queueService.js after saving to DB
-    // Removed duplicate io.emit here to prevent duplicate messages in frontend
-
-    return aiResponseText;
-  }
-  return "No response from AI.";
+  return output;
 }
 
 /**
- * Extract information from conversation and update thread metadata
+ * Create an AI response using the Responses API, handling the full tool call loop.
+ * Replaces: runAssistant + pollRunCompletion + handleRunStatus + getAssistantResponse
  */
-async function updateThreadMetadataFromConversation(threadId, userId, headers) {
-  try {
-    // Get recent messages to extract information
-    const messagesResponse = await axios.get(
-      `${BASE_URL}/threads/${threadId}/messages?limit=20&order=desc`,
-      { headers }
-    );
+async function createResponse(conversationId, inputItems, instructions, tools, userId) {
+  let response = await openai.responses.create({
+    model: OPENAI_MODEL,
+    instructions,
+    tools,
+    tool_choice: 'auto',
+    conversation: conversationId,
+    input: inputItems,
+    truncation: 'auto'
+  });
 
-    const messages = messagesResponse.data.data;
-    const conversationText = messages
-      .map(m => {
-        const content = m.content.find(c => c.type === "text");
-        return `${m.role}: ${content?.text?.value || ""}`;
-      })
-      .join("\n");
+  // Tool call loop — max 5 iterations to prevent infinite loops
+  let iterations = 0;
+  while (iterations < 5) {
+    const toolCalls = (response.output || []).filter(item => item.type === 'function_call');
+    if (toolCalls.length === 0) break;
 
-    // Use AI to extract structured information
-    const extractionPrompt = `Analyze this conversation and extract ONLY the following information if explicitly mentioned by the customer. Return ONLY a JSON object with these exact keys (use null for missing values):
+    console.log(`🔧 Processing ${toolCalls.length} tool call(s) from AI, iteration ${iterations + 1}`);
 
-{
-  "customer_name": "full name if mentioned",
-  "email": "email if mentioned",
-  "address": "full address if mentioned",
-  "city": "city if mentioned",
-  "issue_type": "brief category like 'billing', 'support', 'sales'",
-  "product_interest": "product or service mentioned"
+    const toolOutputItems = [];
+    for (const call of toolCalls) {
+      const args = JSON.parse(call.arguments || '{}');
+      const toolOutput = await executeToolCall(call.name, args, userId);
+      toolOutputItems.push({
+        type: 'function_call_output',
+        call_id: call.call_id,
+        output: toolOutput  // already a JSON string from executeToolCall
+      });
+    }
+
+    response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      previous_response_id: response.id,
+      conversation: conversationId,
+      input: toolOutputItems,
+      truncation: 'auto'
+    });
+    iterations++;
+  }
+
+  return response;
 }
 
-Conversation:
-${conversationText}
+// ============================================
+// CONVERSATION METADATA
+// ============================================
 
-Return ONLY valid JSON, nothing else.`;
+/**
+ * Extract customer info from recent messages and store in OpenAI Conversation metadata.
+ * Replaces updateThreadMetadataFromConversation.
+ */
+async function updateConversationMetadata(conversationId, userId) {
+  try {
+    const CustomerModel = require('../models/Customer');
+    const customer = await CustomerModel.findOne({ phoneNumber: userId });
+    if (!customer) return;
 
-    const extraction = await getChatCompletion(
-      [{ role: "user", content: extractionPrompt }],
-      { 
-        model: "gpt-4o-mini",
-        temperature: 0,
-        max_tokens: 300,
-        response_format: { type: "json_object" }
-      }
-    );
+    // Fetch recent messages from local MongoDB
+    const recentMessages = await Message.find({ customerId: customer._id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
-    const extractedData = JSON.parse(extraction);
-    
-    // Get current metadata
-    const threadResponse = await axios.get(
-      `${BASE_URL}/threads/${threadId}`,
-      { headers }
-    );
+    if (recentMessages.length === 0) return;
 
-    const currentMetadata = threadResponse.data.metadata || {};
-    
-    // Merge with existing metadata, only adding non-null values
+    const conversationText = recentMessages
+      .reverse()
+      .map(m => `${m.direction === 'inbound' ? 'customer' : 'assistant'}: ${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}`)
+      .join('\n');
+
+    const extractionResponse = await openai.responses.create({
+      model: 'gpt-4o-mini',
+      instructions: 'Extract ONLY explicitly mentioned customer information. Return ONLY valid JSON.',
+      input: `Analyze this conversation and extract ONLY the following if explicitly mentioned. Return ONLY a JSON object (null for missing):{"customer_name":"full name","email":"email","address":"full address","city":"city","issue_type":"billing|support|sales","product_interest":"product or service"}\n\nConversation:\n${conversationText}`,
+      max_output_tokens: 300,
+      store: false
+    });
+
+    const outputText = extractResponseText(extractionResponse);
+    let extractedData;
+    try {
+      extractedData = JSON.parse(outputText);
+    } catch {
+      console.error('⚠️ Failed to parse metadata extraction response');
+      return;
+    }
+
+    const currentConv = await openai.conversations.retrieve(conversationId);
+    const currentMetadata = currentConv.metadata || {};
     const updatedMetadata = { ...currentMetadata };
     Object.keys(extractedData).forEach(key => {
-      if (extractedData[key] && extractedData[key] !== null && extractedData[key] !== "null") {
+      if (extractedData[key] && extractedData[key] !== null && extractedData[key] !== 'null') {
         updatedMetadata[key] = extractedData[key];
       }
     });
 
-    // Update thread metadata
-    await axios.post(
-      `${BASE_URL}/threads/${threadId}`,
-      { metadata: updatedMetadata },
-      { headers }
-    );
+    await openai.conversations.update(conversationId, { metadata: updatedMetadata });
+    console.log(`✅ Updated conversation metadata for ${userId}:`, updatedMetadata);
 
-    console.log(`✅ Updated thread metadata for ${userId}:`, updatedMetadata);
+    const conv = await Conversation.findOne({
+      customerId: customer._id,
+      status: { $in: ['open', 'assigned', 'waiting', 'closed'] }
+    }).sort({ updatedAt: -1 });
 
-    // Emit socket event to notify frontend of metadata update
-    const Conversation = require('../models/Conversation');
-    const Customer = require('../models/Customer');
-    const customer = await Customer.findOne({ phoneNumber: userId });
-    if (customer) {
-      const conversation = await Conversation.findOne({
-        customerId: customer._id,
-        status: { $in: ['open', 'assigned', 'waiting', 'closed'] }
-      }).sort({ updatedAt: -1 });
-      
-      if (conversation) {
-        io.emit('metadata_updated', {
-          conversationId: conversation._id.toString(),
-          userId,
-          metadata: updatedMetadata
-        });
-        console.log(`📡 Emitted metadata update for conversation ${conversation._id}`);
-      }
+    if (conv) {
+      io.emit('metadata_updated', {
+        conversationId: conv._id.toString(),
+        userId,
+        metadata: updatedMetadata
+      });
+      console.log(`📡 Emitted metadata update for conversation ${conv._id}`);
     }
-
   } catch (error) {
-    console.error("⚠️ Error updating thread metadata:", error.message);
-    // Don't throw - metadata update is not critical
+    console.error('⚠️ Error updating conversation metadata:', error.message);
+    // Non-critical — do not throw
   }
 }
 
@@ -1003,70 +875,65 @@ Return ONLY valid JSON, nothing else.`;
 // MAIN FUNCTION
 // ============================================
 async function getAIResponse(message, userId, context = {}, conversationId = null) {
-  if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) throw new Error("OpenAI config missing");
-
-  const headers = {
-    Authorization: `Bearer ${OPENAI_API_KEY}`,
-    "Content-Type": "application/json",
-    "OpenAI-Beta": "assistants=v2",
-  };
+  if (!process.env.OPENAI_API_KEY) throw new Error("OpenAI API key missing");
 
   await waitForUserProcessing(userId);
   const processingResolver = startUserProcessing(userId);
 
   try {
-    // Emit AI typing start
-    if (conversationId) {
-      io.emit('ai_typing_start', { conversationId, userId });
-    }
+    if (conversationId) io.emit('ai_typing_start', { conversationId, userId });
 
-    // Detect language from user's message BEFORE processing
-    const detectedLanguage = await detectLanguage(message);
+    // Detect language and get/create conversation in parallel
+    const [detectedLanguage, openaiConversationId] = await Promise.all([
+      detectLanguage(message),
+      getOrCreateConversation(userId)
+    ]);
 
-    const threadId = await getOrCreateThread(userId, headers);
-    await ensureNoActiveRun(threadId, headers);
-    await addMessageToThread(threadId, message, { ...context, userId }, headers);
-    const runId = await runAssistant(threadId, userId, headers, detectedLanguage);
-    await handleRunStatus(threadId, runId, headers, userId);
-    const response = await getAssistantResponse(threadId, runId, userId, conversationId);
+    const instructions = await buildAdditionalInstructions(userId, detectedLanguage);
+    const activePresetId = await configurationService.getActivePresetId();
+    const tools = getToolsForPreset(activePresetId);
 
-    // Emit AI typing end
-    if (conversationId) {
-      io.emit('ai_typing_end', { conversationId, userId });
-    }
+    console.log(`📝 AI response for user ${userId} (lang: ${detectedLanguage}, preset: ${activePresetId}, tools: ${tools.map(t => t.name).join(', ')})`);
 
-    return response;
+    const inputItems = buildInputItems(message, context);
+    const response = await createResponse(openaiConversationId, inputItems, instructions, tools, userId);
+    const responseText = extractResponseText(response);
+
+    // Update message count and metadata (non-blocking)
+    UserThread.updateOne({ userId }, { $inc: { messageCount: 1 }, $set: { lastInteraction: Date.now() } }).catch(() => {});
+    updateConversationMetadata(openaiConversationId, userId).catch(err =>
+      console.error('⚠️ Metadata update error:', err.message)
+    );
+
+    if (conversationId) io.emit('ai_typing_end', { conversationId, userId });
+
+    return responseText;
   } catch (error) {
-    // Enhanced error logging
     console.error("🚨 OpenAI Service Error:", {
       message: error.message,
       userId,
       stack: error.stack,
-      response: error.response?.data
+      response: error.response?.data || error.status
     });
-    
-    // Return user-friendly error message
-    if (error.message.includes("rate_limit_exceeded")) {
+
+    if (error.message?.includes("rate_limit_exceeded") || error.status === 429) {
       return "Lo siento, el servicio está temporalmente ocupado. Por favor intenta de nuevo en un momento.";
-    } else if (error.message.includes("invalid_api_key")) {
+    } else if (error.message?.includes("invalid_api_key") || error.status === 401) {
       return "Error de configuración del asistente. Por favor contacta al administrador.";
-    } else if (error.message.includes("timeout")) {
+    } else if (error.message?.includes("timeout")) {
       return "La respuesta está tomando demasiado tiempo. Por favor intenta de nuevo.";
     }
-    
+
     return "Lo siento, hubo un error con el asistente IA.";
   } finally {
-    // Ensure AI typing indicator is cleared on error
-    if (conversationId) {
-      io.emit('ai_typing_end', { conversationId, userId });
-    }
+    if (conversationId) io.emit('ai_typing_end', { conversationId, userId });
     endUserProcessing(userId);
     if (processingResolver) processingResolver();
   }
 }
 
 /**
- * Get chat completion from OpenAI (non-assistant, for analysis)
+ * Get a single AI completion (non-conversational, for internal analysis tasks).
  */
 async function getChatCompletion(messages, options = {}) {
   try {
@@ -1077,92 +944,73 @@ async function getChatCompletion(messages, options = {}) {
       response_format = null
     } = options;
 
+    const systemMsg = messages.find(m => m.role === 'system');
+    const otherMessages = messages.filter(m => m.role !== 'system');
+
     const payload = {
       model,
-      messages,
-      temperature,
-      max_tokens
+      instructions: systemMsg?.content || undefined,
+      input: otherMessages.map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      })),
+      max_output_tokens: max_tokens,
+      store: false
     };
 
-    if (response_format) {
-      payload.response_format = response_format;
+    if (response_format?.type === 'json_object') {
+      payload.text = { format: { type: 'json_object' } };
     }
 
-    const response = await axios.post(
-      `${BASE_URL}/chat/completions`,
-      payload,
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000
-      }
-    );
-
-    return response.data.choices[0].message.content;
+    const response = await openai.responses.create(payload);
+    return extractResponseText(response);
 
   } catch (error) {
-    console.error("❌ OpenAI Chat Completion Error:", error.response?.data || error.message);
+    console.error("❌ OpenAI Completion Error:", error.message);
     throw error;
   }
 }
 
 /**
- * Get thread metadata from OpenAI Assistant
- * This includes customer information collected by the AI
+ * Get conversation metadata from the OpenAI Conversations API.
+ * Replaces getThreadMetadata.
  */
-async function getThreadMetadata(userId) {
+async function getConversationMetadata(userId) {
   try {
-    if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) {
-      throw new Error("OpenAI config missing");
-    }
+    if (!process.env.OPENAI_API_KEY) throw new Error("OpenAI API key missing");
 
-    const headers = {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-      "OpenAI-Beta": "assistants=v2",
-    };
-
-    // Get thread ID from cache or database
-    let threadId = userThreads.get(userId);
-    
-    if (!threadId) {
+    let conversationId = userConversations.get(userId);
+    if (!conversationId) {
       const userThread = await UserThread.findOne({ userId });
-      if (userThread) {
-        threadId = userThread.threadId;
+      if (userThread?.conversationId) {
+        conversationId = userThread.conversationId;
       } else {
-        return null; // No thread exists yet
+        return null; // No conversation exists yet
       }
     }
 
-    // Retrieve thread details from OpenAI
-    const threadResponse = await axios.get(
-      `${BASE_URL}/threads/${threadId}`,
-      { headers }
-    );
-
+    const conversation = await openai.conversations.retrieve(conversationId);
     return {
-      threadId,
-      metadata: threadResponse.data.metadata || {},
-      createdAt: threadResponse.data.created_at
+      conversationId,
+      metadata: conversation.metadata || {},
+      createdAt: conversation.created_at
     };
 
   } catch (error) {
-    console.error("❌ Error fetching thread metadata:", error.response?.data || error.message);
+    console.error("❌ Error fetching conversation metadata:", error.message);
     return null;
   }
 }
 
+// Backward-compatible alias for callers that use getThreadMetadata
+const getThreadMetadata = getConversationMetadata;
+
 /**
- * Get count of active users with threads
- * Returns the number of users currently in the thread management system
+ * Get count of users with active conversations.
  */
 async function getActiveUsersCount() {
   try {
-    const UserThread = require('../models/UserThread');
-    const count = await UserThread.countDocuments();
-    return count;
+    return await UserThread.countDocuments();
   } catch (error) {
     console.error("❌ Error getting active users count:", error.message);
     return 0;
