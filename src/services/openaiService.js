@@ -6,6 +6,7 @@ const Customer = require("../models/Customer");
 const { io } = require("../models/server");
 const configurationService = require("./configurationService");
 const ticketService = require("./ticketService");
+const { getToolsForPreset } = require("../shared/toolDefinitions");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -337,15 +338,25 @@ async function runAssistant(threadId, userId, headers, detectedLanguage = 'es') 
   // Build instructions from database configuration + runtime context
   const dynamicInstructions = await buildAdditionalInstructions(userId, detectedLanguage);
 
-  console.log(`📝 Using database instructions for user ${userId} (lang: ${detectedLanguage})`);
+  // Resolve the active preset and pick the matching tool set.
+  // By passing `tools` at run-creation time we OVERRIDE the assistant's global
+  // tool list, so the model can only invoke functions that belong to this preset.
+  const activePresetId = await configurationService.getActivePresetId();
+  const allowedTools = getToolsForPreset(activePresetId);
+
+  console.log(`📝 Using database instructions for user ${userId} (lang: ${detectedLanguage}, preset: ${activePresetId}, tools: ${allowedTools.map(t => t.function.name).join(', ')})`);
 
   const runResponse = await axios.post(
     `${BASE_URL}/threads/${threadId}/runs`,
     {
       assistant_id: OPENAI_ASSISTANT_ID,
-      // Use 'instructions' to OVERRIDE the assistant's base instructions
-      // instead of 'additional_instructions' which ADDS to them
-      instructions: dynamicInstructions
+      // OVERRIDE the assistant's base instructions with database-driven ones
+      instructions: dynamicInstructions,
+      // OVERRIDE the assistant's registered tools with only the preset-allowed subset.
+      // This is the hard enforcement layer: even if the prompt somehow asked for a
+      // disallowed function, OpenAI will reject the call because the tool isn't listed.
+      tools: allowedTools,
+      tool_choice: 'auto'
     },
     { headers }
   );
@@ -659,6 +670,156 @@ async function handleToolCalls(threadId, runId, toolCalls, headers, userId) {
         const { handleEcommerceFunction } = require('../handlers/ecommerceFunctionHandler');
         const result = await handleEcommerceFunction(functionName, args);
         output = JSON.stringify(result);
+
+      } else if (
+        functionName === "create_clinical_analysis_request" ||
+        functionName === "get_clinical_analysis_results"
+      ) {
+        // ─────────────────────────────────────────────────────────────────
+        // Healthcare: Clinical Analysis Tools  (MOCK implementation)
+        // TODO: Replace mock responses with real laboratory system integration
+        // ─────────────────────────────────────────────────────────────────
+
+        if (functionName === "create_clinical_analysis_request") {
+          const { patient_name, patient_phone, analysis_types = [], doctor_name, preparation_notes, preferred_date, date_of_birth } = args;
+
+          if (!patient_name || !patient_phone || analysis_types.length === 0) {
+            output = JSON.stringify({
+              success: false,
+              error: 'Faltan datos requeridos: nombre del paciente, teléfono y al menos un tipo de análisis.'
+            });
+          } else {
+            // Mock: generate a reference number for this request
+            const year = new Date().getFullYear();
+            const seq = String(Math.floor(Math.random() * 900000) + 100000);
+            const referenceNumber = `CLN-${year}-${seq}`;
+
+            // Mock: estimated ready date (3 business days from today)
+            const readyDate = new Date();
+            readyDate.setDate(readyDate.getDate() + 3);
+            const readyDateStr = readyDate.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Mock: derive generic preparation guidelines per analysis type
+            const fastingRequired = analysis_types.some(t =>
+              ['glucose', 'liver_panel', 'kidney_panel', 'lipid_panel', 'hba1c', 'blood_count'].includes(t)
+            );
+
+            const analysisLabels = {
+              blood_count: 'Biometría Hemática Completa',
+              glucose: 'Glucosa en Sangre',
+              liver_panel: 'Panel Hepático',
+              kidney_panel: 'Panel Renal',
+              thyroid_panel: 'Panel Tiroideo (TSH, T3, T4)',
+              lipid_panel: 'Panel de Lípidos (Colesterol, Triglicéridos)',
+              urine_general: 'Examen General de Orina',
+              urine_culture: 'Urocultivo',
+              stool_general: 'Examen General de Heces',
+              stool_culture: 'Coprocultivo',
+              pregnancy_test: 'Prueba de Embarazo (HCG)',
+              hba1c: 'Hemoglobina Glucosilada (HbA1c)',
+              covid_pcr: 'PCR COVID-19',
+              covid_antigen: 'Antígeno COVID-19',
+              other: 'Análisis Adicional'
+            };
+
+            const analysisNames = analysis_types.map(t => analysisLabels[t] || t);
+
+            console.log(`🧪 [MOCK] Clinical analysis request created: ${referenceNumber} for ${patient_name}`);
+
+            output = JSON.stringify({
+              success: true,
+              mock: true, // ← remove once real service is integrated
+              referenceNumber,
+              patientName: patient_name,
+              analyses: analysisNames,
+              doctorName: doctor_name || null,
+              preferredDate: preferred_date || null,
+              estimatedReadyDate: readyDateStr,
+              preparationInstructions: fastingRequired
+                ? 'Se requiere ayuno de 8 a 12 horas antes de la toma de muestra. Solo agua simple está permitida durante el ayuno.'
+                : 'No se requiere ayuno especial. Sigue las indicaciones de tu médico.',
+              collectionInfo: 'Preséntate en el laboratorio con este número de referencia y una identificación oficial. Horario: Lunes a Viernes 7:00 AM – 2:00 PM, Sábados 7:00 AM – 12:00 PM.',
+              message: `Solicitud registrada exitosamente con número de referencia ${referenceNumber}. Los resultados estarán listos aproximadamente el ${readyDateStr}.`
+            });
+          }
+
+        } else if (functionName === "get_clinical_analysis_results") {
+          const { reference_number, patient_phone: searchPhone, lookup_recent, include_results } = args;
+          const phoneToSearch = searchPhone || userId;
+
+          if (!reference_number && !lookup_recent) {
+            output = JSON.stringify({
+              success: false,
+              error: 'Debes proporcionar un número de referencia o solicitar análisis recientes.'
+            });
+          } else if (reference_number) {
+            // Mock: single analysis lookup by reference number
+            const normalizedRef = reference_number.toUpperCase().trim();
+            console.log(`🧪 [MOCK] Clinical analysis lookup: ${normalizedRef} for phone ${phoneToSearch}`);
+
+            // Mock response — simulates a completed blood count + glucose
+            output = JSON.stringify({
+              success: true,
+              mock: true, // ← remove once real service is integrated
+              referenceNumber: normalizedRef,
+              patientName: 'Paciente (Mock)',
+              status: 'ready',
+              statusText: 'Resultados Disponibles',
+              requestedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString('es-MX'),
+              readyDate: new Date().toLocaleDateString('es-MX'),
+              analyses: include_results ? [
+                {
+                  name: 'Biometría Hemática Completa',
+                  status: 'ready',
+                  values: [
+                    { parameter: 'Hemoglobina', value: '14.5', unit: 'g/dL', reference: '12.0 – 17.5', flag: 'normal' },
+                    { parameter: 'Leucocitos', value: '7.2', unit: 'x10³/µL', reference: '4.5 – 11.0', flag: 'normal' },
+                    { parameter: 'Plaquetas', value: '250', unit: 'x10³/µL', reference: '150 – 400', flag: 'normal' }
+                  ]
+                },
+                {
+                  name: 'Glucosa en Sangre',
+                  status: 'ready',
+                  values: [
+                    { parameter: 'Glucosa', value: '95', unit: 'mg/dL', reference: '70 – 100', flag: 'normal' }
+                  ]
+                }
+              ] : null,
+              disclaimer: '⚠️ IMPORTANTE: Estos resultados son de carácter informativo. NO los interprete por su cuenta. Comparta siempre sus resultados con su médico o especialista para una evaluación adecuada.',
+              message: include_results
+                ? `Los resultados de la solicitud ${normalizedRef} están disponibles. Recuerde consultar con su médico para la interpretación.`
+                : `Los resultados de la solicitud ${normalizedRef} están listos. Puede solicitarlos indicando que desea ver los valores detallados.`
+            });
+
+          } else {
+            // Mock: recent analyses lookup by phone
+            console.log(`🧪 [MOCK] Recent analyses lookup for phone: ${phoneToSearch}`);
+
+            output = JSON.stringify({
+              success: true,
+              mock: true, // ← remove once real service is integrated
+              total: 2,
+              analyses: [
+                {
+                  referenceNumber: `CLN-${new Date().getFullYear()}-100001`,
+                  analyses: ['Biometría Hemática Completa', 'Glucosa en Sangre'],
+                  status: 'ready',
+                  statusText: 'Resultados Disponibles',
+                  requestedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString('es-MX')
+                },
+                {
+                  referenceNumber: `CLN-${new Date().getFullYear()}-099847`,
+                  analyses: ['Panel Tiroideo (TSH, T3, T4)'],
+                  status: 'processing',
+                  statusText: 'En Proceso',
+                  requestedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('es-MX')
+                }
+              ],
+              disclaimer: '⚠️ Consulte siempre con su médico para la interpretación de resultados.'
+            });
+          }
+        }
+
       } else {
         // Unknown function
         output = JSON.stringify({
