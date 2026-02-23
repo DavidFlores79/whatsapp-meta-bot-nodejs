@@ -793,7 +793,6 @@ async function createResponse(conversationId, inputItems, instructions, tools, u
     response = await openai.responses.create({
       model: OPENAI_MODEL,
       previous_response_id: response.id,
-      conversation: conversationId,
       input: toolOutputItems,
       truncation: 'auto'
     });
