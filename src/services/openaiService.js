@@ -935,9 +935,23 @@ async function getAIResponse(message, userId, context = {}, conversationId = nul
       getOrCreateConversation(userId)
     ]);
 
-    const instructions = await buildAdditionalInstructions(userId, detectedLanguage);
-    const activePresetId = await configurationService.getActivePresetId();
+    const [instructions, activePresetId, ticketCategories] = await Promise.all([
+      buildAdditionalInstructions(userId, detectedLanguage),
+      configurationService.getActivePresetId(),
+      configurationService.getTicketCategories()
+    ]);
     const tools = getToolsForPreset(activePresetId);
+
+    // Inject valid category IDs as enum so the model picks the right one
+    const categoryIds = (ticketCategories || []).map(c => c.id).filter(Boolean);
+    if (categoryIds.length > 0) {
+      const createTicketTool = tools.find(t => t.name === 'create_ticket_report');
+      if (createTicketTool?.parameters?.properties?.category) {
+        createTicketTool.parameters.properties.category.enum = [...categoryIds, 'other'];
+        createTicketTool.parameters.properties.category.description =
+          `Issue category. Must be one of: ${categoryIds.join(', ')}, other`;
+      }
+    }
 
     console.log(`📝 AI response for user ${userId} (lang: ${detectedLanguage}, preset: ${activePresetId}, tools: ${tools.map(t => t.name).join(', ')})`);
 
