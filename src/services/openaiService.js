@@ -1077,4 +1077,38 @@ async function getActiveUsersCount() {
   }
 }
 
-module.exports = { getAIResponse, getChatCompletion, getThreadMetadata, getActiveUsersCount };
+/**
+ * Inject a system-level context note into a user's OpenAI conversation.
+ * Used to inform the AI about events that happened outside its chat flow
+ * (e.g. a resolution template was sent, a ticket was reopened, etc.).
+ *
+ * The message is stored in the conversation history but does NOT trigger
+ * an AI reply — we use store:false on a separate one-shot call so the
+ * injected item lands in the conversation without generating output.
+ *
+ * @param {string} userId       - The user's phone number (conversation key)
+ * @param {string} contextNote  - Plain-text system note to inject
+ */
+async function injectSystemContext(userId, contextNote) {
+  try {
+    const conversationId = await getOrCreateConversation(userId);
+
+    // Send a system message into the conversation without producing a reply.
+    // We use store:true (default when conversation is set) so the item
+    // is persisted and visible in future turns.
+    await openai.responses.create({
+      model: OPENAI_MODEL,
+      conversation: conversationId,
+      input: [{ role: 'system', content: contextNote }],
+      max_output_tokens: 1,   // Minimise cost — we only care about storing the input
+      truncation: 'auto'
+    });
+
+    console.log(`📌 Injected system context for user ${userId}: "${contextNote.substring(0, 80)}..."`);
+  } catch (error) {
+    // Non-critical — log and continue
+    console.error(`⚠️ Failed to inject system context for user ${userId}:`, error.message);
+  }
+}
+
+module.exports = { getAIResponse, getChatCompletion, getThreadMetadata, getActiveUsersCount, injectSystemContext };

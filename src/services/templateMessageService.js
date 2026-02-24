@@ -7,6 +7,7 @@
  * 2. Display content is generated using getTemplateDisplayContent()
  * 3. Message is saved to database with correct format
  * 4. Socket.io events are emitted for real-time UI updates
+ * 5. AI conversation context is injected so the assistant knows a template was sent
  *
  * IMPORTANT: Always use this service when sending templates to ensure
  * the CRM chat bubble displays the same content as WhatsApp.
@@ -162,6 +163,27 @@ const sendTemplateMessage = async (options) => {
     }
 
     console.log(`📤 Template '${templateName}' sent to ${phoneNumber}`);
+
+    // 10. Inject context into the AI conversation so it knows a template was sent.
+    //     This runs for every customer-facing template regardless of who triggered it.
+    //     Lazy require avoids circular dependency (openaiService requires templateMessageService
+    //     indirectly through ticketService).
+    try {
+        const { injectSystemContext } = require('./openaiService');
+        const senderLabel = sender === 'system' ? 'system (automated)' : (agentId ? 'an agent' : 'system');
+        const contextNote = [
+            `[SYSTEM EVENT - ${new Date().toISOString()}]`,
+            `A WhatsApp template message was sent to this customer by ${senderLabel}.`,
+            `Template name: ${templateName}`,
+            `Message content: ${displayContent || '(content unavailable)'}`,
+            `If the customer replies about this message, acknowledge it naturally and help them accordingly.`,
+            `Do NOT mention this system event directly to the customer.`
+        ].join('\n');
+        await injectSystemContext(phoneNumber, contextNote);
+    } catch (injectError) {
+        // Non-critical — AI context injection must never block the template send
+        console.error(`⚠️ Could not inject AI context after sending template '${templateName}':`, injectError.message);
+    }
 
     return {
         message: savedMessage,

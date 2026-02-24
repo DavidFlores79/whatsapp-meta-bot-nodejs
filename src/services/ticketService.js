@@ -521,8 +521,8 @@ class TicketService {
     /**
      * Send WhatsApp notification when ticket is resolved
      * Uses WhatsApp template to bypass 24-hour messaging window
-     * Note: This is a notification only - not saved to conversation history
-     * because it's sent automatically on resolution (not by agent action)
+     * Saves the message to conversation history and injects context into the AI
+     * so the assistant knows a resolution notification was sent to the customer.
      */
     async sendTicketResolvedNotification(ticket) {
         try {
@@ -552,22 +552,42 @@ class TicketService {
 
             // Template parameters (6 parameters for ticket_resolved template)
             const parameters = [
-                { type: 'text', text: customerName },           // {{1}} - Customer name
-                { type: 'text', text: ticket.ticketId },        // {{2}} - Ticket ID
+                { type: 'text', text: customerName },              // {{1}} - Customer name
+                { type: 'text', text: ticket.ticketId },           // {{2}} - Ticket ID
                 { type: 'text', text: ticket.resolution.summary }, // {{3}} - Solution summary
-                { type: 'text', text: agentName },              // {{4}} - Resolved by
-                { type: 'text', text: formattedDate },          // {{5}} - Date
-                { type: 'text', text: companyName }             // {{6}} - Company name
+                { type: 'text', text: agentName },                 // {{4}} - Resolved by
+                { type: 'text', text: formattedDate },             // {{5}} - Date
+                { type: 'text', text: companyName }                // {{6}} - Company name
             ];
 
-            // Use centralized template message service (notification only, not saved to DB)
             const templateMessageService = require('./templateMessageService');
-            await templateMessageService.sendTemplateNotification({
-                templateName: 'ticket_resolved_es',
-                languageCode: 'en', // Note: Template is in Spanish but marked as 'en' in database
-                parameters,
-                phoneNumber: customer.phoneNumber
-            });
+
+            // Resolve MongoDB IDs from populated fields (they may be objects or plain IDs)
+            const conversationMongoId = ticket.conversationId?._id || ticket.conversationId || null;
+            const customerMongoId = customer._id || null;
+
+            if (conversationMongoId && customerMongoId) {
+                // Save to DB + emit Socket.io so CRM chat shows the message
+                await templateMessageService.sendTemplateMessage({
+                    templateName: 'ticket_resolved_es',
+                    languageCode: 'en', // Template is in Spanish but marked as 'en' in database
+                    parameters,
+                    phoneNumber: customer.phoneNumber,
+                    customerId: customerMongoId,
+                    conversationId: conversationMongoId,
+                    agentId: agent?._id || null,
+                    sender: 'system'
+                });
+            } else {
+                // No conversation linked — fall back to notification-only (no DB save)
+                console.log(`⚠️ Ticket ${ticket.ticketId} has no linked conversation — sending notification only`);
+                await templateMessageService.sendTemplateNotification({
+                    templateName: 'ticket_resolved_es',
+                    languageCode: 'en',
+                    parameters,
+                    phoneNumber: customer.phoneNumber
+                });
+            }
 
             console.log(`📤 Ticket resolution template sent to ${customer.phoneNumber} for ticket ${ticket.ticketId}`);
         } catch (error) {

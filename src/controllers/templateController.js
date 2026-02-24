@@ -2,10 +2,7 @@ const templateService = require('../services/templateService');
 const Template = require('../models/Template');
 const Customer = require('../models/Customer');
 const Conversation = require('../models/Conversation');
-const Message = require('../models/Message');
-const whatsappService = require('../services/whatsappService');
-const { buildTemplateJSON } = require('../shared/whatsappModels');
-const { getTemplateDisplayContent } = require('../shared/processMessage');
+const templateMessageService = require('../services/templateMessageService');
 
 /**
  * Sync templates from Meta WhatsApp API
@@ -223,23 +220,6 @@ const sendTemplateToCustomer = async (req, res) => {
             });
         }
 
-        // Format parameters for WhatsApp API
-        const formattedParams = parameters ? parameters.map(param => ({
-            type: "text",
-            text: param
-        })) : [];
-
-        // Build template message
-        const templateMessage = buildTemplateJSON(
-            customer.phoneNumber,
-            template.name,
-            formattedParams,
-            template.language
-        );
-
-        // Send via WhatsApp
-        whatsappService.sendWhatsappResponse(templateMessage);
-
         // Find or create conversation
         let conversation = await Conversation.findOne({
             customerId: customer._id,
@@ -256,40 +236,23 @@ const sendTemplateToCustomer = async (req, res) => {
             });
         }
 
-        // Save message to database
-        const message = await Message.create({
-            conversationId: conversation._id,
+        // Format parameters for WhatsApp API
+        const formattedParams = parameters ? parameters.map(param => ({
+            type: "text",
+            text: param
+        })) : [];
+
+        // Send via centralized service (saves to DB, emits Socket.io, injects AI context)
+        const result = await templateMessageService.sendTemplateMessage({
+            templateName: template.name,
+            languageCode: template.language,
+            parameters: formattedParams,
+            phoneNumber: customer.phoneNumber,
             customerId: customer._id,
-            content: getTemplateDisplayContent(template, parameters),
-            type: 'template',
-            direction: 'outbound',
-            sender: 'agent',
-            agentId: req.agent?._id,
-            status: 'sent',
-            template: {
-                name: template.name,
-                language: template.language,
-                parameters: parameters || [],
-                category: template.category
-            }
+            conversationId: conversation._id,
+            agentId: req.agent?._id || null,
+            sender: 'agent'
         });
-
-        // Update template usage
-        await template.incrementUsage();
-
-        // Update conversation
-        await Conversation.findByIdAndUpdate(conversation._id, {
-            lastMessageAt: new Date(),
-            $inc: { messageCount: 1 }
-        });
-
-        // Emit Socket.io event
-        if (req.io) {
-            req.io.emit('new_message', {
-                conversationId: conversation._id,
-                message
-            });
-        }
 
         res.status(200).json({
             success: true,
@@ -297,7 +260,7 @@ const sendTemplateToCustomer = async (req, res) => {
             data: {
                 template: template.name,
                 customer: customer.phoneNumber,
-                messageId: message._id
+                messageId: result.message?._id
             }
         });
     } catch (error) {
@@ -379,23 +342,6 @@ const sendTemplateBulk = async (req, res) => {
         // Send template to each customer
         for (const customer of customers) {
             try {
-                // Format parameters (can be customized per customer if needed)
-                const formattedParams = parameters ? parameters.map(param => ({
-                    type: "text",
-                    text: param
-                })) : [];
-
-                // Build template message
-                const templateMessage = buildTemplateJSON(
-                    customer.phoneNumber,
-                    template.name,
-                    formattedParams,
-                    template.language
-                );
-
-                // Send via WhatsApp
-                whatsappService.sendWhatsappResponse(templateMessage);
-
                 // Find or create conversation
                 let conversation = await Conversation.findOne({
                     customerId: customer._id,
@@ -412,41 +358,27 @@ const sendTemplateBulk = async (req, res) => {
                     });
                 }
 
-                // Save message to database
-                const message = await Message.create({
-                    conversationId: conversation._id,
+                // Format parameters for WhatsApp API
+                const formattedParams = parameters ? parameters.map(param => ({
+                    type: "text",
+                    text: param
+                })) : [];
+
+                // Send via centralized service (saves to DB, emits Socket.io, injects AI context)
+                await templateMessageService.sendTemplateMessage({
+                    templateName: template.name,
+                    languageCode: template.language,
+                    parameters: formattedParams,
+                    phoneNumber: customer.phoneNumber,
                     customerId: customer._id,
-                    content: getTemplateDisplayContent(template, parameters),
-                    type: 'template',
-                    direction: 'outbound',
-                    sender: 'system',
-                    agentId: req.agent?._id,
-                    status: 'sent',
-                    template: {
-                        name: template.name,
-                        language: template.language,
-                        parameters: parameters || [],
-                        category: template.category
-                    }
+                    conversationId: conversation._id,
+                    agentId: req.agent?._id || null,
+                    sender: 'agent'
                 });
-
-                // Update conversation
-                await Conversation.findByIdAndUpdate(conversation._id, {
-                    lastMessageAt: new Date(),
-                    $inc: { messageCount: 1 }
-                });
-
-                // Emit Socket.io event
-                if (req.io) {
-                    req.io.emit('new_message', {
-                        conversationId: conversation._id,
-                        message
-                    });
-                }
 
                 results.sent++;
 
-                // Add delay to prevent rate limiting (adjust as needed)
+                // Delay to prevent rate limiting
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
             } catch (error) {
@@ -458,12 +390,6 @@ const sendTemplateBulk = async (req, res) => {
                 });
             }
         }
-
-        // Update template usage
-        await Template.findByIdAndUpdate(templateId, {
-            $inc: { usageCount: results.sent },
-            lastUsedAt: new Date()
-        });
 
         res.status(200).json({
             success: true,
