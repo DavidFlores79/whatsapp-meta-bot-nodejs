@@ -52,7 +52,7 @@ const TICKET_TOOLS = [
     {
         type: 'function',
         name: 'get_ticket_information',
-        description: 'Retrieves ticket information for the customer. ONLY call after the customer has confirmed the phone number or ticket ID to search. Customers can only access their own tickets.',
+        description: 'Retrieves ticket information for the customer. The current customer\'s phone is already known — do NOT ask for it unless they explicitly want to search by a different number. To look up a specific ticket, just ask for the ticket ID. To list recent tickets, set lookup_recent to true. Either ticket_id OR lookup_recent is sufficient to call this tool — never require both.',
         parameters: {
             type: 'object',
             properties: {
@@ -62,7 +62,7 @@ const TICKET_TOOLS = [
                 },
                 phone_number: {
                     type: 'string',
-                    description: 'Phone number to search tickets for. Defaults to the current customer\'s number.'
+                    description: 'Phone number to search tickets for. OPTIONAL — already defaults to the current customer\'s number. Only provide this if the customer explicitly asks to search by a different phone number.'
                 },
                 lookup_recent: {
                     type: 'boolean',
