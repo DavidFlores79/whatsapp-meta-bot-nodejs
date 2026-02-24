@@ -405,7 +405,9 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex flex-1 flex-col bg-whatsapp-dark relative pt-14 md:pt-0 min-w-0 overflow-hidden"
+  <div class="flex flex-1 flex-col bg-whatsapp-dark relative pt-14 md:pt-0 min-w-0"
+       [class.overflow-hidden]="currentView === 'chat'"
+       [class.overflow-auto]="currentView !== 'chat'"
        [ngClass]="{'flex': hasSelectedChat || currentView !== 'chat', 'hidden md:flex': !hasSelectedChat && currentView === 'chat'}">
 
     <!-- Show Chat Window when in chat view -->
@@ -420,7 +422,9 @@
 
     <!-- Show Router Outlet for other views (customers, templates, agents, reports, settings) -->
     <ng-container *ngIf="currentView !== 'chat'">
-      <router-outlet></router-outlet>
+      <div class="flex-1 min-h-0 flex flex-col">
+        <router-outlet></router-outlet>
+      </div>
     </ng-container>
   </div>
 </div>

@@ -1,4 +1,4 @@
-<div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full max-w-full overflow-hidden">
+<div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full max-w-full">
   <!-- Header with Stats -->
   <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 flex-none w-full max-w-full overflow-hidden">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -153,7 +153,7 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex-1 overflow-auto custom-scrollbar p-4 md:px-6">
+  <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:px-6">
     <!-- Loading State -->
     <div *ngIf="loading" class="bg-whatsapp-gray rounded-lg border border-gray-700 p-12 text-center">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-whatsapp-green"></div>
@@ -187,7 +187,7 @@
       </div>
 
     <!-- Table -->
-    <div *ngIf="tickets.length > 0" class="overflow-x-auto">
+    <div *ngIf="tickets.length > 0" class="overflow-x-auto w-full">
       <table class="w-full">
         <thead class="bg-whatsapp-dark border-b border-gray-700">
           <tr>
