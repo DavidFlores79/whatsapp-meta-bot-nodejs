@@ -1,4 +1,8 @@
 const { io } = require('../models/server');
+const autoTimeoutService = require('./autoTimeoutService');
+
+// Track which socket IDs belong to authenticated agents
+const authenticatedAgentSockets = new Set();
 
 //sockets
 io.on('connection', (socket) => {
@@ -9,6 +13,13 @@ io.on('connection', (socket) => {
         const { agentId } = data;
         socket.join(`agent_${agentId}`);
         console.log(`Agent ${agentId} joined room agent_${agentId}`);
+
+        const wasEmpty = authenticatedAgentSockets.size === 0;
+        authenticatedAgentSockets.add(socket.id);
+
+        if (wasEmpty) {
+            autoTimeoutService.resumeAutoTimeoutService();
+        }
 
         socket.emit('authenticated', { success: true, agentId });
     });
@@ -32,6 +43,14 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Socket disconnected:', socket.id);
+
+        if (authenticatedAgentSockets.has(socket.id)) {
+            authenticatedAgentSockets.delete(socket.id);
+
+            if (authenticatedAgentSockets.size === 0) {
+                autoTimeoutService.pauseAutoTimeoutService();
+            }
+        }
     });
 });
 

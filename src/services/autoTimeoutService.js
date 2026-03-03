@@ -187,6 +187,27 @@ async function manualResumeAI(conversationId, agentId) {
 }
 
 /**
+ * Pause the auto-timeout job (run one final check first)
+ */
+async function pauseAutoTimeoutService() {
+    if (!timeoutCheckInterval) return;
+    await checkInactiveConversations(); // final sweep before pausing
+    clearInterval(timeoutCheckInterval);
+    timeoutCheckInterval = null;
+    console.log('⏸️  Auto-timeout service paused (no agents connected)');
+}
+
+/**
+ * Resume the auto-timeout job if not already running
+ */
+function resumeAutoTimeoutService() {
+    if (timeoutCheckInterval) return;
+    checkInactiveConversations(); // immediate check on resume
+    timeoutCheckInterval = setInterval(checkInactiveConversations, CHECK_INTERVAL);
+    console.log('▶️  Auto-timeout service resumed (agent connected)');
+}
+
+/**
  * Get timeout configuration
  */
 function getTimeoutConfig() {
@@ -200,6 +221,8 @@ function getTimeoutConfig() {
 module.exports = {
     startAutoTimeoutService,
     stopAutoTimeoutService,
+    pauseAutoTimeoutService,
+    resumeAutoTimeoutService,
     checkInactiveConversations,
     manualResumeAI,
     getTimeoutConfig

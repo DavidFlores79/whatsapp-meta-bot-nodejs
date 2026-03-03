@@ -91,9 +91,7 @@ class Server {
     await dbConnection();
     // Initialize ticket system after DB connection
     await this.initializeTicketSystem();
-    // Start background services after DB is connected
-    const autoTimeoutService = require('../services/autoTimeoutService');
-    autoTimeoutService.startAutoTimeoutService();
+    // Auto-timeout service starts paused; socket.js resumes it when agents connect
   }
 
   async initializeTicketSystem() {
