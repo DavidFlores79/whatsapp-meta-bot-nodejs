@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const { dbConnection } = require("../database/config");
 const bodyParser = require("body-parser");
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config()
 
 
@@ -14,7 +16,7 @@ class Server {
     const http = require('http').createServer(this.app);
     const io = require('socket.io')(http, {
       cors: {
-        origin: "*", // Allow all origins for development
+        origin: process.env.ALLOWED_ORIGIN || false,
         methods: ["GET", "POST"]
       }
     });
@@ -52,30 +54,38 @@ class Server {
     this.app.use(express.json());
 
 
-    this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Access-Control-Allow-Request-Method');
-      res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-      res.header('Allow', 'GET, PUT, POST, DELETE, OPTIONS');
+    // Helmet sets X-Content-Type-Options, X-Frame-Options, HSTS, CSP and more
+    this.app.use(helmet());
 
-      // Security headers
-      res.header('X-Content-Type-Options', 'nosniff');
-      res.header('X-Frame-Options', 'DENY');
-      res.header('X-XSS-Protection', '1; mode=block');
-      res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // CORS — only needed if an external origin is explicitly configured (e.g. separate dev frontend)
+    if (process.env.ALLOWED_ORIGIN) {
+      this.app.use((req, res, next) => {
+        res.header('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN);
+        res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Access-Control-Allow-Request-Method');
+        res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+        res.header('Allow', 'GET, PUT, POST, DELETE, OPTIONS');
+        if (req.method === 'OPTIONS') return res.sendStatus(204);
+        next();
+      });
+    }
 
-      next();
-    });
+    // Rate limiting — 100 req/min per IP on all API routes
+    const apiLimit = rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false });
+    this.app.use('/api', apiLimit);
+
+    // Stricter limit for webhook endpoint (Meta sends bursts, but abuse protection is still needed)
+    const webhookLimit = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
+    this.app.use('/api/v2', webhookLimit);
 
     this.app.use(
       bodyParser.json({
-        limit: "20mb",
+        limit: "1mb",
       })
     );
 
     this.app.use(
       bodyParser.urlencoded({
-        limit: "20mb",
+        limit: "1mb",
         extended: true,
       })
     );
