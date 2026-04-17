@@ -148,7 +148,7 @@ const ECOMMERCE_TOOLS = [
                 },
                 payment_method: {
                     type: 'string',
-                    enum: ['cash', 'card', 'transfer', 'paypal'],
+                    enum: ['cash', 'credit_card', 'paypal', 'bank_transfer'],
                     description: 'Payment method. Default: cash'
                 },
                 address: {
