@@ -47,10 +47,10 @@ class Server {
     // Set to 1 to trust the first proxy hop (avoids ERR_ERL_PERMISSIVE_TRUST_PROXY)
     this.app.set('trust proxy', 1);
 
-    // Serve static files from Angular build
+    // Serve static files from Angular build (public/ is the deployed copy)
+    this.app.use(express.static("public"));
     const frontendPath = path.join(__dirname, '../../frontend/dist/frontend/browser');
     this.app.use(express.static(frontendPath));
-    this.app.use(express.static("public")); // Keep public for other assets if any
     this.app.use(express.json());
 
 
@@ -191,7 +191,7 @@ class Server {
 
     // Handle Angular routing - return index.html for all other routes
     this.app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../../frontend/dist/frontend/browser/index.html'));
+      res.sendFile(path.join(__dirname, '../../public/index.html'));
     });
   }
 
