@@ -56,10 +56,12 @@
       <div class="bg-whatsapp-dark rounded-lg p-6 border border-gray-700">
         <div class="flex items-start gap-6">
           <!-- Avatar -->
-          <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-600 flex-shrink-0">
-            <img *ngIf="customer.avatar" [src]="customer.avatar" [alt]="getCustomerName()" class="w-full h-full object-cover">
-            <div *ngIf="!customer.avatar" class="w-full h-full flex items-center justify-center text-white font-bold text-3xl">
-              {{ (customer.firstName || customer.phoneNumber)[0] }}
+          <div class="w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
+            <img *ngIf="resolveAvatar(customer.avatar)" [src]="resolveAvatar(customer.avatar)" [alt]="getCustomerName()" class="w-full h-full object-cover">
+            <div *ngIf="!resolveAvatar(customer.avatar)"
+                 class="w-full h-full flex items-center justify-center text-white font-bold text-3xl select-none"
+                 [style.background-color]="getAvatarColor()">
+              {{ getAvatarInitials() }}
             </div>
           </div>
 

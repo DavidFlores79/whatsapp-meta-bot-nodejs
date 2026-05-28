@@ -326,4 +326,32 @@ export class CustomerDetailComponent implements OnInit {
     const d = new Date(date);
     return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+
+  resolveAvatar(url: string | undefined): string | undefined {
+    if (!url) return undefined;
+    if (url.includes('pravatar.cc') || url.includes('ui-avatars.com')) return undefined;
+    return url;
+  }
+
+  getAvatarInitials(): string {
+    if (!this.customer) return '?';
+    const name = this.customer.firstName
+      ? (this.customer.firstName + (this.customer.lastName ? ' ' + this.customer.lastName : ''))
+      : this.customer.phoneNumber;
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  getAvatarColor(): string {
+    const colors = [
+      '#1E88E5', '#43A047', '#E53935', '#8E24AA',
+      '#F4511E', '#039BE5', '#00897B', '#FB8C00',
+      '#6D4C41', '#546E7A'
+    ];
+    const seed = this.customer?.firstName || this.customer?.phoneNumber || '';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
 }
