@@ -10,11 +10,12 @@ import { ChatService, Chat } from '../../../services/chat';
 import { ToastService } from '../../../services/toast';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, ChatListComponent, ChatWindowComponent],
+  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, ChatListComponent, ChatWindowComponent, AvatarComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })

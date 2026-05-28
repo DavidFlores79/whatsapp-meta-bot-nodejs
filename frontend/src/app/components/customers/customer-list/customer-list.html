@@ -253,14 +253,7 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                  <img *ngIf="resolveAvatar(customer.avatar)" [src]="resolveAvatar(customer.avatar)" [alt]="getCustomerName(customer)" class="w-full h-full object-cover">
-                  <div *ngIf="!resolveAvatar(customer.avatar)"
-                       class="w-full h-full flex items-center justify-center text-white font-semibold text-sm select-none"
-                       [style.background-color]="getAvatarColor(customer)">
-                    {{ getAvatarInitials(customer) }}
-                  </div>
-                </div>
+                <app-avatar [url]="customer.avatar" [name]="getCustomerName(customer)" size="sm" class="flex-shrink-0"></app-avatar>
                 <div>
                   <div class="font-medium text-gray-100">{{ getCustomerName(customer) }}</div>
                   <div class="text-xs text-gray-400">{{ customer.phoneNumber }}</div>

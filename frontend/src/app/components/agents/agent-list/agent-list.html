@@ -103,11 +103,7 @@
           <div class="flex items-start justify-between">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <div class="h-12 w-12 rounded-full bg-whatsapp-green bg-opacity-20 flex items-center justify-center">
-                  <span class="text-whatsapp-green font-semibold text-lg">
-                    {{ agent.firstName.charAt(0) }}{{ agent.lastName.charAt(0) }}
-                  </span>
-                </div>
+                <app-avatar [url]="agent.avatar" [name]="(agent.firstName || '') + ' ' + (agent.lastName || '')" size="md"></app-avatar>
               </div>
               <div class="ml-3">
                 <h3 class="text-lg font-medium text-gray-100">

@@ -7,11 +7,12 @@ import { CustomerService, Customer, CustomerFilters } from '../../../services/cu
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ImportCustomersModalComponent } from '../import-customers-modal/import-customers-modal';
 import { ToastService } from '../../../services/toast';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, ImportCustomersModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, ImportCustomersModalComponent, AvatarComponent],
   templateUrl: './customer-list.html',
   styleUrls: ['./customer-list.css']
 })
@@ -403,30 +404,4 @@ export class CustomerListComponent implements OnInit {
     this.showBulkActions = !this.showBulkActions;
   }
 
-  resolveAvatar(url: string | undefined): string | undefined {
-    if (!url) return undefined;
-    if (url.includes('pravatar.cc') || url.includes('ui-avatars.com')) return undefined;
-    return url;
-  }
-
-  getAvatarInitials(customer: Customer): string {
-    const name = customer.firstName
-      ? (customer.firstName + (customer.lastName ? ' ' + customer.lastName : ''))
-      : customer.phoneNumber;
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0].substring(0, 2).toUpperCase();
-  }
-
-  getAvatarColor(customer: Customer): string {
-    const colors = [
-      '#1E88E5', '#43A047', '#E53935', '#8E24AA',
-      '#F4511E', '#039BE5', '#00897B', '#FB8C00',
-      '#6D4C41', '#546E7A'
-    ];
-    const seed = customer.firstName || customer.phoneNumber || '';
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
-  }
 }

@@ -16,11 +16,12 @@ import { TemplateSenderComponent } from '../../templates/template-sender/templat
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge';
 import { TicketCreateModalComponent } from '../../tickets/ticket-create-modal/ticket-create-modal.component';
 import { Customer } from '../../../services/customer';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent, TicketCreateModalComponent],
+  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent, TicketCreateModalComponent, AvatarComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })
@@ -801,22 +802,5 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
     return config?.presetId === 'ecommerce' || config?.presetId === 'restaurant';
   }
 
-  getAvatarInitials(name: string): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0].substring(0, 2).toUpperCase();
-  }
-
-  getAvatarColor(name: string): string {
-    const colors = [
-      '#1E88E5', '#43A047', '#E53935', '#8E24AA',
-      '#F4511E', '#039BE5', '#00897B', '#FB8C00',
-      '#6D4C41', '#546E7A'
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
-  }
 }
 

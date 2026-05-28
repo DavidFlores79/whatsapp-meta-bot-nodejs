@@ -112,12 +112,7 @@
     <!-- Mobile Profile Section -->
     <div class="border-t border-gray-700 p-3">
       <div class="flex items-center gap-3 px-4 py-3" *ngIf="currentAgent">
-        <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center flex-shrink-0">
-          <img *ngIf="currentAgent.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
-          <span *ngIf="!currentAgent.avatar" class="text-white text-sm font-medium">
-            {{ (currentAgent.firstName || 'A')[0] }}{{ (currentAgent.lastName || '')[0] }}
-          </span>
-        </div>
+        <app-avatar [url]="currentAgent.avatar" [name]="(currentAgent.firstName || '') + ' ' + (currentAgent.lastName || '')" size="sm" class="flex-shrink-0"></app-avatar>
         <div class="flex-1 min-w-0">
           <span class="text-gray-100 text-sm font-medium block truncate">{{ currentAgent.firstName }} {{ currentAgent.lastName }}</span>
           <span class="text-xs text-gray-400 block truncate">{{ currentAgent.email }}</span>
@@ -295,12 +290,7 @@
           [class.justify-center]="sidebarCollapsed"
           class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-gray-200 hover:bg-whatsapp-gray rounded-lg transition-all"
           title="Profile & Account">
-          <div class="w-8 h-8 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center flex-shrink-0" *ngIf="currentAgent">
-            <img *ngIf="currentAgent.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
-            <span *ngIf="!currentAgent.avatar" class="text-white text-xs font-medium">
-              {{ (currentAgent.firstName || 'A')[0] }}{{ (currentAgent.lastName || '')[0] }}
-            </span>
-          </div>
+          <app-avatar *ngIf="currentAgent" [url]="currentAgent.avatar" [name]="(currentAgent.firstName || '') + ' ' + (currentAgent.lastName || '')" size="xs" class="flex-shrink-0"></app-avatar>
           <div *ngIf="!sidebarCollapsed && currentAgent" class="flex flex-col items-start min-w-0 flex-1">
             <span class="text-gray-100 text-sm font-medium truncate w-full">{{ currentAgent.firstName }} {{ currentAgent.lastName }}</span>
             <span class="text-xs text-gray-400 truncate w-full">{{ currentAgent.email }}</span>
@@ -313,12 +303,7 @@
              class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-whatsapp-dark border border-gray-700 rounded-lg shadow-2xl py-2">
           <div class="px-4 py-3 border-b border-gray-700">
             <div class="flex items-center gap-3" *ngIf="currentAgent">
-              <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600 flex-shrink-0">
-                <img *ngIf="currentAgent.avatar" [src]="currentAgent.avatar" [alt]="currentAgent.firstName" class="w-full h-full object-cover">
-                <div *ngIf="!currentAgent.avatar" class="w-full h-full flex items-center justify-center text-white font-medium">
-                  {{ (currentAgent.firstName || 'A')[0] }}{{ (currentAgent.lastName || '')[0] }}
-                </div>
-              </div>
+              <app-avatar [url]="currentAgent.avatar" [name]="(currentAgent.firstName || '') + ' ' + (currentAgent.lastName || '')" size="sm" class="flex-shrink-0"></app-avatar>
               <div class="flex-1 min-w-0">
                 <h3 class="text-gray-100 font-medium text-sm truncate">{{ currentAgent.firstName }} {{ currentAgent.lastName }}</h3>
                 <p class="text-xs text-gray-400 truncate">{{ currentAgent.email }}</p>

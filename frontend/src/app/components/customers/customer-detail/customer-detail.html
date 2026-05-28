@@ -56,14 +56,7 @@
       <div class="bg-whatsapp-dark rounded-lg p-6 border border-gray-700">
         <div class="flex items-start gap-6">
           <!-- Avatar -->
-          <div class="w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
-            <img *ngIf="resolveAvatar(customer.avatar)" [src]="resolveAvatar(customer.avatar)" [alt]="getCustomerName()" class="w-full h-full object-cover">
-            <div *ngIf="!resolveAvatar(customer.avatar)"
-                 class="w-full h-full flex items-center justify-center text-white font-bold text-3xl select-none"
-                 [style.background-color]="getAvatarColor()">
-              {{ getAvatarInitials() }}
-            </div>
-          </div>
+          <app-avatar [url]="customer.avatar" [name]="getCustomerName()" size="xl" class="flex-shrink-0"></app-avatar>
 
           <!-- Info -->
           <div class="flex-1">
