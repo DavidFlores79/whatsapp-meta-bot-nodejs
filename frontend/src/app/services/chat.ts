@@ -83,6 +83,12 @@ export interface Chat {
   phoneNumber?: string;
 }
 
+function resolveAvatar(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  if (url.includes('pravatar.cc') || url.includes('ui-avatars.com')) return undefined;
+  return url;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -175,7 +181,7 @@ export class ChatService {
         const newChats = activeConversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
           name: this.getCustomerName(conv.customerId),
-          avatar: conv.customerId?.avatar || undefined,
+          avatar: resolveAvatar(conv.customerId?.avatar),
           lastMessage: conv.lastMessage?.content || '',
           lastMessageTime: new Date(conv.lastMessage?.timestamp || conv.lastCustomerMessage || conv.updatedAt),
           unreadCount: 0,
@@ -496,7 +502,7 @@ export class ChatService {
     const newChat: Chat = {
       id: data.conversationId,
       name: data.customer?.name || data.customer?.phoneNumber || 'Unknown',
-      avatar: data.customer?.avatar || undefined,
+      avatar: resolveAvatar(data.customer?.avatar),
       lastMessage: 'New conversation',
       lastMessageTime: new Date(data.timestamp),
       unreadCount: 0,
@@ -549,7 +555,7 @@ export class ChatService {
               const newChat: Chat = {
                 id: conv._id,
                 name: this.getCustomerName(conv.customerId),
-                avatar: conv.customerId?.avatar || undefined,
+                avatar: resolveAvatar(conv.customerId?.avatar),
                 lastMessage: message.text || (message.type === 'image' ? '📷 Image' : 'Message'),
                 lastMessageTime: new Date(message.timestamp),
                 unreadCount: 1,

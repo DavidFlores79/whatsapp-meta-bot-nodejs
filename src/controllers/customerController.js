@@ -176,7 +176,7 @@ async function createCustomer(req, res) {
             firstName,
             lastName,
             email,
-            avatar: avatar || `https://i.pravatar.cc/150?u=${phoneNumber}`,
+            avatar: avatar || undefined,
             tags: tags || [],
             segment: segment || 'new',
             source: source || 'whatsapp',
@@ -642,7 +642,7 @@ async function bulkImportCustomers(req, res) {
                 // Create new customer
                 const customer = await Customer.create({
                     ...customerData,
-                    avatar: customerData.avatar || `https://i.pravatar.cc/150?u=${customerData.phoneNumber}`,
+                    avatar: customerData.avatar || undefined,
                     firstContact: new Date(),
                     lastInteraction: new Date()
                 });
