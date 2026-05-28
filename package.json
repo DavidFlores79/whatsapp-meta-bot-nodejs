@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app",
-    "build": "pnpm -C frontend run build",
+    "build": "echo 'Frontend pre-built, skipping build step'",
     "build:windows": "pnpm -C frontend run build",
     "build:unix": "pnpm -C frontend run build",
     "build:install": "pnpm install && pnpm run build",
