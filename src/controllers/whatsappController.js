@@ -269,7 +269,7 @@ const getConversations = async (req, res) => {
     const formattedConversations = conversations.map(conv => ({
       id: conv.customerId.phoneNumber, // Use phone as ID for frontend compatibility
       name: conv.customerId.firstName || conv.customerId.phoneNumber,
-      avatar: conv.customerId.avatar || `https://ui-avatars.com/api/?name=${conv.customerId.firstName || 'User'}&background=random`,
+      avatar: conv.customerId.avatar || undefined,
       lastMessage: conv.lastMessage?.content || 'No messages',
       lastMessageTime: conv.lastMessage?.timestamp || conv.createdAt,
       unreadCount: conv.unreadCount || 0,

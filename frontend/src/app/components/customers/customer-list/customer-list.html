@@ -1,4 +1,4 @@
-<div class="flex flex-col bg-whatsapp-dark text-gray-100 h-full min-h-0 w-full max-w-full overflow-hidden">
+<div class="flex flex-col bg-whatsapp-dark text-gray-100 w-full">
   <!-- Header with Stats -->
   <div class="bg-whatsapp-gray border-b border-gray-700 px-4 md:px-6 py-4 flex-none w-full max-w-full overflow-hidden">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -158,11 +158,16 @@
 
     <!-- Bulk Actions Menu -->
     <div *ngIf="showBulkActions && selectedCustomers.size > 0"
-         class="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+         class="mt-3 pt-3 border-t border-gray-700 flex flex-wrap gap-2">
       <button (click)="deleteSelected()"
               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
         <i class="fas fa-trash"></i>
         <span>{{ 'customers.deactivateSelected' | translate }}</span>
+      </button>
+      <button (click)="reactivateSelected()"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-redo"></i>
+        <span>{{ 'customers.reactivateSelected' | translate }}</span>
       </button>
       <button (click)="selectedCustomers.clear()"
               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
@@ -172,7 +177,7 @@
   </div>
 
   <!-- Table -->
-  <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 w-full max-w-full">
+  <div class="px-4 md:px-6 py-4 w-full">
     <!-- Loading State -->
     <div *ngIf="loading" class="flex items-center justify-center h-full">
       <div class="text-center">
@@ -248,12 +253,7 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-600 flex-shrink-0">
-                  <img *ngIf="customer.avatar" [src]="customer.avatar" [alt]="getCustomerName(customer)" class="w-full h-full object-cover">
-                  <div *ngIf="!customer.avatar" class="w-full h-full flex items-center justify-center text-white font-medium text-sm">
-                    {{ (customer.firstName || customer.phoneNumber)[0] }}
-                  </div>
-                </div>
+                <app-avatar [url]="customer.avatar" [name]="getCustomerName(customer)" size="sm" class="flex-shrink-0"></app-avatar>
                 <div>
                   <div class="font-medium text-gray-100">{{ getCustomerName(customer) }}</div>
                   <div class="text-xs text-gray-400">{{ customer.phoneNumber }}</div>

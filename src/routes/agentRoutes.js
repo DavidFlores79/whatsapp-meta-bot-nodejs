@@ -18,6 +18,7 @@ router.post('/auth/logout', authenticateToken, agentController.logout);
 router.get('/profile', authenticateToken, apiLimiter, agentController.getProfile);
 router.patch('/profile', authenticateToken, apiLimiter, agentController.updateProfile);
 router.patch('/status', authenticateToken, apiLimiter, agentController.updateStatus);
+router.patch('/change-password', authenticateToken, apiLimiter, agentController.changePassword);
 
 // =====================================
 // AGENT MANAGEMENT (Admin/Supervisor)

@@ -18,6 +18,24 @@ A complete WhatsApp business solution combining AI-powered conversation manageme
 - **Bulk Operations** - Import/Export customers (XLSX, XLS, CSV)
 - **Real-time Updates** - Socket.io integration for live notifications
 
+### 🎫 Universal Ticket System
+- **Multi-Business Support** - Isolated ticket pools for different business types (luxfree, ecommerce, restaurant, healthcare)
+- **Dynamic Categories** - Configurable ticket categories per business preset
+- **AI-Powered Creation** - Automatic ticket generation from conversations
+- **Ticket Lifecycle** - Status tracking (new, open, in_progress, resolved, closed)
+- **Auto-Assignment** - Load-balanced ticket distribution to agents
+- **Ticket Reopening** - Smart reopening with configurable time windows
+- **Business Type Isolation** - Complete data separation prevents cross-business contamination
+
+### 🛒 E-commerce Integration
+- **Product Search** - AI-assisted product discovery and recommendations
+- **Order Creation** - Complete order placement via WhatsApp conversation
+- **Order Tracking** - Real-time order status and delivery updates
+- **Support Tickets** - Automated ticket creation for returns, refunds, and issues
+- **Dual Workflow** - Seamless integration of sales (orders) and support (tickets)
+- **External API Integration** - Connects to e-commerce backend (La Bella Italia compatible)
+- **Preset-Based Activation** - E-commerce features only available with ecommerce preset
+
 ### 📱 WhatsApp Cloud API Integration
 - **Webhook Processing** - Fast response (<100ms) preventing timeouts
 - **Message Deduplication** - Eliminates duplicate responses (30-50% cost savings)
@@ -41,7 +59,7 @@ A complete WhatsApp business solution combining AI-powered conversation manageme
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Environment Setup
@@ -71,22 +89,32 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 **Production:**
 ```bash
-npm start
+pnpm start
 ```
 
 **Build Frontend:**
 ```bash
-npm run build
+pnpm run build
 ```
 
 **Create Admin User:**
 ```bash
-npm run create-admin
+pnpm run create-admin
 ```
 
 **Reset Admin Password:**
 ```bash
-npm run reset-admin
+pnpm run reset-admin
+```
+
+**Migrate Business Type Field (Required for multi-preset support):**
+```bash
+pnpm run migrate:business-type
+```
+
+**Test Business Isolation:**
+```bash
+pnpm run test:business-isolation
 ```
 
 ## Deployment
@@ -103,12 +131,12 @@ RATE_LIMIT_WINDOW_MS=900000
 
 **Development:**
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 **Production:**
 ```bash
-npm start
+pnpm start
 ```
 
 ## Deployment

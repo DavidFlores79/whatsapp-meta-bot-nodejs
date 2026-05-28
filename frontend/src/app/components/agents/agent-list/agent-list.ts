@@ -6,12 +6,13 @@ import { AgentService, Agent } from '../../../services/agent';
 import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
 import { AgentModalComponent } from '../agent-modal/agent-modal';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-agent-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, AgentModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, AgentModalComponent, AvatarComponent],
   templateUrl: './agent-list.html',
   styleUrls: ['./agent-list.css']
 })

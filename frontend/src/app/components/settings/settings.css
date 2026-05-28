@@ -273,9 +273,6 @@ button[class*="bg-gray-600"]:hover {
   pointer-events: all;
 }
 
-
-}
-
 /* Section headings */
 h3 {
   font-weight: 600;

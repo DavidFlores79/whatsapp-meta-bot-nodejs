@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const { dbConnection } = require("../database/config");
 const bodyParser = require("body-parser");
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config()
 
 
@@ -14,12 +16,16 @@ class Server {
     const http = require('http').createServer(this.app);
     const io = require('socket.io')(http, {
       cors: {
-        origin: "*", // Allow all origins for development
+        origin: process.env.ALLOWED_ORIGIN || false,
         methods: ["GET", "POST"]
       }
     });
     module.exports.io = io;
     require('../services/socket');
+
+    // Initialize template message service with Socket.io
+    const templateMessageService = require('../services/templateMessageService');
+    templateMessageService.setSocketIO(io);
 
     http.listen(this.port, () => {
       console.log(`Listen on port ${this.port}`);
@@ -28,10 +34,6 @@ class Server {
 
     //conectar a DB
     this.conectarDB();
-
-    // Initialize background services
-    const autoTimeoutService = require('../services/autoTimeoutService');
-    autoTimeoutService.startAutoTimeoutService();
 
     //middlewares
     this.middlewares(io);
@@ -42,39 +44,48 @@ class Server {
 
   middlewares(io) {
     // Trust proxy - required when behind reverse proxy (nginx, apache)
-    this.app.set('trust proxy', true);
+    // Set to 1 to trust the first proxy hop (avoids ERR_ERL_PERMISSIVE_TRUST_PROXY)
+    this.app.set('trust proxy', 1);
 
-    // Serve static files from Angular build
+    // Serve static files from Angular build (public/ is the deployed copy)
+    this.app.use(express.static("public"));
     const frontendPath = path.join(__dirname, '../../frontend/dist/frontend/browser');
     this.app.use(express.static(frontendPath));
-    this.app.use(express.static("public")); // Keep public for other assets if any
     this.app.use(express.json());
 
 
-    this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Access-Control-Allow-Request-Method');
-      res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-      res.header('Allow', 'GET, PUT, POST, DELETE, OPTIONS');
+    // Helmet sets X-Content-Type-Options, X-Frame-Options, HSTS, CSP and more
+    this.app.use(helmet());
 
-      // Security headers
-      res.header('X-Content-Type-Options', 'nosniff');
-      res.header('X-Frame-Options', 'DENY');
-      res.header('X-XSS-Protection', '1; mode=block');
-      res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // CORS — only needed if an external origin is explicitly configured (e.g. separate dev frontend)
+    if (process.env.ALLOWED_ORIGIN) {
+      this.app.use((req, res, next) => {
+        res.header('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN);
+        res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Access-Control-Allow-Request-Method');
+        res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+        res.header('Allow', 'GET, PUT, POST, DELETE, OPTIONS');
+        if (req.method === 'OPTIONS') return res.sendStatus(204);
+        next();
+      });
+    }
 
-      next();
-    });
+    // Rate limiting — 100 req/min per IP on all API routes
+    const apiLimit = rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false });
+    this.app.use('/api', apiLimit);
+
+    // Stricter limit for webhook endpoint (Meta sends bursts, but abuse protection is still needed)
+    const webhookLimit = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
+    this.app.use('/api/v2', webhookLimit);
 
     this.app.use(
       bodyParser.json({
-        limit: "20mb",
+        limit: "1mb",
       })
     );
 
     this.app.use(
       bodyParser.urlencoded({
-        limit: "20mb",
+        limit: "1mb",
         extended: true,
       })
     );
@@ -88,6 +99,79 @@ class Server {
 
   async conectarDB() {
     await dbConnection();
+    // Initialize ticket system after DB connection
+    await this.initializeTicketSystem();
+    // Auto-timeout service starts paused; socket.js resumes it when agents connect
+  }
+
+  async initializeTicketSystem() {
+    try {
+      const SystemSettings = require('./SystemSettings');
+      const configService = require('../services/configurationService');
+
+      console.log('🔍 Checking ticket system initialization...');
+
+      // Check if configurations exist
+      const ticketCategoriesExist = await SystemSettings.findOne({
+        key: 'ticket_categories'
+      });
+
+      if (!ticketCategoriesExist) {
+        console.log('🎫 Initializing ticket system with LUXFREE defaults...');
+
+        // Seed all default configurations
+        await SystemSettings.insertMany([
+          {
+            key: 'ticket_categories',
+            value: configService.getDefaultCategories(),
+            category: 'tickets',
+            description: 'Available ticket categories',
+            isEditable: true
+          },
+          {
+            key: 'assistant_configuration',
+            value: configService.getDefaultAssistantConfig(),
+            category: 'assistant',
+            description: 'AI assistant configuration',
+            isEditable: true
+          },
+          {
+            key: 'ticket_terminology',
+            value: configService.getDefaultTerminology(),
+            category: 'tickets',
+            description: 'Ticket system terminology',
+            isEditable: true
+          },
+          {
+            key: 'ticket_id_format',
+            value: configService.getDefaultIdFormat(),
+            category: 'tickets',
+            description: 'Ticket ID generation format',
+            isEditable: true
+          },
+          {
+            key: 'configuration_presets',
+            value: configService.getDefaultPresets(),
+            category: 'presets',
+            description: 'Industry configuration presets',
+            isEditable: true
+          },
+          {
+            key: 'assistant_instructions_template',
+            value: configService.getDefaultInstructionsTemplate(),
+            category: 'assistant',
+            description: 'AI assistant instructions template',
+            isEditable: true
+          }
+        ]);
+
+        console.log('✅ Ticket system initialized successfully');
+      } else {
+        console.log('✅ Ticket system already initialized');
+      }
+    } catch (error) {
+      console.error('❌ Error initializing ticket system:', error);
+    }
   }
 
   routes() {
@@ -98,13 +182,17 @@ class Server {
     this.app.use("/api/v2/customers", require("../routes/customerRoutes"));
     this.app.use("/api/v2/templates", require("../routes/templateRoutes"));
     this.app.use("/api/v2/crm-settings", require("../routes/crmSettingsRoutes"));
+    this.app.use("/api/v2/config", require("../routes/configurationRoutes"));
+    this.app.use("/api/v2/tickets", require("../routes/ticketRoutes"));
+    this.app.use("/api/v2/ecommerce", require("../routes/ecommerceRoutes")); // E-commerce integration
     this.app.use("/api/v2", require("../routes/whatsappRoutes"));
     this.app.use("/health", require("../routes/healthRoutes"));
     this.app.use("/info", require("../routes/infoRoutes"));
 
     // Handle Angular routing - return index.html for all other routes
     this.app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../../frontend/dist/frontend/browser/index.html'));
+      res.set('Cache-Control', 'no-store');
+      res.sendFile(path.join(__dirname, '../../public/index.html'));
     });
   }
 

@@ -257,7 +257,7 @@ Sé objetivo, justo y constructivo en tu análisis. Enfócate en ideas procesabl
                     content: prompt
                 }
             ], {
-                model: 'gpt-4o',
+                model: 'gpt-4o-mini',
                 temperature: 0.3,
                 response_format: { type: "json_object" }
             });

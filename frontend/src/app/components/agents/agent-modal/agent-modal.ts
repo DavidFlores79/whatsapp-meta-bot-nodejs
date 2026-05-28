@@ -222,6 +222,13 @@ export class AgentModalComponent implements OnInit, OnChanges {
       this.errors['lastName'] = 'Last name is required';
     }
 
+    // Phone number validation
+    if (!this.formData.phoneNumber) {
+      this.errors['phoneNumber'] = 'Phone number is required for WhatsApp notifications';
+    } else if (!/^\d{10,15}$/.test(this.formData.phoneNumber.replace(/[\s\-()]/g, ''))) {
+      this.errors['phoneNumber'] = 'Invalid phone number format (10-15 digits)';
+    }
+
     // Max concurrent chats validation
     if (this.formData.maxConcurrentChats < 1 || this.formData.maxConcurrentChats > 50) {
       this.errors['maxConcurrentChats'] = 'Must be between 1 and 50';
@@ -252,7 +259,7 @@ export class AgentModalComponent implements OnInit, OnChanges {
       firstName: this.formData.firstName,
       lastName: this.formData.lastName,
       role: this.formData.role,
-      phoneNumber: this.formData.phoneNumber || undefined
+      phoneNumber: this.formData.phoneNumber
     };
 
     this.agentService.createAgent(data).subscribe({
@@ -277,6 +284,7 @@ export class AgentModalComponent implements OnInit, OnChanges {
       firstName: this.formData.firstName,
       lastName: this.formData.lastName,
       role: this.formData.role,
+      phoneNumber: this.formData.phoneNumber,
       isActive: this.formData.isActive,
       maxConcurrentChats: this.formData.maxConcurrentChats,
       permissions: this.formData.permissions

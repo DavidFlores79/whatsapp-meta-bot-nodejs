@@ -91,13 +91,21 @@ async function getProfile(req, res) {
  */
 async function updateProfile(req, res) {
     try {
-        const { firstName, lastName, avatar, phoneNumber, settings, autoAssign, languages } = req.body;
+        let { firstName, lastName, avatar, phoneNumber, settings, autoAssign, languages } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
         if (avatar) updateData.avatar = avatar;
-        if (phoneNumber) updateData.phoneNumber = phoneNumber;
+        if (phoneNumber) {
+            // Format phone number (ensure consistent 12-digit format)
+            const { formatNumber } = require('../shared/processMessage');
+            if (phoneNumber.length === 13) {
+                phoneNumber = formatNumber(phoneNumber);
+                console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
+            }
+            updateData.phoneNumber = phoneNumber;
+        }
         if (settings) updateData.settings = settings;
         if (typeof autoAssign === 'boolean') updateData.autoAssign = autoAssign;
         if (languages && Array.isArray(languages)) updateData.languages = languages;
@@ -178,10 +186,17 @@ async function getAllAgents(req, res) {
  */
 async function createAgent(req, res) {
     try {
-        const { email, password, firstName, lastName, role, phoneNumber } = req.body;
+        let { email, password, firstName, lastName, role, phoneNumber } = req.body;
 
-        if (!email || !password || !firstName || !lastName) {
-            return res.status(400).json({ error: 'Required fields missing' });
+        if (!email || !password || !firstName || !lastName || !phoneNumber) {
+            return res.status(400).json({ error: 'Required fields missing: email, password, firstName, lastName, and phoneNumber are required' });
+        }
+
+        // Format phone number (ensure consistent 12-digit format)
+        const { formatNumber } = require('../shared/processMessage');
+        if (phoneNumber.length === 13) {
+            phoneNumber = formatNumber(phoneNumber);
+            console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
         }
 
         // Check if agent already exists
@@ -237,12 +252,21 @@ async function getAgentById(req, res) {
  */
 async function updateAgent(req, res) {
     try {
-        const { firstName, lastName, role, isActive, maxConcurrentChats, permissions } = req.body;
+        let { firstName, lastName, role, phoneNumber, isActive, maxConcurrentChats, permissions } = req.body;
 
         const updateData = {};
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
         if (role) updateData.role = role;
+        if (phoneNumber) {
+            // Format phone number (ensure consistent 12-digit format)
+            const { formatNumber } = require('../shared/processMessage');
+            if (phoneNumber.length === 13) {
+                phoneNumber = formatNumber(phoneNumber);
+                console.log(`📞 Formatted agent phone number from 13 to 12 digits: ${phoneNumber}`);
+            }
+            updateData.phoneNumber = phoneNumber;
+        }
         if (isActive !== undefined) updateData.isActive = isActive;
         if (maxConcurrentChats) updateData.maxConcurrentChats = maxConcurrentChats;
         if (permissions) updateData.permissions = permissions;
@@ -305,6 +329,38 @@ async function getAgentStatistics(req, res) {
     }
 }
 
+async function changePassword(req, res) {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+        }
+
+        const agent = await Agent.findById(req.agent._id).select('+password');
+        if (!agent) {
+            return res.status(404).json({ error: 'Agente no encontrado' });
+        }
+
+        const isMatch = await authService.comparePassword(currentPassword, agent.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+        }
+
+        const hashedPassword = await authService.hashPassword(newPassword);
+        await Agent.findByIdAndUpdate(req.agent._id, { password: hashedPassword });
+
+        return res.status(200).json({ msg: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     login,
     refreshToken,
@@ -317,5 +373,6 @@ module.exports = {
     getAgentById,
     updateAgent,
     deleteAgent,
-    getAgentStatistics
+    getAgentStatistics,
+    changePassword
 };

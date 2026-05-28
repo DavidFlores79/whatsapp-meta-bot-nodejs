@@ -158,6 +158,10 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string): Observable<{ msg: string }> {
+    return this.http.patch<{ msg: string }>(`${this.apiUrl}/change-password`, { currentPassword, newPassword });
+  }
+
   getCurrentAgent(): Agent | null {
     return this.currentAgentSubject.value;
   }

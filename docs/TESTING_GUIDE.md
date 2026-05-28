@@ -150,7 +150,7 @@ Open browser DevTools → Console:
 
 ### Messages still duplicating?
 1. Check `git log` - ensure commits `528398e` and `14e9828` are present
-2. Restart Node.js server: `npm run dev`
+2. Restart Node.js server: `pnpm run dev`
 3. Hard refresh browser: Cmd+Shift+R (Mac) / Ctrl+Shift+R (Windows)
 4. Check browser console for old cached JavaScript
 

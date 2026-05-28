@@ -42,6 +42,7 @@ export interface UpdateAgentRequest {
   firstName?: string;
   lastName?: string;
   role?: 'admin' | 'supervisor' | 'agent';
+  phoneNumber?: string;
   isActive?: boolean;
   maxConcurrentChats?: number;
   permissions?: string[];

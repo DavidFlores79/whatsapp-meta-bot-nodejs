@@ -1,28 +1,40 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ChatService, Chat } from '../../../services/chat';
 import { AuthService } from '../../../services/auth';
 import { ToastService } from '../../../services/toast';
+import { TicketService, Ticket } from '../../../services/ticket';
+import { EcommerceService, Order } from '../../../services/ecommerce';
+import { ConfigurationService } from '../../../services/configuration';
 import { Observable } from 'rxjs';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble';
 import { MessageInputComponent } from '../message-input/message-input';
 import { CustomerModalComponent } from '../../customers/customer-modal/customer-modal';
 import { TemplateSenderComponent } from '../../templates/template-sender/template-sender';
+import { StatusBadgeComponent } from '../../shared/status-badge/status-badge';
+import { TicketCreateModalComponent } from '../../tickets/ticket-create-modal/ticket-create-modal.component';
 import { Customer } from '../../../services/customer';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 
 @Component({
   selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent],
+  imports: [CommonModule, TranslateModule, MessageBubbleComponent, MessageInputComponent, CustomerModalComponent, TemplateSenderComponent, StatusBadgeComponent, TicketCreateModalComponent, AvatarComponent],
   templateUrl: './chat-window.html',
   styleUrls: ['./chat-window.css']
 })
 export class ChatWindowComponent implements OnInit, AfterViewChecked {
   selectedChat$: Observable<Chat | null>;
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  @ViewChild('scrollAnchor') private scrollAnchor!: ElementRef;
   isTyping = false;
   private typingTimeout: any;
+  private lastMessageCount = 0;
+  private lastChatId: string | null = null;
+  private shouldScroll = false;
+  private scrollAttempts = 0;
 
   // Customer Modal
   isCustomerModalOpen = false;
@@ -33,6 +45,12 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   isTemplateSenderOpen = false;
   selectedCustomerIdForTemplate?: string;
 
+  // Ticket Create Modal
+  isTicketCreateModalOpen = false;
+  ticketCustomerId?: string | null;
+  ticketConversationId?: string | null;
+  ticketCustomerPhone?: string | null;
+
   // Takeover Summary Modal
   isSummaryModalOpen = false;
   conversationSummary: any = null;
@@ -42,17 +60,72 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
   // Lifecycle actions loading states
   isResolvingChat = false;
   isClosingChat = false;
+
+  // Image Viewer
+  showImageViewer = false;
+  currentImageUrl = '';
+  currentImageFilename = '';
   isReopeningChat = false;
+
+  // Customer Tickets
+  customerTickets: Ticket[] = [];
+  isTicketPanelOpen = false;
+  isLoadingTickets = false;
+  isSendingTicketSummary = false;
+  private lastCustomerId: string | null = null;
+
+  // Customer Orders (ecommerce only)
+  customerOrders: Order[] = [];
+  isOrderPanelOpen = false;
+  isLoadingOrders = false;
+  isSendingOrderUpdate = false;
 
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
-    private toastService: ToastService
+    private router: Router,
+    private toastService: ToastService,
+    private ticketService: TicketService,
+    private ecommerceService: EcommerceService,
+    private configurationService: ConfigurationService
   ) {
     this.selectedChat$ = this.chatService.selectedChat$;
   }
 
   ngOnInit() {
+    // Track message count changes to determine when to scroll
+    this.selectedChat$.subscribe(chat => {
+      if (chat) {
+        const chatChanged = chat.id !== this.lastChatId;
+        const currentMessageCount = chat.messages?.length || 0;
+
+        if (chatChanged) {
+          // Chat switched - reset tracking
+          this.lastChatId = chat.id;
+          this.lastMessageCount = 0; // Reset to 0 so we scroll when messages load
+
+          // If messages are already loaded (cached), scroll immediately
+          if (currentMessageCount > 0) {
+            this.lastMessageCount = currentMessageCount;
+            this.shouldScroll = true;
+            this.forceScrollToBottom();
+          }
+          // Otherwise, wait for messages to load (handled by the else-if below)
+
+          // Fetch customer tickets when chat changes
+          this.fetchCustomerTickets(chat);
+          // Fetch customer orders when chat changes (ecommerce only)
+          this.fetchCustomerOrders(chat);
+        } else if (currentMessageCount > this.lastMessageCount) {
+          // Messages loaded for current chat OR new messages added - scroll to bottom
+          this.shouldScroll = true;
+          this.lastMessageCount = currentMessageCount;
+          // Force scroll when messages first load for a newly selected chat
+          this.forceScrollToBottom();
+        }
+      }
+    });
+
     // Subscribe to typing indicators
     this.chatService.onTyping().subscribe(typingData => {
       if (!typingData) {
@@ -75,16 +148,124 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         }
       });
     });
+
+    // Subscribe to conversation summaries (from auto-assignment or manual takeover)
+    this.chatService.conversationSummary$.subscribe(summaryData => {
+      if (summaryData && summaryData.summary) {
+        // Validate that summary has actual content before showing modal
+        const hasContent = summaryData.summary.briefSummary ||
+                          summaryData.summary.keyPoints?.length > 0 ||
+                          summaryData.summary.customerIntent;
+
+        if (hasContent) {
+          console.log('📊 Received summary from service:', summaryData.source);
+          this.conversationSummary = summaryData.summary;
+          this.isSummaryModalOpen = true;
+        } else {
+          console.log('⚠️ Summary received but has no content, skipping modal');
+        }
+      }
+    });
   }
 
   ngAfterViewChecked() {
-    this.scrollToBottom();
+    // Only scroll to bottom when messages are added, not on every change
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
   }
 
   scrollToBottom(): void {
     try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-    } catch (err) { }
+      // Multiple attempts to ensure scroll works
+      const scroll = () => {
+        if (this.scrollAnchor?.nativeElement) {
+          // Method 1: Use scrollIntoView on anchor element at bottom
+          this.scrollAnchor.nativeElement.scrollIntoView({ behavior: 'auto', block: 'end' });
+        } else if (this.scrollContainer?.nativeElement) {
+          // Method 2: Fallback to scrollTop
+          const element = this.scrollContainer.nativeElement;
+          element.scrollTop = element.scrollHeight;
+        }
+      };
+
+      // Immediate scroll
+      scroll();
+
+      // Delayed scroll to ensure DOM is rendered
+      setTimeout(scroll, 50);
+      setTimeout(scroll, 150);
+    } catch (err) {
+      console.error('Scroll error:', err);
+    }
+  }
+
+  /**
+   * Force scroll to bottom with multiple delayed attempts
+   * Used when switching chats or loading messages for the first time
+   */
+  forceScrollToBottom(): void {
+    // Use requestAnimationFrame to wait for DOM render
+    requestAnimationFrame(() => {
+      this.scrollToBottom();
+      // Additional delayed scrolls to ensure DOM is fully rendered with all messages
+      setTimeout(() => this.scrollToBottom(), 50);
+      setTimeout(() => this.scrollToBottom(), 100);
+      setTimeout(() => this.scrollToBottom(), 200);
+      setTimeout(() => this.scrollToBottom(), 400);
+    });
+  }
+
+  /**
+   * Group messages by date for date separators
+   */
+  groupMessagesByDate(messages: any[]): { date: string, dateLabel: string, messages: any[] }[] {
+    if (!messages || messages.length === 0) return [];
+
+    const groups: { [key: string]: any[] } = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    messages.forEach(msg => {
+      const msgDate = new Date(msg.timestamp);
+      msgDate.setHours(0, 0, 0, 0);
+      const dateKey = msgDate.toISOString().split('T')[0];
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(msg);
+    });
+
+    // Convert to array and add labels
+    return Object.keys(groups)
+      .sort()
+      .map(dateKey => {
+        const msgDate = new Date(dateKey);
+        let dateLabel: string;
+
+        if (msgDate.getTime() === today.getTime()) {
+          dateLabel = 'Today';
+        } else if (msgDate.getTime() === yesterday.getTime()) {
+          dateLabel = 'Yesterday';
+        } else {
+          // Format as "December 27, 2024"
+          dateLabel = msgDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        }
+
+        return {
+          date: dateKey,
+          dateLabel,
+          messages: groups[dateKey]
+        };
+      });
   }
 
   /**
@@ -155,8 +336,10 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
         console.log('Conversation taken over successfully', response);
         this.isTakingOver = false;
 
-        // Show summary modal if available
+        // Emit summary through the service for consistent handling
         if (response.summary) {
+          // The summary will be shown via the conversationSummary$ subscription
+          // This ensures consistent behavior for both manual and auto-assignment
           this.conversationSummary = response.summary;
           this.isSummaryModalOpen = true;
         }
@@ -316,23 +499,19 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Close conversation (final state)
    */
   closeConversation(chatId: string) {
-    if (!confirm('Are you sure you want to close this conversation? This action marks it as complete.')) {
-      return;
-    }
-
     this.isClosingChat = true;
 
     this.chatService.closeConversation(chatId).subscribe({
       next: () => {
         console.log('Conversation closed');
         this.isClosingChat = false;
-        this.toastService.success('Conversation closed successfully.');
+        this.toastService.success('Conversación cerrada exitosamente.');
       },
       error: (err) => {
         console.error('Close failed:', err);
         this.isClosingChat = false;
-        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
-        this.toastService.error(`Failed to close conversation: ${errorMessage}`);
+        const errorMessage = err.error?.error || err.error?.message || 'Error desconocido';
+        this.toastService.error(`Error al cerrar conversación: ${errorMessage}`);
       }
     });
   }
@@ -341,24 +520,287 @@ export class ChatWindowComponent implements OnInit, AfterViewChecked {
    * Reopen closed conversation (admin/supervisor only)
    */
   reopenConversation(chatId: string) {
-    if (!confirm('Are you sure you want to reopen this closed conversation?')) {
-      return;
-    }
-
     this.isReopeningChat = true;
 
     this.chatService.reopenConversation(chatId).subscribe({
       next: () => {
         console.log('Conversation reopened');
         this.isReopeningChat = false;
-        this.toastService.success('Conversation reopened successfully.');
+        this.toastService.success('Conversación reabierta exitosamente.');
       },
       error: (err) => {
         console.error('Reopen failed:', err);
         this.isReopeningChat = false;
-        const errorMessage = err.error?.error || err.error?.message || 'Unknown error';
-        this.toastService.error(`Failed to reopen conversation: ${errorMessage}`);
+        const errorMessage = err.error?.error || err.error?.message || 'Error desconocido';
+        this.toastService.error(`Error al reabrir conversación: ${errorMessage}`);
       }
     });
   }
+
+  /**
+   * Create ticket for current conversation
+   */
+  createTicket(chat: Chat) {
+    if (!chat.customerId) {
+      this.toastService.warning('Please save customer information first');
+      return;
+    }
+
+    // Extract customer ID
+    const customerId = typeof chat.customerId === 'string'
+      ? chat.customerId
+      : (chat.customerId as any)._id;
+
+    // Open ticket creation modal with conversation context
+    this.ticketCustomerId = customerId;
+    this.ticketConversationId = chat.id;
+    this.ticketCustomerPhone = chat.phoneNumber;
+    this.isTicketCreateModalOpen = true;
+  }
+
+  /**
+   * Close ticket create modal
+   */
+  closeTicketCreateModal() {
+    this.isTicketCreateModalOpen = false;
+    this.ticketCustomerId = null;
+    this.ticketConversationId = null;
+    this.ticketCustomerPhone = null;
+  }
+
+  /**
+   * Handle ticket created
+   */
+  onTicketCreated(ticket: any) {
+    this.toastService.success(`Ticket ${ticket.ticketId} created successfully`);
+    this.closeTicketCreateModal();
+  }
+
+  /**
+   * Open image viewer modal
+   */
+  openImageViewer(event: { url: string; filename: string }) {
+    this.currentImageUrl = event.url;
+    this.currentImageFilename = event.filename;
+    this.showImageViewer = true;
+  }
+
+  /**
+   * Close image viewer modal
+   */
+  closeImageViewer() {
+    this.showImageViewer = false;
+    this.currentImageUrl = '';
+    this.currentImageFilename = '';
+  }
+
+  /**
+   * Fetch customer tickets for the current chat
+   */
+  fetchCustomerTickets(chat: Chat) {
+    // Reset ticket panel state when chat changes
+    this.isTicketPanelOpen = false;
+    this.customerTickets = [];
+
+    // Get customer ID from chat
+    const customerId = typeof chat.customerId === 'string'
+      ? chat.customerId
+      : (chat.customerId as any)?._id;
+
+    if (!customerId || customerId === this.lastCustomerId) {
+      return;
+    }
+
+    this.lastCustomerId = customerId;
+    this.isLoadingTickets = true;
+
+    this.ticketService.getTicketsByCustomer(customerId).subscribe({
+      next: (tickets) => {
+        // Filter to show only open tickets (not resolved/closed)
+        this.customerTickets = tickets.filter(t =>
+          !['resolved', 'closed'].includes(t.status)
+        );
+        this.isLoadingTickets = false;
+      },
+      error: (err) => {
+        console.error('Error fetching customer tickets:', err);
+        this.isLoadingTickets = false;
+      }
+    });
+  }
+
+  /**
+   * Toggle ticket panel visibility
+   */
+  toggleTicketPanel() {
+    this.isTicketPanelOpen = !this.isTicketPanelOpen;
+  }
+
+  /**
+   * Get open ticket count
+   */
+  getOpenTicketCount(): number {
+    return this.customerTickets.length;
+  }
+
+  /**
+   * Send ticket summary to customer via WhatsApp
+   */
+  sendTicketSummary(ticket: Ticket, chat: Chat) {
+    if (this.isSendingTicketSummary) return;
+
+    this.isSendingTicketSummary = true;
+
+    this.ticketService.sendTicketSummary(ticket._id, chat.id).subscribe({
+      next: () => {
+        this.isSendingTicketSummary = false;
+        // Message will appear via Socket.io
+      },
+      error: (err) => {
+        console.error('Error sending ticket summary:', err);
+        this.isSendingTicketSummary = false;
+        this.toastService.error('Error al enviar el resumen del ticket');
+      }
+    });
+  }
+
+  /**
+   * Get status label in Spanish
+   */
+  getTicketStatusLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'new': 'Nuevo',
+      'open': 'Abierto',
+      'in_progress': 'En progreso',
+      'pending_customer': 'Pendiente',
+      'waiting_internal': 'Esperando',
+      'resolved': 'Resuelto',
+      'closed': 'Cerrado'
+    };
+    return statusLabels[status] || status;
+  }
+
+  /**
+   * Get status color class for ticket badge
+   */
+  getTicketStatusClass(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'new': 'bg-gray-500',
+      'open': 'bg-blue-500',
+      'in_progress': 'bg-yellow-500',
+      'pending_customer': 'bg-purple-500',
+      'waiting_internal': 'bg-orange-500',
+      'resolved': 'bg-green-500',
+      'closed': 'bg-gray-600'
+    };
+    return colorMap[status] || 'bg-gray-500';
+  }
+
+  /**
+   * Fetch customer orders for the current chat (ecommerce only)
+   */
+  fetchCustomerOrders(chat: Chat) {
+    // Reset order panel state when chat changes
+    this.isOrderPanelOpen = false;
+    this.customerOrders = [];
+
+    // Only fetch orders for ecommerce business type
+    // Check active preset from configuration service
+    const config = this.configurationService.assistantConfigSubject.value;
+    if (!config || (config.presetId !== 'ecommerce' && config.presetId !== 'restaurant')) {
+      return;
+    }
+
+    const phoneNumber = chat.phoneNumber;
+    if (!phoneNumber) {
+      return;
+    }
+
+    this.isLoadingOrders = true;
+
+    this.ecommerceService.getActiveOrders(phoneNumber).subscribe({
+      next: (response) => {
+        this.customerOrders = response.orders;
+        this.isLoadingOrders = false;
+      },
+      error: (err) => {
+        console.error('Error fetching customer orders:', err);
+        this.isLoadingOrders = false;
+      }
+    });
+  }
+
+  /**
+   * Toggle order panel visibility
+   */
+  toggleOrderPanel() {
+    this.isOrderPanelOpen = !this.isOrderPanelOpen;
+  }
+
+  /**
+   * Get active order count
+   */
+  getActiveOrderCount(): number {
+    return this.customerOrders.length;
+  }
+
+  /**
+   * Send order update to customer via WhatsApp
+   */
+  sendOrderUpdate(order: Order, chat: Chat) {
+    if (this.isSendingOrderUpdate) return;
+
+    this.isSendingOrderUpdate = true;
+
+    this.ecommerceService.sendOrderUpdate(order.id, chat.id).subscribe({
+      next: () => {
+        this.isSendingOrderUpdate = false;
+        this.toastService.success('Actualización de orden enviada');
+        // Message will appear via Socket.io
+      },
+      error: (err) => {
+        console.error('Error sending order update:', err);
+        this.isSendingOrderUpdate = false;
+        this.toastService.error('Error al enviar la actualización de la orden');
+      }
+    });
+  }
+
+  /**
+   * Get order status label in Spanish
+   */
+  getOrderStatusLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'pending': 'Pendiente',
+      'processing': 'Procesando',
+      'shipped': 'Enviado',
+      'delivered': 'Entregado',
+      'cancelled': 'Cancelado'
+    };
+    return statusLabels[status] || status;
+  }
+
+  /**
+   * Get status color class for order badge
+   */
+  getOrderStatusClass(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'pending': 'bg-yellow-500',
+      'processing': 'bg-blue-500',
+      'shipped': 'bg-purple-500',
+      'delivered': 'bg-green-500',
+      'cancelled': 'bg-red-500'
+    };
+    return colorMap[status] || 'bg-gray-500';
+  }
+
+  /**
+   * Check if current business type is ecommerce
+   */
+  isEcommerceBusiness(chat: Chat): boolean {
+    const config = this.configurationService.assistantConfigSubject.value;
+    return config?.presetId === 'ecommerce' || config?.presetId === 'restaurant';
+  }
+
 }
+

@@ -23,7 +23,11 @@ const agentSchema = new mongoose.Schema({
         required: true
     },
     avatar: String,
-    phoneNumber: String,
+    phoneNumber: {
+        type: String,
+        required: [true, 'Phone number is required for WhatsApp notifications'],
+        trim: true
+    },
 
     // Role & Permissions
     role: {

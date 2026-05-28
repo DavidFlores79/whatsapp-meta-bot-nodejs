@@ -27,7 +27,19 @@
       "Bash(powershell:*)",
       "Bash(grep:*)",
       "Bash(kill:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Skill(explore-plan)",
+      "Skill(explore-plan:*)",
+      "Bash(mkdir:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(git mv:*)",
+      "Bash(xcopy /E /Y /I \"frontend\\\\dist\\\\frontend\\\\browser\\\\*\" \"public\"\")",
+      "Bash(git rm:*)",
+      "Bash(git reset:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git tag:*)",
+      "Bash(gh release create:*)"
     ],
     "deny": [],
     "ask": []
@@ -38,6 +50,19 @@
     "playwright"
   ],
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/build-frontend-on-commit.sh",
+            "timeout": 120,
+            "statusMessage": "Building frontend before commit..."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

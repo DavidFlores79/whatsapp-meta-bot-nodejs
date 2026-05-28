@@ -175,9 +175,23 @@ async function sendReply(req, res) {
             return res.status(404).json({ error: 'Conversation not found' });
         }
 
-        // Verify agent is assigned
-        if (conversation.assignedAgent?.toString() !== agentId.toString()) {
-            return res.status(403).json({ error: 'Conversation not assigned to you' });
+        // Verify agent is assigned - handle both ObjectId and string comparison
+        const assignedAgentId = conversation.assignedAgent?._id || conversation.assignedAgent;
+        const isAssigned = assignedAgentId && assignedAgentId.toString() === agentId.toString();
+
+        if (!isAssigned) {
+            console.log('[sendReply] Assignment check failed:', {
+                conversationId,
+                assignedAgent: conversation.assignedAgent,
+                assignedAgentId: assignedAgentId?.toString(),
+                requestingAgentId: agentId.toString(),
+                isAIEnabled: conversation.isAIEnabled
+            });
+            // Provide more helpful error message
+            const errorMsg = conversation.assignedAgent
+                ? 'Conversation is assigned to another agent'
+                : 'You must take over the conversation first';
+            return res.status(403).json({ error: errorMsg });
         }
 
         // Send message
@@ -193,6 +207,107 @@ async function sendReply(req, res) {
         return res.json({ message: newMessage });
     } catch (error) {
         console.error('Send reply error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * POST /api/v2/conversations/:id/reply-media
+ * Send media (image/document/video) to customer
+ */
+async function sendMediaReply(req, res) {
+    try {
+        const conversationId = req.params.id;
+        const agentId = req.agent._id;
+
+        // Check if file was uploaded
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const { caption } = req.body;
+        const { buffer, originalname, mimetype } = req.file;
+
+        // Validate file size (WhatsApp limits: 16MB for media, 100MB for documents)
+        const maxSize = mimetype.startsWith('video/') ? 16 * 1024 * 1024 :
+                        mimetype.startsWith('image/') ? 5 * 1024 * 1024 :
+                        100 * 1024 * 1024; // documents up to 100MB
+
+        if (buffer.length > maxSize) {
+            const maxMB = Math.floor(maxSize / (1024 * 1024));
+            return res.status(400).json({
+                error: `File too large. Maximum size for this file type is ${maxMB}MB`
+            });
+        }
+
+        // Validate MIME type
+        const allowedTypes = [
+            // Images
+            'image/jpeg', 'image/png', 'image/webp',
+            // Documents
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            // Video
+            'video/mp4', 'video/3gpp',
+            // Audio
+            'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg'
+        ];
+
+        if (!allowedTypes.includes(mimetype)) {
+            return res.status(400).json({
+                error: `File type not supported. Allowed types: images (jpeg, png, webp), documents (pdf, doc, xls, ppt, txt), video (mp4), audio (aac, mp3, amr, ogg)`
+            });
+        }
+
+        // Get conversation with customer info
+        const conversation = await Conversation.findById(conversationId)
+            .populate('customerId');
+
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        // Verify agent is assigned - handle both ObjectId and string comparison
+        const assignedAgentId = conversation.assignedAgent?._id || conversation.assignedAgent;
+        const isAssigned = assignedAgentId && assignedAgentId.toString() === agentId.toString();
+
+        if (!isAssigned) {
+            console.log('[sendMediaReply] Assignment check failed:', {
+                conversationId,
+                assignedAgent: conversation.assignedAgent,
+                assignedAgentId: assignedAgentId?.toString(),
+                requestingAgentId: agentId.toString(),
+                isAIEnabled: conversation.isAIEnabled
+            });
+            // Provide more helpful error message
+            const errorMsg = conversation.assignedAgent
+                ? 'Conversation is assigned to another agent'
+                : 'You must take over the conversation first';
+            return res.status(403).json({ error: errorMsg });
+        }
+
+        // Send media message
+        const newMessage = await agentMessageRelayService.sendMediaMessageToCustomer(
+            conversationId,
+            conversation.customerId._id,
+            agentId,
+            conversation.customerId.phoneNumber,
+            buffer,
+            originalname,
+            mimetype,
+            caption || '',
+            'web'
+        );
+
+        return res.json({ message: newMessage });
+    } catch (error) {
+        console.error('Send media reply error:', error);
         return res.status(500).json({ error: error.message });
     }
 }
@@ -239,6 +354,7 @@ async function getConversationMessages(req, res) {
         // Get all messages for the conversation, sorted by timestamp ascending (oldest first)
         const messages = await Message.find({ conversationId })
             .populate('agentId', 'firstName lastName avatar')
+            .populate('replyTo', 'content type sender timestamp attachments media')
             .sort({ timestamp: 1 })
             .limit(parseInt(limit))
             .skip(parseInt(skip));
@@ -689,6 +805,7 @@ module.exports = {
     releaseConversation,
     transferConversation,
     sendReply,
+    sendMediaReply,
     getThreadMetadata,
     getConversationMessages,
     resumeAI,

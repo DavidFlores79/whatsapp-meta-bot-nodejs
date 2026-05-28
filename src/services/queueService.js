@@ -12,6 +12,7 @@ const { buildTextJSON } = require("../shared/whatsappModels");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Customer = require("../models/Customer");
+const Ticket = require("../models/Ticket");
 const { io } = require("../models/server");
 
 // Message queue configuration
@@ -91,22 +92,38 @@ async function processUserQueue(userId) {
     console.log(`📝 Combined message (${combinedText.length} chars):`);
     console.log(`   "${combinedText.substring(0, 100)}${combinedText.length > 100 ? '...' : ''}"`);
 
+    // CHECK FOR RECENTLY RESOLVED TICKETS - Auto-reopen if customer responds
+    await checkAndReopenResolvedTickets(conversationId, messagesToProcess[0].customerId, combinedText);
+
     // If assigned to agent, route to agent instead of AI
     if (conversation && conversation.assignedAgent && !conversation.isAIEnabled) {
       console.log(`📨 Conversation assigned to agent ${conversation.assignedAgent.email} - Routing to agent`);
 
-      // Emit to specific agent via socket
-      io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
-        conversationId: conversation._id,
-        customerId: messagesToProcess[0].customerId,
-        customerPhone: userId,
-        message: combinedText,
-        messageCount: messagesToProcess.length,
-        timestamp: new Date()
-      });
-
-      // Save messages to database
+      // Save messages to database first, then emit with full data
       for (const msg of messagesToProcess) {
+        // Extract reply context from WhatsApp message object if present
+        let replyToId = null;
+        let replyToData = null;
+        if (msg.object?.context?.id) {
+          // Find the original message by WhatsApp message ID
+          const originalMessage = await Message.findOne({ 
+            whatsappMessageId: msg.object.context.id,
+            conversationId: msg.conversationId
+          });
+          if (originalMessage) {
+            replyToId = originalMessage._id;
+            replyToData = {
+              id: originalMessage._id.toString(),
+              text: originalMessage.content,
+              type: originalMessage.type,
+              sender: (originalMessage.sender === 'agent' || originalMessage.sender === 'ai') ? 'me' : 'other',
+              attachments: originalMessage.attachments,
+              media: originalMessage.media
+            };
+            console.log(`📎 Message is reply to: ${msg.object.context.id} -> ${originalMessage._id}`);
+          }
+        }
+
         const newMessage = new Message({
           conversationId: msg.conversationId,
           customerId: msg.customerId,
@@ -115,12 +132,22 @@ async function processUserQueue(userId) {
           direction: 'inbound',
           sender: 'customer',
           whatsappMessageId: msg.id,
-          status: 'delivered'
+          status: 'delivered',
+          replyTo: replyToId
         });
         await newMessage.save();
 
-        // Message already sent to agent via customer_message event above
-        // No need to emit new_message here
+        // Emit to specific agent via socket with full message data including replyTo
+        io.to(`agent_${conversation.assignedAgent._id}`).emit('customer_message', {
+          conversationId: conversation._id,
+          customerId: msg.customerId,
+          customerPhone: userId,
+          message: msg.text,
+          messageId: newMessage._id.toString(),
+          timestamp: newMessage.timestamp,
+          type: msg.type || 'text',
+          replyTo: replyToData
+        });
       }
 
       // Update conversation stats
@@ -149,6 +176,30 @@ async function processUserQueue(userId) {
 
     // Save messages first
     for (const msg of messagesToProcess) {
+      // Extract reply context from WhatsApp message object if present
+      let replyToId = null;
+      let replyToData = null;
+      
+      if (msg.object?.context?.id) {
+        // Find the original message by WhatsApp message ID
+        const originalMessage = await Message.findOne({ 
+          whatsappMessageId: msg.object.context.id,
+          conversationId: msg.conversationId
+        });
+        
+        if (originalMessage) {
+          replyToId = originalMessage._id;
+          replyToData = {
+            id: originalMessage._id.toString(),
+            text: originalMessage.content,
+            type: originalMessage.type,
+            sender: (originalMessage.sender === 'agent' || originalMessage.sender === 'ai') ? 'me' : 'other',
+            attachments: originalMessage.attachments,
+            media: originalMessage.media
+          };
+        }
+      }
+
       const newMessage = new Message({
         conversationId: msg.conversationId,
         customerId: msg.customerId,
@@ -157,18 +208,21 @@ async function processUserQueue(userId) {
         direction: 'inbound',
         sender: 'customer',
         whatsappMessageId: msg.id,
-        status: 'delivered'
+        status: 'delivered',
+        replyTo: replyToId
       });
       await newMessage.save();
 
-      // Emit customer message to frontend
+      // Emit customer message to frontend with replyTo data
       io.emit('new_message', {
         chatId: conversationId,
         message: {
           id: newMessage._id.toString(),
           text: newMessage.content,
           sender: 'other',
-          timestamp: newMessage.timestamp
+          timestamp: newMessage.timestamp,
+          type: msg.type || 'text',
+          replyTo: replyToData
         }
       });
     }
@@ -225,11 +279,15 @@ async function processUserQueue(userId) {
 
     console.log(`🤖 OpenAI response received in ${duration}s (length: ${aiReply.length} chars)`);
 
-    // Send response to WhatsApp
+    // Send response to WhatsApp and capture message ID
     const replyPayload = buildTextJSON(userId, aiReply);
-    whatsappService.sendWhatsappResponse(replyPayload);
+    console.log(`📤 Sending to WhatsApp API...`);
+    const sendResult = await whatsappService.sendWhatsappResponse(replyPayload);
+    console.log(`📤 WhatsApp API response:`, JSON.stringify(sendResult));
+    const whatsappMessageId = sendResult?.messageId;
 
     console.log(`✅ Single AI response sent to ${userId} for ${messagesToProcess.length} message(s)`);
+    console.log(`📤 AI message whatsappMessageId: ${whatsappMessageId}`);
     console.log(`🔓 Queue processing finished for ${userId}\n`);
 
     // Update conversation stats
@@ -253,7 +311,7 @@ async function processUserQueue(userId) {
     // NOTE: User messages are already saved in whatsappController.js before calling handlers
     // No need to save them again here - this was causing duplicate messages
 
-    // Save AI response to history
+    // Save AI response to history with WhatsApp message ID
     try {
       const customerId = messagesToProcess[0].customerId;
       const aiMessage = new Message({
@@ -263,7 +321,8 @@ async function processUserQueue(userId) {
         type: 'text',
         direction: 'outbound',
         sender: 'ai',
-        status: 'sent'
+        status: 'sent',
+        whatsappMessageId
       });
       await aiMessage.save();
 
@@ -292,6 +351,92 @@ async function processUserQueue(userId) {
     // Clean up
     userQueues.delete(userId);
     queueTimers.delete(userId);
+  }
+}
+
+/**
+ * Check for recently resolved tickets and auto-reopen if customer responds
+ * @param {string} conversationId - Conversation ID
+ * @param {string} customerId - Customer ID
+ * @param {string} messageText - Customer's message
+ */
+async function checkAndReopenResolvedTickets(conversationId, customerId, messageText) {
+  try {
+    // Find resolved tickets from the last 48 hours
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+    const resolvedTickets = await Ticket.find({
+      conversationId: conversationId,
+      customerId: customerId,
+      status: 'resolved',
+      'resolution.resolvedAt': { $gte: twoDaysAgo }
+    })
+      .populate('customerId', 'firstName lastName phoneNumber')
+      .sort({ 'resolution.resolvedAt': -1 });
+
+    if (resolvedTickets.length === 0) {
+      return; // No recently resolved tickets
+    }
+
+    // Auto-reopen the most recent resolved ticket
+    const ticketToReopen = resolvedTickets[0];
+
+    console.log(`🔄 Auto-reopening ticket ${ticketToReopen.ticketId} - Customer responded after resolution`);
+
+    // Update ticket status to open
+    ticketToReopen.status = 'open';
+
+    // Add note about auto-reopen
+    if (!ticketToReopen.notes) {
+      ticketToReopen.notes = [];
+    }
+    ticketToReopen.notes.push({
+      content: `Ticket automáticamente reabierto. Cliente respondió: "${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}"`,
+      agent: null,
+      isInternal: true,
+      timestamp: new Date()
+    });
+
+    await ticketToReopen.save();
+
+    // Populate and emit Socket.io event
+    const populatedTicket = await Ticket.findById(ticketToReopen._id)
+      .populate('customerId', 'firstName lastName phoneNumber')
+      .populate('assignedAgent', 'firstName lastName email')
+      .populate('resolution.resolvedBy', 'firstName lastName')
+      .populate('notes.agent', 'firstName lastName');
+
+    if (io) {
+      io.emit('ticket_status_changed', {
+        ticket: populatedTicket,
+        previousStatus: 'resolved'
+      });
+    }
+
+    // Send notification to customer
+    const customer = ticketToReopen.customerId;
+    const configService = require('./configurationService');
+    const configData = await configService.getAssistantConfig();
+    const companyName = configData.companyName || process.env.COMPANY_NAME || 'LUXFREE';
+
+    const reopenMessage = `🔄 *Ticket Reabierto*
+
+Hola ${customer.firstName},
+
+Tu ticket *${ticketToReopen.ticketId}* ha sido reabierto ya que detectamos que aún necesitas ayuda.
+
+Un agente revisará tu mensaje y te responderá pronto.
+
+Gracias por tu paciencia.
+- Equipo ${companyName}`;
+
+    const messagePayload = buildTextJSON(customer.phoneNumber, reopenMessage);
+    await whatsappService.sendWhatsappResponse(messagePayload);
+
+    console.log(`✅ Ticket ${ticketToReopen.ticketId} auto-reopened and notification sent`);
+  } catch (error) {
+    console.error('❌ Error checking/reopening resolved tickets:', error);
+    // Don't throw - this shouldn't break message processing
   }
 }
 

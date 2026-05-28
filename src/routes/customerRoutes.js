@@ -64,10 +64,16 @@ router.patch('/:id/tags', customerController.updateCustomerTags);
 // Block/unblock customer
 router.patch('/:id/block', customerController.toggleBlockCustomer);
 
+// Reactivate customer (change status from inactive to active)
+router.patch('/:id/reactivate', customerController.reactivateCustomer);
+
 // Delete customer (soft delete by default)
 router.delete('/:id', customerController.deleteCustomer);
 
 // Get customer conversations
 router.get('/:id/conversations', customerController.getCustomerConversations);
+
+// Get customer tickets
+router.get('/:customerId/tickets', require('../controllers/ticketController').getCustomerTickets);
 
 module.exports = router;

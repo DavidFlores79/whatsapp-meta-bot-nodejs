@@ -1,19 +1,24 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 import { AuthService, Agent } from './auth';
 import { ToastService } from './toast';
+import { NotificationService } from './notification';
 
 export interface Message {
   id: string;
   text: string;
-  sender: 'me' | 'other';
+  sender: 'me' | 'other' | 'system';
   timestamp: Date;
   type?: string;
   status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
   isAI?: boolean; // Flag to indicate AI-generated message
+  isSystemMessage?: boolean; // Flag for system messages (assignment transitions, etc.)
+  systemMessageType?: 'agent_assigned' | 'agent_released' | 'ai_resumed';
+  agentName?: string; // Agent name (for both regular agent messages and system transitions)
+  agentId?: string; // Agent ID for identification
   attachments?: Array<{
     type: string;
     url: string;
@@ -33,12 +38,35 @@ export interface Message {
     parameters?: string[];
     category?: string;
   };
+  media?: {
+    type: string;
+    filename?: string;
+    mimeType?: string;
+    url?: string;
+  };
+  // Reply context - when message is a reply to another message
+  replyTo?: {
+    id: string;
+    text: string;
+    type?: string;
+    sender: 'me' | 'other' | 'system';
+    attachments?: Array<{
+      type: string;
+      url: string;
+      filename?: string;
+    }>;
+    media?: {
+      type: string;
+      url?: string;
+      filename?: string;
+    };
+  };
 }
 
 export interface Chat {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
   lastMessage: string;
   lastMessageTime: Date;
   unreadCount: number;
@@ -53,6 +81,12 @@ export interface Chat {
   status?: string;
   customerId?: string;
   phoneNumber?: string;
+}
+
+function resolveAvatar(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  if (url.includes('pravatar.cc') || url.includes('ui-avatars.com')) return undefined;
+  return url;
 }
 
 @Injectable({
@@ -70,10 +104,21 @@ export class ChatService {
   private metadataUpdateSubject = new BehaviorSubject<any>(null);
   private newMessageSubject = new BehaviorSubject<any>(null);
 
+  // Store conversation summaries from auto-assignment
+  private conversationSummaries = new Map<string, any>();
+  private conversationSummarySubject = new BehaviorSubject<any>(null);
+
   chats$ = this.chatsSubject.asObservable();
-  selectedChat$ = this.selectedChatIdSubject.asObservable().pipe(
-    map(chatId => this.mockChats.find(c => c.id === chatId) || null)
+  // Use combineLatest to emit when EITHER chatId changes OR chats array updates (e.g., messages loaded)
+  selectedChat$ = combineLatest([
+    this.selectedChatIdSubject.asObservable(),
+    this.chatsSubject.asObservable()
+  ]).pipe(
+    map(([chatId, chats]) => chats.find(c => c.id === chatId) || null)
   );
+
+  // Observable for conversation summaries (when auto-assigned or manually taken over)
+  conversationSummary$ = this.conversationSummarySubject.asObservable();
 
   /**
    * Get currently selected chat ID
@@ -85,7 +130,8 @@ export class ChatService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private notificationService: NotificationService
   ) {
     this.initSocket();
 
@@ -135,13 +181,13 @@ export class ChatService {
         const newChats = activeConversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
           name: this.getCustomerName(conv.customerId),
-          avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+          avatar: resolveAvatar(conv.customerId?.avatar),
           lastMessage: conv.lastMessage?.content || '',
           lastMessageTime: new Date(conv.lastMessage?.timestamp || conv.lastCustomerMessage || conv.updatedAt),
           unreadCount: 0,
           messages: [],
           assignedAgent: conv.assignedAgent,
-          isAIEnabled: conv.isAIEnabled !== false, // Default to true if not specified
+          isAIEnabled: conv.isAIEnabled !== false,
           status: conv.status,
           customerId: conv.customerId?._id,
           phoneNumber: conv.customerId?.phoneNumber
@@ -164,12 +210,12 @@ export class ChatService {
 
   private loadMessages(chatId: string) {
     return this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/messages`).pipe(
-      tap(response => {
+      tap(async (response) => {
         const chat = this.mockChats.find(c => c.id === chatId);
         if (chat) {
           // Map backend message format to frontend Message format
           const backendMessages = response.messages || [];
-          chat.messages = backendMessages.map((msg: any) => ({
+          let messages: Message[] = backendMessages.map((msg: any) => ({
             id: msg._id,
             text: msg.content,
             // Agent and AI messages show on the right (sender: 'me')
@@ -181,8 +227,83 @@ export class ChatService {
             status: msg.status,
             attachments: msg.attachments,
             location: msg.location,
-            template: msg.template
+            template: msg.template,
+            // Include media information for images/documents/videos/audio
+            media: msg.media,
+            // Include agent information if available (populated by backend)
+            agentName: msg.agentId
+              ? `${msg.agentId.firstName} ${msg.agentId.lastName}`.trim()
+              : undefined,
+            agentId: msg.agentId?._id,
+            // Include reply context if this message is a reply to another message
+            replyTo: msg.replyTo ? {
+              id: msg.replyTo._id,
+              text: msg.replyTo.content,
+              type: msg.replyTo.type,
+              sender: (msg.replyTo.sender === 'agent' || msg.replyTo.sender === 'ai') ? 'me' : 'other',
+              attachments: msg.replyTo.attachments,
+              media: msg.replyTo.media
+            } : undefined
           }));
+
+          // Fetch assignment history to inject context markers
+          try {
+            const historyResponse = await firstValueFrom(
+              this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/assignment-history`)
+            );
+
+            if (historyResponse?.history && historyResponse.history.length > 0) {
+              // Sort assignment history by assignedAt (oldest first)
+              const sortedHistory = [...historyResponse.history].sort((a, b) =>
+                new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime()
+              );
+
+              // Create system messages for each assignment transition
+              const systemMessages: Message[] = [];
+
+              sortedHistory.forEach((assignment: any) => {
+                const agentName = assignment.agentId
+                  ? `${assignment.agentId.firstName} ${assignment.agentId.lastName}`
+                  : 'Agent';
+
+                // Add "Agent assigned" marker
+                systemMessages.push({
+                  id: `system-assigned-${assignment._id}`,
+                  text: `🔵 ${agentName} joined the conversation`,
+                  sender: 'system',
+                  timestamp: new Date(assignment.assignedAt),
+                  isSystemMessage: true,
+                  systemMessageType: 'agent_assigned',
+                  agentName: agentName
+                });
+
+                // Add "Agent released" marker if released
+                if (assignment.releasedAt) {
+                  systemMessages.push({
+                    id: `system-released-${assignment._id}`,
+                    text: `🟢 AI resumed control (${agentName} left)`,
+                    sender: 'system',
+                    timestamp: new Date(assignment.releasedAt),
+                    isSystemMessage: true,
+                    systemMessageType: 'ai_resumed',
+                    agentName: agentName
+                  });
+                }
+              });
+
+              // Merge system messages with regular messages and sort by timestamp
+              messages = [...messages, ...systemMessages].sort((a, b) =>
+                a.timestamp.getTime() - b.timestamp.getTime()
+              );
+
+              console.log(`📋 Injected ${systemMessages.length} context markers into conversation timeline`);
+            }
+          } catch (error) {
+            console.error('Failed to load assignment history for context markers:', error);
+            // Continue without context markers
+          }
+
+          chat.messages = messages;
           this.chatsSubject.next([...this.mockChats]);
         }
       })
@@ -250,14 +371,15 @@ export class ChatService {
       console.log('Customer message (assigned to me):', data);
       if (data && data.conversationId && data.message) {
         this.handleNewMessage(data.conversationId, {
-          id: Date.now().toString(),
+          id: data.messageId || Date.now().toString(),
           text: data.message,
           sender: 'other',
           timestamp: new Date(data.timestamp),
           type: data.type || 'text',
           status: data.status,
           attachments: data.attachments,
-          location: data.location
+          location: data.location,
+          replyTo: data.replyTo
         });
       }
     });
@@ -265,23 +387,38 @@ export class ChatService {
     this.socket.on('conversation_assigned', (data: any) => {
       console.log('Conversation assigned to me:', data);
 
-      // Play notification sound
-      this.playNotificationSound();
+      // Store summary for later display
+      if (data.summary) {
+        console.log('📊 Storing conversation summary for', data.conversationId);
+        this.conversationSummaries.set(data.conversationId, data.summary);
+      }
 
       // Update existing conversation or add it if not present
       const existingChat = this.mockChats.find(c => c.id === data.conversationId);
+      const customerName = data.customerName || existingChat?.name || 'Unknown Customer';
+
+      // Extract lastMessage text properly
+      let lastMessageText = 'New conversation';
+      if (data.lastMessage) {
+        // Handle if lastMessage is a string or object
+        lastMessageText = typeof data.lastMessage === 'string'
+          ? data.lastMessage
+          : (data.lastMessage.content || data.lastMessage.text || 'New conversation');
+      } else if (existingChat?.lastMessage) {
+        lastMessageText = existingChat.lastMessage;
+      }
+
       if (existingChat) {
         // Update assignment info - use current agent as assignedAgent
         existingChat.assignedAgent = this.currentAgent?._id || 'unknown';
         existingChat.isAIEnabled = false;
         existingChat.status = 'assigned';
         existingChat.name = data.customerName || existingChat.name;
-        existingChat.lastMessage = data.lastMessage || existingChat.lastMessage;
+        existingChat.lastMessage = lastMessageText;
         this.chatsSubject.next([...this.mockChats]);
         console.log(`✅ Updated conversation ${data.conversationId} with assignment to agent ${this.currentAgent?._id}`);
 
-        // Show notification with customer name
-        const customerName = data.customerName || existingChat.name || 'Unknown Customer';
+        // Show toast notification
         this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
 
         // Check if agent is viewing a different conversation
@@ -293,9 +430,15 @@ export class ChatService {
         // Conversation not in list, reload all to get the new conversation
         console.log('🔄 Conversation not found in list, reloading...');
         this.loadConversations(this.currentAgent);
-        const customerName = data.customerName || 'Unknown Customer';
         this.toastService.info(`🔔 New conversation assigned: ${customerName}`, 5000);
       }
+
+      // Show comprehensive notifications (sound, desktop, badge)
+      this.notificationService.notifyNewConversation(
+        customerName,
+        lastMessageText,
+        data.conversationId
+      );
     });
 
     this.socket.on('agent_typing', (data: any) => {
@@ -319,31 +462,7 @@ export class ChatService {
     });
   }
 
-  /**
-   * Play notification sound
-   */
-  private playNotificationSound() {
-    try {
-      // Create a short notification sound using Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = 800; // Frequency in Hz
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (error) {
-      console.warn('Could not play notification sound:', error);
-    }
-  }
 
   /**
    * Observable for typing indicator
@@ -383,7 +502,7 @@ export class ChatService {
     const newChat: Chat = {
       id: data.conversationId,
       name: data.customer?.name || data.customer?.phoneNumber || 'Unknown',
-      avatar: data.customer?.avatar || `https://i.pravatar.cc/150?u=${data.customer?.phoneNumber}`,
+      avatar: resolveAvatar(data.customer?.avatar),
       lastMessage: 'New conversation',
       lastMessageTime: new Date(data.timestamp),
       unreadCount: 0,
@@ -436,7 +555,7 @@ export class ChatService {
               const newChat: Chat = {
                 id: conv._id,
                 name: this.getCustomerName(conv.customerId),
-                avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+                avatar: resolveAvatar(conv.customerId?.avatar),
                 lastMessage: message.text || (message.type === 'image' ? '📷 Image' : 'Message'),
                 lastMessageTime: new Date(message.timestamp),
                 unreadCount: 1,
@@ -471,16 +590,71 @@ export class ChatService {
       console.error('Error loading messages:', error);
     }
 
-    // Reset unread count and clear "assigned" status for NEW indicator
+    const chat = this.mockChats.find(c => c.id === chatId);
+
+    // Show summary in these cases:
+    // 1. Summary was stored during takeover/auto-assignment (conversationSummaries Map)
+    // 2. Conversation has status 'assigned' and is assigned to current agent (newly assigned)
+    if (this.conversationSummaries.has(chatId)) {
+      const summary = this.conversationSummaries.get(chatId);
+      console.log('📊 Found stored summary for conversation, emitting to components');
+      this.conversationSummarySubject.next({
+        conversationId: chatId,
+        summary: summary,
+        source: 'auto-assignment'
+      });
+      // Clear the summary after showing it once
+      this.conversationSummaries.delete(chatId);
+    } else if (chat && chat.status === 'assigned' && this.isAssignedToCurrentAgent(chat)) {
+      // Fetch summary for newly assigned conversation that agent is viewing for first time
+      console.log('🔍 Fetching summary for newly assigned conversation...');
+      try {
+        const historyResponse = await firstValueFrom(
+          this.http.get<any>(`${this.apiUrl}/conversations/${chatId}/assignment-history`)
+        );
+
+        if (historyResponse?.history && historyResponse.history.length > 0) {
+          // Get the most recent (active) assignment
+          const activeAssignment = historyResponse.history.find((h: any) => !h.releasedAt);
+
+          if (activeAssignment?.contextSummary?.aiSummary) {
+            console.log('✅ Using stored AI summary from assignment history');
+            this.conversationSummarySubject.next({
+              conversationId: chatId,
+              summary: activeAssignment.contextSummary.aiSummary,
+              source: 'assignment-history'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch assignment history:', error);
+        // Not critical, continue without summary
+      }
+    }
+
+    // Reset unread count when chat is viewed
     const chatIndex = this.mockChats.findIndex(c => c.id === chatId);
     if (chatIndex !== -1) {
       this.mockChats[chatIndex].unreadCount = 0;
-      // Clear the "assigned" status once viewed (keeps assignedAgent but removes NEW badge)
-      if (this.mockChats[chatIndex].status === 'assigned') {
-        this.mockChats[chatIndex].status = 'active';
-      }
+      // Keep status as 'assigned' - it should only change when agent explicitly resolves/releases
+      // The status determines button visibility, NOT just the "NEW" badge
       this.chatsSubject.next([...this.mockChats]);
     }
+  }
+
+  /**
+   * Check if conversation is assigned to current agent
+   */
+  private isAssignedToCurrentAgent(chat: Chat): boolean {
+    if (!this.currentAgent || !chat.assignedAgent) {
+      return false;
+    }
+
+    const assignedAgentId = typeof chat.assignedAgent === 'string'
+      ? chat.assignedAgent
+      : chat.assignedAgent._id;
+
+    return assignedAgentId === this.currentAgent._id;
   }
 
   /**
@@ -514,6 +688,59 @@ export class ChatService {
         this.toastService.error(`Failed to send message: ${errorMessage}`, 6000);
       }
     });
+  }
+
+  /**
+   * Send media message (image, document, video, audio) to current chat
+   */
+  sendMediaMessage(file: File, caption: string = ''): Observable<any> {
+    const currentChatId = this.selectedChatIdSubject.value;
+    if (!currentChatId) {
+      return new Observable(observer => {
+        observer.error(new Error('No chat selected'));
+      });
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+
+    return this.http.post(`${this.apiUrl}/conversations/${currentChatId}/reply-media`, formData).pipe(
+      tap((response: any) => {
+        // Add message to chat using server response data (includes Cloudinary URL)
+        const mediaType = file.type.startsWith('image/') ? 'image' :
+                          file.type.startsWith('video/') ? 'video' :
+                          file.type.startsWith('audio/') ? 'audio' : 'document';
+
+        // Use server response for media URL if available
+        const serverMessage = response.message;
+        const mediaUrl = serverMessage?.media?.url || null;
+
+        const newMessage: Message = {
+          id: serverMessage?._id || Date.now().toString(),
+          text: caption || `[${mediaType}: ${file.name}]`,
+          sender: 'me',
+          timestamp: new Date(),
+          status: serverMessage?.status || 'sent',
+          type: mediaType,
+          media: {
+            type: mediaType,
+            filename: file.name,
+            mimeType: file.type,
+            url: mediaUrl
+          },
+          // Include attachments for message-bubble compatibility
+          attachments: mediaUrl ? [{
+            type: mediaType,
+            url: mediaUrl,
+            filename: file.name
+          }] : undefined
+        };
+        this.handleNewMessage(currentChatId, newMessage);
+      })
+    );
   }
 
   // ======================================

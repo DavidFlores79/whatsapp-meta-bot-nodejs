@@ -1,5 +1,7 @@
 const Conversation = require('../models/Conversation');
 const Agent = require('../models/Agent');
+const AgentAssignmentHistory = require('../models/AgentAssignmentHistory');
+const Message = require('../models/Message');
 
 // Configuration
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
@@ -84,6 +86,44 @@ async function resumeAIForConversation(conversation, agent) {
         const previousAgent = agent;
 
         // Update conversation
+        const releaseTime = new Date();
+
+        // Find active assignment history record
+        const assignmentHistory = await AgentAssignmentHistory.findOne({
+            conversationId: conversation._id,
+            agentId: agent._id,
+            releasedAt: null // Still active
+        }).sort({ assignedAt: -1 });
+
+        if (assignmentHistory) {
+            // Calculate agent metrics
+            const agentMessages = await Message.countDocuments({
+                conversationId: conversation._id,
+                sender: 'agent',
+                agentId: agent._id,
+                timestamp: { $gte: assignmentHistory.assignedAt }
+            });
+
+            // Update assignment history with auto-timeout info
+            assignmentHistory.releasedAt = releaseTime;
+            assignmentHistory.calculateDuration();
+            assignmentHistory.releaseReason = 'auto_timeout_inactivity';
+            assignmentHistory.releaseMethod = 'timeout';
+            assignmentHistory.finalStatus = 'open'; // Reopened for AI
+            
+            assignmentHistory.agentSummary = {
+                messagesSent: agentMessages,
+                issueResolved: false,
+                resolutionNotes: `Auto-released due to agent inactivity (${INACTIVITY_TIMEOUT / 60000} minutes)`,
+                followUpRequired: true // Likely needs follow-up since agent was inactive
+            };
+
+            await assignmentHistory.save();
+            console.log(`✅ Assignment history updated for auto-timeout: ${assignmentHistory._id}`);
+        } else {
+            console.warn('⚠️ No active assignment history found for auto-timeout');
+        }
+
         conversation.assignedAgent = null;
         conversation.assignedAt = null;
         conversation.isAIEnabled = true;
@@ -147,6 +187,27 @@ async function manualResumeAI(conversationId, agentId) {
 }
 
 /**
+ * Pause the auto-timeout job (run one final check first)
+ */
+async function pauseAutoTimeoutService() {
+    if (!timeoutCheckInterval) return;
+    await checkInactiveConversations(); // final sweep before pausing
+    clearInterval(timeoutCheckInterval);
+    timeoutCheckInterval = null;
+    console.log('⏸️  Auto-timeout service paused (no agents connected)');
+}
+
+/**
+ * Resume the auto-timeout job if not already running
+ */
+function resumeAutoTimeoutService() {
+    if (timeoutCheckInterval) return;
+    checkInactiveConversations(); // immediate check on resume
+    timeoutCheckInterval = setInterval(checkInactiveConversations, CHECK_INTERVAL);
+    console.log('▶️  Auto-timeout service resumed (agent connected)');
+}
+
+/**
  * Get timeout configuration
  */
 function getTimeoutConfig() {
@@ -160,6 +221,8 @@ function getTimeoutConfig() {
 module.exports = {
     startAutoTimeoutService,
     stopAutoTimeoutService,
+    pauseAutoTimeoutService,
+    resumeAutoTimeoutService,
     checkInactiveConversations,
     manualResumeAI,
     getTimeoutConfig

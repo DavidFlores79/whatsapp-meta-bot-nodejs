@@ -176,7 +176,7 @@ async function createCustomer(req, res) {
             firstName,
             lastName,
             email,
-            avatar: avatar || `https://i.pravatar.cc/150?u=${phoneNumber}`,
+            avatar: avatar || undefined,
             tags: tags || [],
             segment: segment || 'new',
             source: source || 'whatsapp',
@@ -361,6 +361,44 @@ async function deleteCustomer(req, res) {
         }
     } catch (error) {
         console.error('Delete customer error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+/**
+ * PATCH /api/v2/customers/:id/reactivate
+ * Reactivate a deactivated customer (change status from inactive to active)
+ */
+async function reactivateCustomer(req, res) {
+    try {
+        const { id } = req.params;
+
+        // Find customer
+        const customer = await Customer.findById(id);
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        // Check if customer is inactive
+        if (customer.status !== 'inactive') {
+            return res.status(400).json({ 
+                error: 'Customer is not inactive',
+                currentStatus: customer.status 
+            });
+        }
+
+        // Reactivate customer
+        customer.status = 'active';
+        await customer.save();
+
+        return res.json({
+            success: true,
+            message: 'Customer reactivated successfully',
+            customer
+        });
+    } catch (error) {
+        console.error('Reactivate customer error:', error);
         return res.status(500).json({ error: error.message });
     }
 }
@@ -604,7 +642,7 @@ async function bulkImportCustomers(req, res) {
                 // Create new customer
                 const customer = await Customer.create({
                     ...customerData,
-                    avatar: customerData.avatar || `https://i.pravatar.cc/150?u=${customerData.phoneNumber}`,
+                    avatar: customerData.avatar || undefined,
                     firstContact: new Date(),
                     lastInteraction: new Date()
                 });
@@ -892,6 +930,7 @@ module.exports = {
     updateCustomerTags,
     toggleBlockCustomer,
     deleteCustomer,
+    reactivateCustomer,
     getCustomerConversations,
     getCustomerStats,
     bulkImportCustomers,

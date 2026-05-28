@@ -7,11 +7,12 @@ import { CustomerService, Customer, CustomerFilters } from '../../../services/cu
 import { CustomerModalComponent } from '../customer-modal/customer-modal';
 import { ImportCustomersModalComponent } from '../import-customers-modal/import-customers-modal';
 import { ToastService } from '../../../services/toast';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, ImportCustomersModalComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, CustomerModalComponent, ImportCustomersModalComponent, AvatarComponent],
   templateUrl: './customer-list.html',
   styleUrls: ['./customer-list.css']
 })
@@ -171,7 +172,8 @@ export class CustomerListComponent implements OnInit {
   }
 
   createCustomer() {
-    this.router.navigate(['/customers/new']);
+    this.selectedCustomerId = undefined;
+    this.isCustomerModalOpen = true;
   }
 
   toggleSelectCustomer(customerId: string) {
@@ -312,6 +314,41 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
+  reactivateSelected() {
+    if (this.selectedCustomers.size === 0) return;
+
+    this.toast.info(`Reactivating ${this.selectedCustomers.size} customer(s)...`, 3000);
+
+    let completed = 0;
+    let successful = 0;
+    const total = this.selectedCustomers.size;
+
+    this.selectedCustomers.forEach(customerId => {
+      this.customerService.reactivateCustomer(customerId).subscribe({
+        next: () => {
+          completed++;
+          successful++;
+          if (completed === total) {
+            this.selectedCustomers.clear();
+            this.toast.success(`${successful} customer(s) reactivated successfully`, 3000);
+            this.loadCustomers();
+            this.loadStats();
+          }
+        },
+        error: (err) => {
+          console.error('Error reactivating customer:', err);
+          completed++;
+          if (completed === total) {
+            this.selectedCustomers.clear();
+            this.toast.warning(`${successful} of ${total} customer(s) reactivated`, 3000);
+            this.loadCustomers();
+            this.loadStats();
+          }
+        }
+      });
+    });
+  }
+
   getCustomerName(customer: Customer): string {
     return this.customerService.getCustomerDisplayName(customer);
   }
@@ -366,4 +403,5 @@ export class CustomerListComponent implements OnInit {
   toggleBulkActions() {
     this.showBulkActions = !this.showBulkActions;
   }
+
 }

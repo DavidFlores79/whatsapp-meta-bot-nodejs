@@ -1,0 +1,61 @@
+{
+  "name": "create_ecommerce_order",
+  "description": "Create a new order for the customer via WhatsApp. Use after customer confirms products they want to purchase. The system will find existing customer or create new profile based on phone.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "required": ["customer_phone", "customer_name", "items", "payment_method", "address", "delivery_option", "delivery_date", "notes"],
+    "additionalProperties": false,
+    "properties": {
+      "customer_phone": {
+        "type": "string",
+        "description": "Customer's phone number from the WhatsApp conversation."
+      },
+      "customer_name": {
+        "type": ["string", "null"],
+        "description": "Customer's name if provided. Null defaults to 'WhatsApp Customer'."
+      },
+      "items": {
+        "type": "array",
+        "description": "Array of products to order.",
+        "items": {
+          "type": "object",
+          "required": ["product_id", "quantity"],
+          "additionalProperties": false,
+          "properties": {
+            "product_id": {
+              "type": "string",
+              "description": "Product ID from search_ecommerce_products."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "Quantity to order (minimum 1)."
+            }
+          }
+        }
+      },
+      "payment_method": {
+        "type": ["string", "null"],
+        "enum": ["cash", "credit_card", "paypal", "bank_transfer", null],
+        "description": "Payment method. Null defaults to 'cash'."
+      },
+      "address": {
+        "type": ["string", "null"],
+        "description": "Delivery address. Null for pickup orders."
+      },
+      "delivery_option": {
+        "type": ["string", "null"],
+        "enum": ["pickup", "delivery", null],
+        "description": "Pickup or delivery. Null defaults to 'delivery'."
+      },
+      "delivery_date": {
+        "type": ["string", "null"],
+        "description": "Requested date (YYYY-MM-DD). Null uses earliest available."
+      },
+      "notes": {
+        "type": ["string", "null"],
+        "description": "Special instructions. Can be null."
+      }
+    }
+  }
+}

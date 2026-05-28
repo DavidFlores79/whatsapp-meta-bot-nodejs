@@ -3,10 +3,11 @@ const rateLimit = require('express-rate-limit');
 // Rate limiter for auth endpoints (stricter)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 requests per window
+    max: 20, // 20 requests per window (increased for development)
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
+    // Disable trust proxy validation - configured at Express app level with app.set('trust proxy', 1)
     validate: {
         xForwardedForHeader: false,
         trustProxy: false
@@ -20,6 +21,7 @@ const apiLimiter = rateLimit({
     message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
+    // Disable trust proxy validation - configured at Express app level with app.set('trust proxy', 1)
     validate: {
         xForwardedForHeader: false,
         trustProxy: false

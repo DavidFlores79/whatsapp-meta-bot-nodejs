@@ -1,6 +1,5 @@
-const { buildTemplateJSON } = require('../shared/whatsappModels');
-const whatsappService = require('./whatsappService');
 const { formatNumber } = require('../shared/processMessage');
+const templateMessageService = require('./templateMessageService');
 
 /**
  * Determine agent's preferred language for notifications
@@ -67,26 +66,29 @@ const sendAssignmentNotification = async (agent, customer, conversation = null) 
             ? priority
             : translatePriority(priority);
 
+        // Dashboard name (4th parameter) - configurable via environment variable
+        const dashboardName = process.env.COMPANY_NAME || 'Luxfree';
+
         const parameters = [
             { type: 'text', text: customerName },
             { type: 'text', text: customerPhone },
-            { type: 'text', text: priorityText }
+            { type: 'text', text: priorityText },
+            { type: 'text', text: dashboardName }
         ];
 
         console.log(`📤 Sending assignment notification to agent ${agent.email} (${agentPhone})`);
         console.log(`   Template: ${templateName} (${languageCode})`);
         console.log(`   Customer: ${customerName} (${customerPhone})`);
         console.log(`   Priority: ${priorityText}`);
+        console.log(`   Dashboard: ${dashboardName}`);
 
-        // Build and send template message
-        const templateData = buildTemplateJSON(
-            agentPhone,
+        // Use centralized template message service (notification to agent, not saved to DB)
+        await templateMessageService.sendTemplateNotification({
             templateName,
+            languageCode,
             parameters,
-            languageCode
-        );
-
-        whatsappService.sendWhatsappResponse(templateData);
+            phoneNumber: agentPhone
+        });
 
         console.log(`✅ Assignment notification sent to agent ${agent.email}`);
         return true;
