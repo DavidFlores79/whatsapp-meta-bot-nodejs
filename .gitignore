@@ -10,6 +10,9 @@ logs.txt
 frontend/nul
 nul
 
+# Frontend intermediate build output (only public/ gets committed)
+frontend/dist/
+
 # Test files
 test-customers*.xlsx
 test-customers*.csv
