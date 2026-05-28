@@ -10,7 +10,12 @@
                 </button>
                 <div class="flex items-center cursor-pointer" (click)="openCustomerModal(chat)" [title]="'chat.viewEditCustomer' | translate">
                     <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
-                        <img [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+                        <img *ngIf="chat.avatar" [src]="chat.avatar" [alt]="chat.name" class="w-full h-full object-cover">
+                        <div *ngIf="!chat.avatar"
+                             class="w-full h-full flex items-center justify-center text-white font-semibold text-sm select-none"
+                             [style.background-color]="getAvatarColor(chat.name)">
+                            {{ getAvatarInitials(chat.name) }}
+                        </div>
                     </div>
                     <div>
                         <div class="flex items-center gap-2 mb-1">

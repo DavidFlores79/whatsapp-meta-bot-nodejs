@@ -66,7 +66,7 @@ export interface Message {
 export interface Chat {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
   lastMessage: string;
   lastMessageTime: Date;
   unreadCount: number;
@@ -175,13 +175,13 @@ export class ChatService {
         const newChats = activeConversations.map((conv: any) => ({
           id: conv._id, // MongoDB _id field
           name: this.getCustomerName(conv.customerId),
-          avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+          avatar: conv.customerId?.avatar || undefined,
           lastMessage: conv.lastMessage?.content || '',
           lastMessageTime: new Date(conv.lastMessage?.timestamp || conv.lastCustomerMessage || conv.updatedAt),
           unreadCount: 0,
           messages: [],
           assignedAgent: conv.assignedAgent,
-          isAIEnabled: conv.isAIEnabled !== false, // Default to true if not specified
+          isAIEnabled: conv.isAIEnabled !== false,
           status: conv.status,
           customerId: conv.customerId?._id,
           phoneNumber: conv.customerId?.phoneNumber
@@ -496,7 +496,7 @@ export class ChatService {
     const newChat: Chat = {
       id: data.conversationId,
       name: data.customer?.name || data.customer?.phoneNumber || 'Unknown',
-      avatar: data.customer?.avatar || `https://i.pravatar.cc/150?u=${data.customer?.phoneNumber}`,
+      avatar: data.customer?.avatar || undefined,
       lastMessage: 'New conversation',
       lastMessageTime: new Date(data.timestamp),
       unreadCount: 0,
@@ -549,7 +549,7 @@ export class ChatService {
               const newChat: Chat = {
                 id: conv._id,
                 name: this.getCustomerName(conv.customerId),
-                avatar: conv.customerId?.avatar || `https://i.pravatar.cc/150?u=${conv.customerId?.phoneNumber}`,
+                avatar: conv.customerId?.avatar || undefined,
                 lastMessage: message.text || (message.type === 'image' ? '📷 Image' : 'Message'),
                 lastMessageTime: new Date(message.timestamp),
                 unreadCount: 1,
