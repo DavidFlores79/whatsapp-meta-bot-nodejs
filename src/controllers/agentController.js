@@ -329,6 +329,38 @@ async function getAgentStatistics(req, res) {
     }
 }
 
+async function changePassword(req, res) {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+        }
+
+        const agent = await Agent.findById(req.agent._id).select('+password');
+        if (!agent) {
+            return res.status(404).json({ error: 'Agente no encontrado' });
+        }
+
+        const isMatch = await authService.comparePassword(currentPassword, agent.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+        }
+
+        const hashedPassword = await authService.hashPassword(newPassword);
+        await Agent.findByIdAndUpdate(req.agent._id, { password: hashedPassword });
+
+        return res.status(200).json({ msg: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     login,
     refreshToken,
@@ -341,5 +373,6 @@ module.exports = {
     getAgentById,
     updateAgent,
     deleteAgent,
-    getAgentStatistics
+    getAgentStatistics,
+    changePassword
 };

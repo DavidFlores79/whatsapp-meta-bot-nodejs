@@ -274,25 +274,30 @@ export class SettingsComponent implements OnInit {
   }
 
   updatePassword() {
+    if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
+      this.toastService.error('Todos los campos son requeridos');
+      return;
+    }
+
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
       this.toastService.error(this.translate.instant('settings.passwordMismatch'));
       return;
     }
 
     if (this.passwordForm.newPassword.length < 6) {
-      this.toastService.error('Password must be at least 6 characters');
+      this.toastService.error('La nueva contraseña debe tener al menos 6 caracteres');
       return;
     }
 
-    // TODO: Implement password change API
-    this.toastService.info('Password change feature coming soon!');
-
-    // Reset form
-    this.passwordForm = {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    };
+    this.authService.changePassword(this.passwordForm.currentPassword, this.passwordForm.newPassword).subscribe({
+      next: (response) => {
+        this.toastService.success(response.msg || 'Contraseña actualizada correctamente');
+        this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.error || 'Error al actualizar la contraseña');
+      }
+    });
   }
 
   private loadPreferences() {
