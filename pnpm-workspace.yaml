@@ -1,2 +1,6 @@
 packages:
   - frontend
+
+settings:
+  auditConfig:
+    minimumReleaseAge: 0
