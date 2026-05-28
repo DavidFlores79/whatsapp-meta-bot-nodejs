@@ -5,12 +5,12 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app",
-    "build": "cd frontend && npm run build",
-    "build:windows": "cd frontend && npm run build",
-    "build:unix": "cd frontend && npm run build",
-    "build:install": "npm install && cd frontend && npm install && cd .. && npm run build",
-    "deploy:prepare": "npm run build && powershell -ExecutionPolicy Bypass -File ./deploy.ps1",
-    "deploy:prepare:unix": "npm run build && bash ./deploy.sh",
+    "build": "pnpm -C frontend run build",
+    "build:windows": "pnpm -C frontend run build",
+    "build:unix": "pnpm -C frontend run build",
+    "build:install": "pnpm install && pnpm run build",
+    "deploy:prepare": "pnpm run build && powershell -ExecutionPolicy Bypass -File ./deploy.ps1",
+    "deploy:prepare:unix": "pnpm run build && bash ./deploy.sh",
     "dev": "nodemon src/app",
     "test:threads": "node test-thread-optimization.js",
     "create-admin": "node scripts/createAdminAgent.js",
@@ -45,6 +45,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "packageManager": "pnpm@10.22.0",
   "devDependencies": {
     "nodemon": "^3.0.1"
   }

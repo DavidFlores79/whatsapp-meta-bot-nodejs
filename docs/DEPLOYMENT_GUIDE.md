@@ -9,7 +9,7 @@ This project uses a pre-built deployment strategy where the Angular frontend is 
 ### Local Development (Windows)
 ```powershell
 # After making frontend changes
-npm run deploy:prepare
+pnpm run deploy:prepare
 
 # Review changes, then commit and push
 git commit -m "Your commit message"
@@ -32,13 +32,13 @@ After editing any frontend code in `frontend/src/`:
 
 ```powershell
 # Option A: Use the automated script
-npm run deploy:prepare
+pnpm run deploy:prepare
 
 # Option B: Run the PowerShell script directly
 .\deploy.ps1
 
 # Option C: Manual steps
-npm run build
+pnpm run build
 Copy-Item -Path "frontend\dist\frontend\browser\*" -Destination "public\" -Recurse -Force
 git add frontend/dist public frontend/src
 ```
@@ -143,12 +143,12 @@ Automates server deployment:
 - Pulls latest changes
 - Restarts PM2 services
 
-### NPM Scripts
-- `npm run build` - Build frontend only (fast, 5-10 seconds)
-- `npm run build:install` - Full build with dependency installation (slow, use when adding packages)
-- `npm run deploy:prepare` - Complete deployment preparation (build + copy + stage)
-- `npm run dev` - Start development server with nodemon
-- `npm start` - Start production server
+### PNPM Scripts
+- `pnpm run build` - Build frontend only (fast, 5-10 seconds)
+- `pnpm run build:install` - Full build with dependency installation (slow, use when adding packages)
+- `pnpm run deploy:prepare` - Complete deployment preparation (build + copy + stage)
+- `pnpm run dev` - Start development server with nodemon
+- `pnpm start` - Start production server
 
 ---
 
@@ -163,7 +163,7 @@ cd whatsapp-meta-bot-nodejs
 git checkout feature/crm-implementation
 
 # 3. Install dependencies (backend only)
-npm install
+pnpm install
 
 # 4. Set up environment variables
 cp .env.example .env
@@ -183,7 +183,7 @@ No need to install frontend dependencies or build on the server - the built file
 
 ## Best Practices
 
-1. **Always run `npm run deploy:prepare` before pushing** to ensure built files are up to date
+1. **Always run `pnpm run deploy:prepare` before pushing** to ensure built files are up to date
 2. **Commit frontend source and built files together** so they stay in sync
 3. **Use descriptive commit messages** to track what changed
 4. **Test locally first** before deploying to production

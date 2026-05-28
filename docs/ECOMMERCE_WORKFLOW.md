@@ -557,7 +557,7 @@ db.tickets.aggregate([
 
 ### Issue: "Tickets mixing between businesses"
 **Solution:**
-1. Run `npm run migrate:business-type`
+1. Run `pnpm run migrate:business-type`
 2. Verify all tickets have `businessType` field
 3. Check active preset matches query
 

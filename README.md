@@ -59,7 +59,7 @@ A complete WhatsApp business solution combining AI-powered conversation manageme
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Environment Setup
@@ -89,32 +89,32 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 **Production:**
 ```bash
-npm start
+pnpm start
 ```
 
 **Build Frontend:**
 ```bash
-npm run build
+pnpm run build
 ```
 
 **Create Admin User:**
 ```bash
-npm run create-admin
+pnpm run create-admin
 ```
 
 **Reset Admin Password:**
 ```bash
-npm run reset-admin
+pnpm run reset-admin
 ```
 
 **Migrate Business Type Field (Required for multi-preset support):**
 ```bash
-npm run migrate:business-type
+pnpm run migrate:business-type
 ```
 
 **Test Business Isolation:**
 ```bash
-npm run test:business-isolation
+pnpm run test:business-isolation
 ```
 
 ## Deployment
@@ -131,12 +131,12 @@ RATE_LIMIT_WINDOW_MS=900000
 
 **Development:**
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 **Production:**
 ```bash
-npm start
+pnpm start
 ```
 
 ## Deployment

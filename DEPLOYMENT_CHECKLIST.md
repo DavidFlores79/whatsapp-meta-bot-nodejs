@@ -13,7 +13,7 @@
 ### 2. Build Frontend (if frontend changed)
 ```bash
 cd frontend
-npm run build
+pnpm run build
 cd ..
 ```
 
@@ -24,7 +24,7 @@ cp -r frontend/dist/frontend/browser/* public/
 
 ### 4. Test Locally (Optional but Recommended)
 ```bash
-npm run dev
+pnpm run dev
 # Test on http://localhost:5000
 ```
 
@@ -67,7 +67,7 @@ cd /var/www/whatsapp-meta-bot-nodejs
 ### Frontend Changes Only
 ```bash
 # 1. Build frontend
-cd frontend && npm run build && cd ..
+pnpm -C frontend run build
 
 # 2. Copy to public
 cp -r frontend/dist/frontend/browser/* public/
@@ -99,7 +99,7 @@ git push origin feat/universal-ticket-system
 # 1. Make all changes
 
 # 2. Build frontend
-cd frontend && npm run build && cd ..
+pnpm -C frontend run build
 
 # 3. Copy to public
 cp -r frontend/dist/frontend/browser/* public/
@@ -119,7 +119,7 @@ git push origin feat/universal-ticket-system
 
 For rapid frontend changes, use this one-liner:
 ```bash
-cd frontend && npm run build && cd .. && cp -r frontend/dist/frontend/browser/* public/ && git add -A && git commit -m "feat: your message" && git push origin feat/universal-ticket-system
+pnpm -C frontend run build && cp -r frontend/dist/frontend/browser/* public/ && git add -A && git commit -m "feat: your message" && git push origin feat/universal-ticket-system
 ```
 
 Then on server:
@@ -157,7 +157,7 @@ git log --stat -1 | grep "public/"
 
 If missing, rebuild and commit:
 ```bash
-cd frontend && npm run build && cd ..
+pnpm -C frontend run build
 cp -r frontend/dist/frontend/browser/* public/
 git add public/ && git commit --amend --no-edit
 git push origin feat/universal-ticket-system --force-with-lease

@@ -95,7 +95,7 @@ const ticket = await ticketService.updateTicket('ECOM-001', updates);
 
 ### Step 1: Run Migration Script
 ```bash
-npm run migrate:business-type
+pnpm run migrate:business-type
 ```
 
 This will:
@@ -107,7 +107,7 @@ This will:
 
 ### Step 2: Verify Migration
 ```bash
-npm run test:business-isolation
+pnpm run test:business-isolation
 ```
 
 This runs automated tests to confirm:
@@ -170,7 +170,7 @@ This runs automated tests to confirm:
 ```
 
 ### Automated Tests
-Run: `npm run test:business-isolation`
+Run: `pnpm run test:business-isolation`
 
 Tests verify:
 - ✅ Ticket creation stores correct businessType
@@ -303,7 +303,7 @@ db.tickets.find({
 For issues or questions:
 1. Check [BUSINESS_TYPE_ISOLATION.md](BUSINESS_TYPE_ISOLATION.md) for detailed documentation
 2. Check [ECOMMERCE_WORKFLOW.md](ECOMMERCE_WORKFLOW.md) for e-commerce order and ticket flows
-3. Run `npm run test:business-isolation` to verify setup
+3. Run `pnpm run test:business-isolation` to verify setup
 4. Review logs for businessType validation errors
 5. Check MongoDB indexes: `db.tickets.getIndexes()`
 
@@ -329,8 +329,8 @@ For issues or questions:
 - ✅ Performance optimized with indexes
 
 **Next Steps:**
-1. Run `npm run migrate:business-type`
-2. Run `npm run test:business-isolation`
+1. Run `pnpm run migrate:business-type`
+2. Run `pnpm run test:business-isolation`
 3. Deploy and monitor
 
 ---

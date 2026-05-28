@@ -24,9 +24,9 @@ All commits must appear as human-authored work without any AI acknowledgment or 
 ### Getting Started
 
 1. Clone the repository
-2. Install dependencies: `npm install`
+2. Install dependencies: `pnpm install`
 3. Copy `.env.example` to `.env` and configure
-4. Run development server: `npm run dev`
+4. Run development server: `pnpm run dev`
 
 ### Code Conventions
 
@@ -51,7 +51,7 @@ docs: update API documentation
 
 ### Testing
 
-- Run thread optimization tests: `npm run test:threads`
+- Run thread optimization tests: `pnpm run test:threads`
 - Test with WhatsApp Business API sandbox
 - Verify Socket.io events in browser console
 
@@ -59,7 +59,7 @@ docs: update API documentation
 
 When making frontend changes:
 
-1. **Build and prepare**: `npm run deploy:prepare`
+1. **Build and prepare**: `pnpm run deploy:prepare`
 2. **Commit**: `git commit -m "Your message"`
 3. **Push**: `git push origin feature/crm-implementation`
 4. **Deploy on AWS**: `./deploy.sh`

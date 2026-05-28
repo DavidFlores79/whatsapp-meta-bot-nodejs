@@ -65,10 +65,10 @@ Every ticket now stores which business created it:
 ### 3. ✅ Created Migration Tools
 ```bash
 # Migrate existing tickets (DONE - 5 tickets migrated)
-npm run migrate:business-type
+pnpm run migrate:business-type
 
 # Test isolation (DONE - ALL TESTS PASS)
-npm run test:business-isolation
+pnpm run test:business-isolation
 ```
 
 ### 4. ✅ Migration Results
